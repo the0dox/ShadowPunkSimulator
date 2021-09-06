@@ -14,106 +14,45 @@ public class PlayerStats : MonoBehaviour
     public PlayerStats grappleTarget;
     public GameObject model;
     public Material SelectedColor;
+    public CharacterSaveData myData;
     private int AdvanceBonus;
     public GameObject MyCharacterSheet;
     //Reference for all player stats
-    public Dictionary<string, int> Stats = new Dictionary<string, int>
-    {
-        { "BS", 50 },
-        { "WS", 50 },
-        { "S", 40 },
-        { "T", 30 },
-        { "A", 30 },
-        { "INT", 20 },
-        { "PER", 50 },
-        { "WP", 50 },
-        { "FEL", 30 },
-        { "Wounds", 10},
-        { "MaxWounds", 10},
-        { "MoveHalf", 0 },
-        { "MoveFull", 0}, 
-        { "MoveCharge", 0},
-        { "MoveRun", 0},
-        { "Head",0},
-        { "Right Arm", 2},
-        { "Left Arm", 2},
-        { "Body", 3},
-        { "Right Leg", 2},
-        { "Left Leg", 2},
-        { "Fatigue", 0},
-        { "Critical", 0},
-        { "Fate", 3},
-        { "FateMax", 3}
-        
-    };
+    public Dictionary<string, int> Stats = new Dictionary<string, int>();
     public Dictionary<ConditionTemplate, int> Conditions = new Dictionary<ConditionTemplate, int>();
 
 
     //level of skill training a character has, is called first
     public List<Skill> Skills = new List<Skill>();
     public List<Weapon> equipment = new List<Weapon>();
-
-    public List<WeaponTemplate> WeaponInitalizer = new List<WeaponTemplate>();
     public Weapon LeftHand;
     public Weapon RightHand; 
 
     //quick reference for what die rolls correspond to a hit location
     private Dictionary<int, string> HitLocations;
 
-    void Start()
+    public void DownloadSaveData(CharacterSaveData myData)
     {
+        this.myData = myData;
+        this.playername = myData.playername;
+        this.team = myData.team;
+        this.Stats = myData.GetStats();
+        this.Skills = myData.GetSkills();
+        this.equipment = myData.GetWeapons();
+        this.HitLocations = myData.StandardHitLocations();
         Init();
     }
     // Start is called before the first frame update
     public void Init()
     {
-        StandardHitLocations();
-        UpdateMovement(); 
-        BasicSkills();
-        foreach(WeaponTemplate wt in WeaponInitalizer)
-        {
-            Weapon w = new Weapon(wt);
-            equipment.Add(w);
-            
+        UpdateMovement();
+        foreach(Weapon w in equipment)
+        {   
             if(LeftHand == null || RightHand == null)
             {
                 Equip(w);
             }
         }
-    }
-    //to implmenet basic skill reference;
-    private void BasicSkills()
-    {
-        Skills.Add(new Skill("Parry",1,"WS",true));
-        Skills.Add(new Skill("Awareness",1,"PER",true));
-        Skills.Add(new Skill("Barter",1,"FEL",true));
-        Skills.Add(new Skill("Carouse",1,"T",true));
-        Skills.Add(new Skill("Charm",1,"FEL",true));
-        Skills.Add(new Skill("Concealment",1,"A",true));
-        Skills.Add(new Skill("Contortionist",1,"A",true));
-        Skills.Add(new Skill("Deceive",1,"FEL",true));
-        Skills.Add(new Skill("Disguise",1,"FEL",true));
-        Skills.Add(new Skill("Dodge",1,"A",true));
-        Skills.Add(new Skill("Evaluate",1,"INT",true));
-        Skills.Add(new Skill("Gamble",1,"INT",true));
-        Skills.Add(new Skill("Inquiry",1,"FEL",true));
-        Skills.Add(new Skill("Intimidate",1,"S",true));
-        Skills.Add(new Skill("Logic",1,"INT",true));
-        Skills.Add(new Skill("Climb",1,"S",true));
-        Skills.Add(new Skill("Scrutiny",1,"PER",true));
-        Skills.Add(new Skill("Search",1,"PER",true));
-        Skills.Add(new Skill("SilentMove",1,"A",true));
-        Skills.Add(new Skill("Swim",1,"S",true));
-    }
-    private void StandardHitLocations()
-    {
-        HitLocations = new Dictionary<int, string>();
-        HitLocations.Add(10, "Head");
-        HitLocations.Add(20, "Right Arm");
-        HitLocations.Add(30, "Left Arm");
-        HitLocations.Add(70, "Body");
-        HitLocations.Add(85, "Right Leg");
-        HitLocations.Add(100, "Left Leg");
     }
 
     public int getWounds()
@@ -682,5 +621,4 @@ public class PlayerStats : MonoBehaviour
         string output = GetName();
         return output;
     }
-
 }

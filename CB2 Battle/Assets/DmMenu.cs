@@ -5,27 +5,65 @@ using UnityEngine;
 public class DmMenu : MonoBehaviour
 {
     [SerializeField] private GameObject Display;
-    [SerializeField] private GameObject CharacterSheet;
-    [SerializeField] private List<ScriptableObject> SavedCharacters = new List<ScriptableObject>();
-    [SerializeField] private GameObject PlayerReference;
+    [SerializeField] private List<CharacterSaveData> SavedCharacters = new List<CharacterSaveData>();
+    [SerializeField] private GameObject PlayerScreen;
+    [SerializeField] private GameObject SelectorButton;
+    private List<GameObject> PrevSelectorButtons = new List<GameObject>();
+    private Vector3 CharacterSelectorPos;
+
+    void Start()
+    {
+        SavedCharacters = SaveSystem.LoadPlayer();
+    }
 
     public void Toggle()
     {
         Display.SetActive(!Display.activeInHierarchy);
+        PlayerScreen.SetActive(false);
     }
 
     public void CreateCharacter()
     {
-        Instantiate(CharacterSheet);
+        CharacterSaveData newplayer = new CharacterSaveData(true);
+        SavedCharacters.Add(newplayer);
+        ViewCharacters();
+    }
+    public void CreateNPC()
+    {
+        CharacterSaveData newplayer = new CharacterSaveData(false);
+        SavedCharacters.Add(newplayer);
+        ViewCharacters();
     }
 
-    public void EditCharacter(int index)
+    public void Quit()
     {
-        ScriptableObject character = SavedCharacters[index];
+        foreach(CharacterSaveData csd in SavedCharacters)
+        {
+            csd.Quit();
+        }
     }
 
-    public void one()
+    public void ViewCharacters()
     {
-        EditCharacter(1);
+        foreach(GameObject prevButton in PrevSelectorButtons)
+        {
+            Destroy(prevButton);
+        }
+        CharacterSelectorPos = new Vector3(250,130,0);
+        PlayerScreen.SetActive(true);
+        foreach(CharacterSaveData csd in SavedCharacters)
+        {
+            GameObject newButton = Instantiate(SelectorButton) as GameObject;
+            newButton.transform.SetParent(PlayerScreen.transform);
+            newButton.transform.localPosition = CharacterSelectorPos;
+            newButton.GetComponent<CharacterSelectorButton>().SetData(csd);
+            PrevSelectorButtons.Add(newButton);
+            CharacterSelectorPos -= new Vector3(125,0,0);
+            if(CharacterSelectorPos.x < -250)
+            {
+                CharacterSelectorPos.x = 250;
+                CharacterSelectorPos.y -= 75;
+            }
+        }
     }
 }

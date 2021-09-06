@@ -15,7 +15,6 @@ public class WeaponAdder : MonoBehaviour
     {
         Selector.ClearOptions();
         weaponLibrary = WeaponsReference.WeaponTemplates();
-        Debug.Log(weaponLibrary.Count);
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
         foreach(string key in weaponLibrary.Keys)
         {
@@ -31,6 +30,7 @@ public class WeaponAdder : MonoBehaviour
 
     public Weapon GetWeapon()
     {
-        return new Weapon(weaponLibrary[Selector.captionText.text]);
+        Weapon output = new Weapon(weaponLibrary[Selector.captionText.text]);
+        return output;
     }
 }

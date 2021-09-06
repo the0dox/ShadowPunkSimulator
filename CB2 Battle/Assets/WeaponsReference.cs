@@ -13,7 +13,6 @@ public class WeaponsReference : MonoBehaviour
         {
             Library.Add(c.name, c);
         }
-        Debug.Log(Library.Count);
     }
 
     public static WeaponTemplate GetWeapon(string name)

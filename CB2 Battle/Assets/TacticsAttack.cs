@@ -28,7 +28,7 @@ public class TacticsAttack : MonoBehaviour
             {
                 modifiers += 20;
             }
-            if(w.HasWeaponAttribute("Unarmed") && target.LeftHand.HasWeaponAttribute("Melee") || target.RightHand.HasWeaponAttribute("Melee"))
+            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand != null && target.LeftHand.HasWeaponAttribute("Melee")) || (target.LeftHand != null && target.RightHand.HasWeaponAttribute("Melee")))
             {
                 modifiers -= 20;
             }
@@ -218,7 +218,7 @@ public class TacticsAttack : MonoBehaviour
     public static Tile CalculateCover(GameObject attacker,  GameObject target, string HitLocation)
     {
         //cover never protects arms and head
-        if (HitLocation != "Body" && HitLocation != "Left Leg" && HitLocation != "Right Leg")
+        if (HitLocation != "Body" && HitLocation != "LeftLeg" && HitLocation != "RightLeg")
         {
             return null;
         }
@@ -476,7 +476,7 @@ public class TacticsAttack : MonoBehaviour
                         outputStack.Push(" +20%: Target Running");
                         chanceToHit += 20;
                     }
-                    if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand.HasWeaponAttribute("Melee") || target.RightHand.HasWeaponAttribute("Melee")))
+                    if(w.HasWeaponAttribute("Unarmed") && ( (target.LeftHand != null && target.LeftHand.HasWeaponAttribute("Melee")) || (target.RightHand != null && target.RightHand.HasWeaponAttribute("Melee"))))
                     {
                         outputStack.Push(" -20%: Unarmed");
                         chanceToHit -= 20;

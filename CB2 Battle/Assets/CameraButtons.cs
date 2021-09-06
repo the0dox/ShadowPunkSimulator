@@ -9,27 +9,24 @@ public class CameraButtons : MonoBehaviour
     public float panBorderRange = 5f;
     void Update()
     {
-        if(!CharacterSheet.active)
+        Vector3 pos = transform.position;
+        if(Input.mousePosition.y >= Screen.height - panBorderRange)
         {
-            Vector3 pos = transform.position;
-            if(Input.mousePosition.y >= Screen.height - panBorderRange)
-            {
-                pos += transform.forward * panSpeed * Time.deltaTime;
-            }
-            if(Input.mousePosition.y <= panBorderRange)
-            {
-                pos += -transform.forward * panSpeed * Time.deltaTime;
-            }
-            if(Input.mousePosition.x >= Screen.width - panBorderRange)
-            {
-                pos += transform.right * panSpeed * Time.deltaTime;
-            }
-            if(Input.mousePosition.x <= panBorderRange)
-            {
-                pos += -transform.right * panSpeed * Time.deltaTime;
-            }
-            transform.position = pos;
+            pos += transform.forward * panSpeed * Time.deltaTime;
         }
+        if(Input.mousePosition.y <= panBorderRange)
+        {
+            pos += -transform.forward * panSpeed * Time.deltaTime;
+        }
+        if(Input.mousePosition.x >= Screen.width - panBorderRange)
+        {
+            pos += transform.right * panSpeed * Time.deltaTime;
+        }
+        if(Input.mousePosition.x <= panBorderRange)
+        {
+            pos += -transform.right * panSpeed * Time.deltaTime;
+        }
+        transform.position = pos;
     }
     // Start is called before the first frame update
     public void RotateLeft()

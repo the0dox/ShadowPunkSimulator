@@ -11,6 +11,7 @@ public class TurnManager : TurnActions
     public GameObject CharacterSheet;
     public GameObject SkillModifierScript;
     public InitativeTrackerScript It;
+    float incrementer = 0;
     SortedList<float, TacticsMovement> Sorter = new SortedList<float, TacticsMovement>();  
     // Start is called before the first frame update
     void Start()
@@ -390,7 +391,7 @@ public class TurnManager : TurnActions
         Sorter.Clear(); 
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
-        float incrementer = 0;
+        
         //adds all values in to sorted list in descending order
         foreach (GameObject p in players)
         {
@@ -425,27 +426,10 @@ public class TurnManager : TurnActions
     //Button to bring up player sheet
     public void DisplayCharacterSheet()
     {
-        CharacterSheet cs = CharacterSheet.GetComponent<CharacterSheet>();
-        
-
-
-        //if sheet is active, deactivate and update player stats
-        if (CharacterSheet.activeInHierarchy)
+        if(ActivePlayerStats != null)
         {
-            cs.UpdateStatsOut();
-        }
-        // else enable sheet and transfer it player stats to it
-        else
-        {
-            CharacterSheet.SetActive(true);
-
-            if (!cs.IsInitalized())
-            {
-                cs.Init(); 
-            }
-
-            cs.UpdatePlayer(ActivePlayer.GetComponent<PlayerStats>());
-            cs.UpdateStatsIn();
+            GameObject newSheet = Instantiate(CharacterSheet) as GameObject;
+            newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(ActivePlayerStats);
         }
     }
 
@@ -678,7 +662,6 @@ public class TurnManager : TurnActions
     }
     public void AbilityCheck(string skill)
     {
-        DisplayCharacterSheet();
         GameObject prompt = Instantiate(SkillModifierScript) as GameObject;
         prompt.GetComponent<SkillPromptBehavior>().SetValue(skill);
         prompt.transform.SetParent(Canvas.transform, false);
@@ -688,5 +671,43 @@ public class TurnManager : TurnActions
     {
         ActivePlayerStats.AbilityCheck(skill,value);
         Cancel();
+    }
+
+    public void AddPlayer(GameObject newPlayer)
+    {
+        float initiative = newPlayer.GetComponent<PlayerStats>().RollInitaitve() + (float)newPlayer.GetComponent<PlayerStats>().GetStatScore("A")/10f;
+        TacticsMovement tm = newPlayer.GetComponent<TacticsMovement>();
+        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
+        if(Sorter.ContainsKey(initiative))
+        {
+            incrementer += 0.01f;
+            initiative += incrementer;
+        }
+        Sorter.Add(initiative,tm);
+        units.Add(tm, initiative);
+        if(InitativeOrder.Count > 0)
+        {
+            TacticsMovement SavedPostion = InitativeOrder.Dequeue();
+            InitativeOrder.Clear();
+            //moved to a stack to reverse order 
+            foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) {
+                TempStack.Push(kvp.Value);
+            }
+
+            //finally added to Queue in correct order
+            while(TempStack.Count != 0){
+                InitativeOrder.Enqueue(TempStack.Pop());
+            }
+
+            while(InitativeOrder.Peek() != SavedPostion)
+            {
+                InitativeOrder.Enqueue(InitativeOrder.Dequeue());
+            }
+        }
+        else
+        {
+            InitativeOrder.Enqueue(tm);
+            StartTurn(tm);
+        }
     }
 }

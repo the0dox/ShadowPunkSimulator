@@ -5,21 +5,23 @@ using UnityEngine.UI;
 
 public class WeaponInputScript : MonoBehaviour
 {
-    public Text Name;
-    public Text Class;
-    public Text Range;
-    public Text Damage;
-    public Text ROF;
-    public Text Pen;
-    public Text Clip;
-    public Text Reload;
-    public Text Type;
-    public Text Rules;
+    private Weapon myWeapon;
+    [SerializeField]private Text Name;
+    [SerializeField]private Text Class;
+    [SerializeField]private Text Range;
+    [SerializeField]private Text Damage;
+    [SerializeField]private Text ROF;
+    [SerializeField]private Text Pen;
+    [SerializeField]private Text Clip;
+    [SerializeField]private Text Reload;
+    [SerializeField]private Text Type;
+    [SerializeField]private Text Rules;
     
 
     // Update Values from players weapon
     public void UpdateIn(Weapon input)
     {
+        myWeapon = input;
         Name.text = input.GetName();
         Class.text = "Basic";
         if(input.HasWeaponAttribute("Thrown"))
@@ -48,5 +50,9 @@ public class WeaponInputScript : MonoBehaviour
         Rules.text = input.AttributesToString();
     }
 
+    public Weapon GetWeapon()
+    {
+        return myWeapon;
+    }
 
 }

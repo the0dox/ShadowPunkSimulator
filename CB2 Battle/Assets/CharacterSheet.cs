@@ -5,14 +5,14 @@ using UnityEngine.UI;
 
 public class CharacterSheet : MonoBehaviour
 {
-    public static bool active;
     private Dictionary<string, InputFieldScript> TextEntries;
     
     private Dictionary<string, SkillScript> BasicSkillEntries;
     
     private Dictionary<int, WeaponInputScript> WeaponEntries;
 
-    private static PlayerStats ActivePlayer; 
+    private static CharacterSaveData ActivePlayer; 
+    private static PlayerStats ActivePlayerStats; 
     [SerializeField] private GameObject WeaponDisplay;
     [SerializeField] private InputField NameField;
     [SerializeField] private GameObject SkillInputButton;
@@ -27,17 +27,18 @@ public class CharacterSheet : MonoBehaviour
     private Vector3 weaponDisplacementRight = new Vector3(0,98.5f,0);
     private Vector3 weaponDisplacementLeft = new Vector3(0,82.5f,0);
     private Vector3 SkillDisplacement = new Vector3(0,14.5f,0);
+    private Vector3 startingPos = new Vector3(-227.6f,73.3f,0);
     Vector3 PlacementPosAdvanced;
     Vector3 PlacementPosBasic;
     Vector3 PlacementWeaponRanged;
     Vector3 PlacementWeaponMelee;
-
-    void Start()
-    {
-        active = false;
-        gameObject.SetActive(false);
-    }
+    private Dictionary<string, int> PlayerStats;
+    private List<Skill> PlayerSkills;
+    private List<Weapon> PlayerWeapons;
+    private string PlayerDisplayName;
     public void Init(){
+        transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
+        transform.localPosition = startingPos;
         LastSkills = new Stack<GameObject>();
         LastRangedWeps = new Stack<GameObject>();
         LastMeleeWeps = new Stack<GameObject>();
@@ -58,33 +59,104 @@ public class CharacterSheet : MonoBehaviour
     
     }
 
+    public void UpdateStatsOut()
+    {
+        if(ActivePlayerStats != null)
+        {
+            UpdateStatsOut(ActivePlayerStats);
+        }
+        else if(ActivePlayer != null)
+        {
+            UpdateStatsOut(ActivePlayer);
+        }
+    }
+
     //transfers sheet info to player
-    public void UpdateStatsOut(){
-        active = false;
-        ActivePlayer.SetName(NameField.text);
+    public void UpdateStatsOut(PlayerStats output){
+        output.playername = NameField.text;
+        //characterisitcs
+        foreach (KeyValuePair<string, InputFieldScript> kvp in TextEntries){
+            int newValue = kvp.Value.GetValue();
+            output.SetStat(kvp.Key, newValue);
+        }
+        GameObject[] EntryListSkills = GameObject.FindGameObjectsWithTag("Skill");
+        PlayerSkills.Clear();    
+        //skills
+        foreach (GameObject g in EntryListSkills)
+        {
+            SkillScript input = g.GetComponent<SkillScript>();
+            PlayerSkills.Add(input.GetSkill());
+            Destroy(g);
+        }
+        PlayerWeapons.Clear();
+        List<Weapon> newEquipment = new List<Weapon>();
+        //weapons
+        foreach(GameObject g in LastMeleeWeps)
+        {
+            PlayerWeapons.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+        }
+        foreach(GameObject g in LastRangedWeps)
+        {
+            PlayerWeapons.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+        }
+        Destroy(gameObject);
+    }
+
+    //transfers sheet info to player
+    public void UpdateStatsOut(CharacterSaveData output){
+        output.playername = NameField.text;
+        output.ClearSkills();
+        output.ClearWeapons();
+        //characterisitcs
         foreach (KeyValuePair<string, InputFieldScript> kvp in TextEntries){
             int newValue = kvp.Value.GetValue();
             ActivePlayer.SetStat(kvp.Key, newValue);
         }
-        GameObject[] EntryListSkills = GameObject.FindGameObjectsWithTag("Skill");    
+        GameObject[] EntryListSkills = GameObject.FindGameObjectsWithTag("Skill"); 
+        //skills
         foreach (GameObject g in EntryListSkills)
         {
             SkillScript input = g.GetComponent<SkillScript>();
-            ActivePlayer.SetSkill(input.GetSkill());
+            output.addSkill(input.GetSkill());
             Destroy(g);
         }
-        gameObject.SetActive(false);
+        List<Weapon> newEquipment = new List<Weapon>();
+        //weapons
+        foreach(GameObject g in LastMeleeWeps)
+        {
+            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+        }
+        foreach(GameObject g in LastRangedWeps)
+        {
+            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+        }
+        ActivePlayer.AddWeapons(newEquipment);
+        ActivePlayer = null;
+        Destroy(gameObject);
     }
 
-    
-    //transfers player info to sheet
+    public void UpdateStatsIn(PlayerStats input)
+    {
+        Init();
+        ActivePlayerStats = input;
+        PlayerStats = input.Stats;
+        PlayerSkills = input.Skills;
+        PlayerWeapons = input.equipment;
+        PlayerDisplayName = input.playername;
+        UpdateStatsIn();
+    }
+    public void UpdateStatsIn(CharacterSaveData input)
+    {
+        Init();
+        ActivePlayer = input;
+        PlayerStats = input.GetStats();
+        PlayerSkills = input.GetSkills();
+        PlayerWeapons = input.GetWeapons();
+        PlayerDisplayName = input.playername;
+        UpdateStatsIn();
+    }
     public void UpdateStatsIn(){
-        LastSkills.Clear();
-        LastRangedWeps.Clear();
-        LastRangedWeps.Clear();
-        active = true;
-        gameObject.SetActive(true);
-        NameField.text = ActivePlayer.GetName();
+        NameField.text = PlayerDisplayName;
         PlacementPosAdvanced = new Vector3(149.5f, 166,0);
         PlacementPosBasic = new Vector3(-258, 193,0);
         PlacementWeaponRanged = new Vector3(783, 212,0);
@@ -92,16 +164,14 @@ public class CharacterSheet : MonoBehaviour
         SkillAdderButton.transform.localPosition = new Vector3(-16,164,0);
         WeaponAdderMelee.transform.localPosition = new Vector3(500, 200,0);
         WeaponAdderRanged.transform.localPosition = new Vector3(900, 200,0);
-        Dictionary<string, int> d = ActivePlayer.Stats;
         //characterisitcs
-        foreach (KeyValuePair<string, int> kvp in d){
+        foreach (KeyValuePair<string, int> kvp in PlayerStats){
             if (TextEntries.ContainsKey(kvp.Key))
             {
                 TextEntries[kvp.Key].UpdateValue(kvp.Value);   
             }
         }
         //skills
-        List<Skill> PlayerSkills = ActivePlayer.Skills;
         foreach (Skill s in PlayerSkills){
             if(s.visible)
             {
@@ -117,10 +187,8 @@ public class CharacterSheet : MonoBehaviour
                     SkillAdderButton.transform.localPosition -= SkillDisplacement;
                 }
             }
-            //method to place spawners at placementPos
         }
-        //to implement, add more weapon entries
-        foreach(Weapon w in ActivePlayer.equipment)
+        foreach(Weapon w in PlayerWeapons)
         {
             if(w.HasWeaponAttribute("Melee"))
             {
@@ -137,11 +205,6 @@ public class CharacterSheet : MonoBehaviour
             }
         }
     }
-
-    public void UpdatePlayer(PlayerStats input){
-        ActivePlayer = input; 
-    }
-
     public bool IsInitalized(){
         return TextEntries != null; 
     }
@@ -170,7 +233,7 @@ public class CharacterSheet : MonoBehaviour
         {
             string skillname = SkillAdderName.text;
             string skillChar = SkillAdderChar.text;
-            if(!ActivePlayer.Stats.ContainsKey(skillChar))
+            if(!PlayerStats.ContainsKey(skillChar))
             {
                 Debug.Log("Error: Characterisitc not found!");
             }

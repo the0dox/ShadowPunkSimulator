@@ -538,7 +538,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "Attack";
         FireRate = "S";
-        HitLocation = "Left Arm";
+        HitLocation = "LeftArm";
         ActivePlayerStats.SetCondition("Called",1,false);
         
         Dictionary<string, string> d = new Dictionary<string,string>();
@@ -560,7 +560,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "Attack";
         FireRate = "S";
-        HitLocation = "Right Leg";
+        HitLocation = "RightLeg";
         ActivePlayerStats.SetCondition("Called",1,false);
         
         Dictionary<string, string> d = new Dictionary<string,string>();
@@ -571,7 +571,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "Attack";
         FireRate = "S";
-        HitLocation = "Left Leg";
+        HitLocation = "LeftLeg";
         ActivePlayerStats.SetCondition("Called",1,false);
         
         Dictionary<string, string> d = new Dictionary<string,string>();
