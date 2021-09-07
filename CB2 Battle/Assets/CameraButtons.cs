@@ -9,13 +9,14 @@ public class CameraButtons : MonoBehaviour
     public float panBorderRange = 5f;
     private static bool UIactive = false;
     private static bool GracePeriod = false;
+    [SerializeField] private bool debugDeactivate = false;
     void Update()
     {
         if(GracePeriod)
         {
             StartCoroutine(FreezeDelay());
         }
-        if(!UIactive)
+        if(!UIactive && !debugDeactivate)
         {
             Vector3 pos = transform.position;
             if(Input.mousePosition.y >= Screen.height - panBorderRange)

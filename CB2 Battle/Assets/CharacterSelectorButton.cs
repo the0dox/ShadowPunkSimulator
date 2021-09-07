@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 public class CharacterSelectorButton : MonoBehaviour
 {
@@ -32,11 +33,11 @@ public class CharacterSelectorButton : MonoBehaviour
         GameObject newPlayer;
         if(myData.team == 0)
         {
-            newPlayer = Instantiate(PlayerReference) as GameObject;
+            newPlayer = PhotonNetwork.Instantiate(PlayerReference.name, spawningPos,Quaternion.identity);
         }
         else
         {
-            newPlayer = Instantiate(NPCReference) as GameObject;
+            newPlayer = PhotonNetwork.Instantiate(NPCReference.name, spawningPos,Quaternion.identity);
         }
         newPlayer.GetComponent<PlayerStats>().DownloadSaveData(myData);
         newPlayer.GetComponent<TacticsMovement>().Init();
