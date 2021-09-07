@@ -398,10 +398,7 @@ public class TurnActions : MonoBehaviour
                 }
             }
         }
-        if(halfActions < 1)
-        {
-            d.Add("End Turn","EndTurn");
-        }
+        d.Add("End Turn","EndTurn");
         ConstructActions(d);
     }
     //creates a set of interactable buttons can key = text value = method called
@@ -988,6 +985,18 @@ public class TurnActions : MonoBehaviour
         {
             g.GetComponent<ActionButtonScript>().DestroyMe();
         }
+    }
+
+    public void AddAction()
+    {
+        halfActions++;
+        Cancel();
+    }
+
+    public void SubtractAction()
+    {
+        halfActions--;
+        Cancel();
     }
 
     public void GuardedCancel()

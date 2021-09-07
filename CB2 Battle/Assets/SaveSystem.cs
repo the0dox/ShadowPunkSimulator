@@ -25,7 +25,6 @@ public static class SaveSystem
         BinaryFormatter formatter = new BinaryFormatter();
         foreach(string file in Directory.EnumerateFiles(path))
         {
-            Debug.Log(file);
             FileStream stream = new FileStream(file,FileMode.Open);
             CharacterSaveData data = formatter.Deserialize(stream) as CharacterSaveData;
             stream.Close();

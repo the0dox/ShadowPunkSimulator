@@ -42,8 +42,8 @@ public class CharacterSelectorButton : MonoBehaviour
         newPlayer.GetComponent<TacticsMovement>().Init();
         GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().AddPlayer(newPlayer);
         newPlayer.transform.position = spawningPos;
-        
         OnButtonPressed();
+        DmMenu.Toggle();
     }
 
     public void OnButtonPressed()

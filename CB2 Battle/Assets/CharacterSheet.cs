@@ -37,6 +37,7 @@ public class CharacterSheet : MonoBehaviour
     private List<Weapon> PlayerWeapons;
     private string PlayerDisplayName;
     public void Init(){
+        CameraButtons.UIFreeze(true);
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
         transform.localPosition = startingPos;
         LastSkills = new Stack<GameObject>();
@@ -61,6 +62,7 @@ public class CharacterSheet : MonoBehaviour
 
     public void UpdateStatsOut()
     {
+        CameraButtons.UIFreeze(false);
         if(ActivePlayerStats != null)
         {
             UpdateStatsOut(ActivePlayerStats);

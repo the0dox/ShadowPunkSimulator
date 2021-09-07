@@ -28,19 +28,13 @@ public class TurnManager : TurnActions
             TryReaction();
         }
         //Where all possible actions take place
-        else if (CurrentAttack == null) 
+        else if (CurrentAttack == null && !CameraButtons.UIActive()) 
         {
-            /*
-            if (halfActions <= 0 && !ActivePlayer.moving)
+            if (halfActions < 0)
             {
                 halfActions = 0;
-                if(PopUpText.FinishedPrinting())
-                {
-                    EndTurn();
-                }
             }
-            */
-        CheckMouse();
+            CheckMouse();
             switch(currentAction)
             {
                 case "ThreatRange":
@@ -426,7 +420,7 @@ public class TurnManager : TurnActions
     //Button to bring up player sheet
     public void DisplayCharacterSheet()
     {
-        if(ActivePlayerStats != null)
+        if(ActivePlayerStats != null && !CameraButtons.UIActive())
         {
             GameObject newSheet = Instantiate(CharacterSheet) as GameObject;
             newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(ActivePlayerStats);

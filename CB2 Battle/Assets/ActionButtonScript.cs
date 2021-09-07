@@ -21,7 +21,10 @@ public class ActionButtonScript : MonoBehaviour
     }
     public void GetAction()
     {
-        TurnOrder.GetComponent<TurnManager>().OnButtonPressed(action);
+        if(!CameraButtons.UIActive())
+        {
+            TurnOrder.GetComponent<TurnManager>().OnButtonPressed(action);
+        }
     }
 
     public void DestroyMe()

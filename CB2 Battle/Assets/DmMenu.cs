@@ -8,18 +8,23 @@ public class DmMenu : MonoBehaviour
     [SerializeField] private List<CharacterSaveData> SavedCharacters = new List<CharacterSaveData>();
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject SelectorButton;
+    private static GameObject DisplayInstance;
+    private static GameObject PlayerScreenInstance;
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
     private Vector3 CharacterSelectorPos;
 
     void Start()
     {
+        DisplayInstance = Display;
+        PlayerScreenInstance = PlayerScreen;
         SavedCharacters = SaveSystem.LoadPlayer();
     }
 
-    public void Toggle()
+    public static void Toggle()
     {
-        Display.SetActive(!Display.activeInHierarchy);
-        PlayerScreen.SetActive(false);
+        CameraButtons.UIFreeze(!DisplayInstance.activeInHierarchy);
+        DisplayInstance.SetActive(!DisplayInstance.activeInHierarchy);
+        PlayerScreenInstance.SetActive(false);
     }
 
     public void CreateCharacter()
