@@ -14,6 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   Attributes:
   - TwoHanded
+  Class: Basic
   numDice: 1
   sizeDice: 10
   damageBonus: 3
@@ -25,3 +26,4 @@ MonoBehaviour:
   auto: 4
   clipMax: 30
   damageType: E
+  blast: 0

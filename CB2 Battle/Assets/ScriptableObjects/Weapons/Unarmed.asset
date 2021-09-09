@@ -16,6 +16,7 @@ MonoBehaviour:
   - Melee
   - Unarmed
   - Flexible
+  Class: Unarmed
   numDice: 1
   sizeDice: 5
   damageBonus: -3

@@ -23,7 +23,11 @@ public class ThreatRangeBehavior : MonoBehaviour
             {
                 if(threatType.Equals("Blast") && hit.collider.tag == "Tile" && controllable)
                 {
-                    gameObject.transform.position = hit.point + new Vector3(0, 0.1f, 0);
+                    float distance = Vector3.Distance(attacker.transform.position, hit.point);
+                    if(distance <= w.getRange(attacker))
+                    {
+                        gameObject.transform.position = hit.point + new Vector3(0, 0.1f, 0);
+                    }
                 }
                 else if ( hit.collider.tag == "Tile" && controllable )
                 {

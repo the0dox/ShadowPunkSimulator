@@ -33,7 +33,7 @@ public class TurnActions : MonoBehaviour
         if(ActivePlayerStats.RightHand != null) 
         {
             //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.RightHand.HasWeaponAttribute("Melee"))
+            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.RightHand.IsWeaponClass("Melee"))
             {    
                 d.Add(ActivePlayerStats.RightHand.GetName(), "RightHandWeapon");
             }
@@ -41,7 +41,7 @@ public class TurnActions : MonoBehaviour
         if (ActivePlayerStats.LeftHand != null && ActivePlayerStats.LeftHand != ActivePlayerStats.RightHand)
         {
             //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.LeftHand.HasWeaponAttribute("Melee"))
+            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.LeftHand.IsWeaponClass("Melee"))
             { 
             d.Add(ActivePlayerStats.LeftHand.GetName(),"LeftHandWeapon");
             }
@@ -125,7 +125,7 @@ public class TurnActions : MonoBehaviour
                     d.Add("Grapple","GrappleAttack");
                 }
             }
-            else if(ActiveWeapon.HasWeaponAttribute("Melee"))
+            else if(ActiveWeapon.IsWeaponClass("Melee"))
             {
                 d.Add("Standard","StandardAttack");
                 d.Add("Called","CalledShot");
@@ -791,7 +791,7 @@ public class TurnActions : MonoBehaviour
         {
             List<string> l = new List<string>();
             l.Add("Dodge");
-            if(CurrentAttack.ActiveWeapon.HasWeaponAttribute("Melee") && CurrentAttack.target.CanParry() && !CurrentAttack.ActiveWeapon.HasWeaponAttribute("Flexible"))
+            if(CurrentAttack.ActiveWeapon.IsWeaponClass("Melee") && CurrentAttack.target.CanParry() && !CurrentAttack.ActiveWeapon.HasWeaponAttribute("Flexible"))
             {
                 l.Add("Parry");
             }

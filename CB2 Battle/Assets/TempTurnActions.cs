@@ -218,13 +218,13 @@ public class PlayerStats : MonoBehaviour
     //simple equip reference, returns true if possible
     public bool Equip(Weapon w)
     {
-        if(LeftHand != null && LeftHand.HasWeaponAttribute("TwoHanded"))
+        if(LeftHand != null && LeftHand.IsWeaponClass("Basic"))
         {
             LeftHand = null;
             RightHand = null; 
         } 
         //replacement required for a two handed weapon
-        if (w.HasWeaponAttribute("TwoHanded"))
+        if (w.IsWeaponClass("Basic"))
         {
             LeftHand = w;
             RightHand = w; 
@@ -253,7 +253,7 @@ public class PlayerStats : MonoBehaviour
     public void Equip(Weapon w, string location)
     {
         // double replacement required for a two handed weapon
-        if (w.HasWeaponAttribute("TwoHanded"))
+        if (w.IsWeaponClass("Basic"))
         {
             CombatLog.Log("put away all weapons and equiped " + w);
             LeftHand = null;
@@ -406,7 +406,7 @@ public class PlayerStats : MonoBehaviour
 
     public bool CanParry()
     {
-        return (LeftHand != null && LeftHand.HasWeaponAttribute("Melee")) || (RightHand != null && RightHand.HasWeaponAttribute("Melee")); 
+        return (LeftHand != null && LeftHand.IsWeaponClass("Melee")) || (RightHand != null && RightHand.IsWeaponClass("Melee")); 
     }
 
     //enforces rules on movement, must be called whenever A is changed

@@ -39,7 +39,7 @@ public class Weapon
     //number of hands required to wield this weapon
     [SerializeField] private bool jammed = false;
     //number of hands required to wield this weapon
-
+    private string Class;
 
     public Weapon(WeaponTemplate template)
     {
@@ -60,6 +60,7 @@ public class Weapon
         this.clipMax = template.clipMax;
         this.clip = this.clipMax;
         this.damageType = template.damageType;
+        this.Class = template.Class;
     }
 
     public int GetStat(string key)
@@ -123,25 +124,23 @@ public class Weapon
     public int rollDamage( int value, PlayerStats player){
         int DB = damageBonus;
         //damageBonus is calculated differently for melee weapons SB is added on top of everything else 
-        if (HasWeaponAttribute("Melee"))
+        if (IsWeaponClass("Melee"))
         {
             DB += player.GetStatScore("S");
         }
         value += DB;
-        CombatLog.Log(name + " rolls a " + numDice + "d" + sizeDice + " + " + DB + " and gets " + value + " damage");
+        CombatLog.Log(name + ": " + numDice + "d" + sizeDice + " + " + DB + " = " + value);
         return value;
     }
 
-    public string GetWeaponClass()
+    public bool IsWeaponClass(string DesiredClass)
     {
-        if (Attributes.Contains("Melee"))
-        {
-            return "Melee";
-        }
-        else
-        {
-            return "Ranged";
-        }
+        return DesiredClass.Equals(Class);
+    }
+
+    public string GetClass()
+    {
+        return Class;
     }
 
     public int GetAP()
@@ -199,7 +198,7 @@ public class Weapon
     //whether of not to display this weapon on the reload screen
     public bool CanReload()
     {
-        if(HasWeaponAttribute("Melee"))
+        if(IsWeaponClass("Melee"))
         {
             return false;
         }
@@ -217,7 +216,7 @@ public class Weapon
 
     public int RangeBonus(Transform target, PlayerStats myStats)
     {
-        if (HasWeaponAttribute("Melee"))
+        if (IsWeaponClass("Melee") || IsWeaponClass("Thrown"))
         {
             return 0;
         }
@@ -256,7 +255,7 @@ public class Weapon
 
     public override string ToString()
     {
-        if(HasWeaponAttribute("Melee"))
+        if(IsWeaponClass("Melee"))
         {
             return GetName();
         }
@@ -269,7 +268,7 @@ public class Weapon
 
     public int getRange(PlayerStats owner)
     {
-        if(HasWeaponAttribute("Thrown"))
+        if(IsWeaponClass("Thrown"))
         {
             return owner.GetStatScore("S") * 3;
         }
@@ -306,7 +305,7 @@ public class Weapon
     public string DisplayDamageRange(PlayerStats user)
     {
         int DB = damageBonus;
-        if(HasWeaponAttribute("Melee"))
+        if(IsWeaponClass("Melee"))
         {
             DB += user.GetStatScore("S");
         }

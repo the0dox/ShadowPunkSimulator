@@ -192,7 +192,7 @@ public class CharacterSheet : MonoBehaviour
         }
         foreach(Weapon w in PlayerWeapons)
         {
-            if(w.HasWeaponAttribute("Melee"))
+            if(w.IsWeaponClass("Melee"))
             {
                 LastMeleeWeps.Push(CreateWeapon(w,PlacementWeaponMelee));
                 PlacementWeaponMelee -= weaponDisplacementLeft;

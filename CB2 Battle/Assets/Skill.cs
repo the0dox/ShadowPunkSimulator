@@ -13,6 +13,8 @@ public class Skill
     //indicates which characterisitc is referenced when this skill is attempted
     public string characterisitc;
     public bool visible;
+    private List<string> Descriptor;
+    private string displayText;
 
     public Skill(string name, int levels, string characterisitc, bool basic)
     {
@@ -28,6 +30,17 @@ public class Skill
         {
             visible = true;
         }
+    }
+
+    public Skill(SkillTemplate template, int levels)
+    {
+        this.name = template.name;
+        this.levels = levels;
+        this.characterisitc = template.characterisitc;
+        this.basic = template.basic;
+        this.visible = template.visible;
+        this.Descriptor = template.Descriptor;
+        this.displayText = template.displayText;
     }
 
     //returns true and updates value with other skill if they are the same, else returns false;

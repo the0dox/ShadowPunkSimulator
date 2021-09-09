@@ -6,9 +6,7 @@ using UnityEngine;
 public class WeaponTemplate : ScriptableObject
 {
     [SerializeField] public List<string> Attributes = new List<string>();
-    //stats concern all weapon stats for easy modification in the player sheet 
-    private Dictionary<string, int> Stats;
-
+    [SerializeField] public string Class;
     //number of dice rolled to determine damage Xd10 
     [SerializeField] public int numDice; 
     //random range of damage per die roll 1dX

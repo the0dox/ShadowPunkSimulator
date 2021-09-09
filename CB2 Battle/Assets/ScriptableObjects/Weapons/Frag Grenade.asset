@@ -15,6 +15,7 @@ MonoBehaviour:
   Attributes:
   - Blast
   - Thrown
+  Class: Thrown
   numDice: 2
   sizeDice: 10
   damageBonus: 0

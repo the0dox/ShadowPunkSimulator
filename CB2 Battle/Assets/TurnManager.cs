@@ -620,11 +620,11 @@ public class TurnManager : TurnActions
             foreach(PlayerStats enemy in adjacentEnemies)
             {
                 Weapon currentWeapon = null;
-                if(enemy.LeftHand != null && enemy.LeftHand.HasWeaponAttribute("Melee"))
+                if(enemy.LeftHand != null && enemy.LeftHand.IsWeaponClass("Melee"))
                 {
                     currentWeapon = enemy.LeftHand;
                 }
-                else if (enemy.RightHand != null && enemy.RightHand.HasWeaponAttribute("Melee"))
+                else if (enemy.RightHand != null && enemy.RightHand.IsWeaponClass("Melee"))
                 {
                     currentWeapon = enemy.RightHand;
                 }

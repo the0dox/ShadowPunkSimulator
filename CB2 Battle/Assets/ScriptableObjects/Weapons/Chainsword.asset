@@ -15,6 +15,7 @@ MonoBehaviour:
   Attributes:
   - Melee
   - Tearing
+  Class: Melee
   numDice: 1
   sizeDice: 10
   damageBonus: 2

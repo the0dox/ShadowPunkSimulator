@@ -14,7 +14,7 @@ public class TacticsAttack : MonoBehaviour
         AttackSequence output = new AttackSequence(target,myStats,w,type,0);
         string attackSkill;
         int shotsFired;
-        if (w.HasWeaponAttribute("Melee"))
+        if (w.IsWeaponClass("Melee"))
         {
             if(target.hasCondition("Defensive Stance"))
             {
@@ -28,7 +28,7 @@ public class TacticsAttack : MonoBehaviour
             {
                 modifiers += 20;
             }
-            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand != null && target.LeftHand.HasWeaponAttribute("Melee")) || (target.LeftHand != null && target.RightHand.HasWeaponAttribute("Melee")))
+            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand != null && target.LeftHand.IsWeaponClass("Melee")) || (target.LeftHand != null && target.RightHand.IsWeaponClass("Melee")))
             {
                 modifiers -= 20;
             }
@@ -76,7 +76,7 @@ public class TacticsAttack : MonoBehaviour
     {
         string attackSkill;
         int shotsFired;
-        if (w.HasWeaponAttribute("Melee"))
+        if (w.IsWeaponClass("Melee"))
         {
             if(target.hasCondition("Defensive Stance"))
             {
@@ -90,7 +90,7 @@ public class TacticsAttack : MonoBehaviour
             {
                 modifiers += 20;
             }
-            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand.HasWeaponAttribute("Melee") || target.RightHand.HasWeaponAttribute("Melee")))
+            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand.IsWeaponClass("Melee") || target.RightHand.IsWeaponClass("Melee")))
             {
                 modifiers -= 20;
             }
@@ -197,26 +197,24 @@ public class TacticsAttack : MonoBehaviour
             return false;
         }
         float distance = Vector3.Distance(myStats.transform.position, target.transform.position);
+
+        List<PlayerStats> meleeCombatants = myStats.gameObject.GetComponent<TacticsMovement>().AdjacentPlayers();
+        bool inCombat = (myStats.gameObject.GetComponent<TacticsMovement>().GetAdjacentEnemies(myStats.GetTeam()) > 0);
+
         //melee weapons can't be used unless adjacent
-        if (distance > 2 && w.HasWeaponAttribute("Melee"))
+        if (!meleeCombatants.Contains(target) && w.IsWeaponClass("Melee"))
         {
             Debug.Log(target.GetName() + " is out of melee range");
             return false;
             
         }
         //ranged weapons other than pistols can't be fired into melee 
-        else if (distance < 2 && !w.HasWeaponAttribute("Melee") && !w.HasWeaponAttribute("Pistol"))
+        else if (inCombat && !w.IsWeaponClass("Melee") && !w.HasWeaponAttribute("Pistol"))
         {
             CombatLog.Log(target.GetName() + " is too close to shoot!");
             return false;
         }
         return true; 
-    }
-
-    public bool HasReaction(GameObject target)
-    {
-        TacticsMovement t = target.GetComponent<TacticsMovement>();
-        return true;
     }
 
     public static Tile CalculateCover(GameObject attacker,  GameObject target, string HitLocation)
@@ -390,7 +388,7 @@ public class TacticsAttack : MonoBehaviour
     //true stops attack sequence, false continues it
    public static bool Jammed(int rollResult, Weapon w, string type, PlayerStats owner)
    {
-       if(w.HasWeaponAttribute("Melee"))
+       if(w.IsWeaponClass("Melee"))
        {
            return false;
        } 
@@ -461,7 +459,7 @@ public class TacticsAttack : MonoBehaviour
                 Stack<string> outputStack = new Stack<string>();
                 Stack<string> conditionStack;
                 int chanceToHit = 0;
-                if (w.HasWeaponAttribute("Melee"))
+                if (w.IsWeaponClass("Melee"))
                 {
                     chanceToHit = myStats.GetStat("WS") + myStats.CalculateStatModifiers("WS");// + myStats.CalculateStatModifiers("WS");
                     conditionStack = myStats.DisplayStatModifiers("WS");
@@ -480,7 +478,7 @@ public class TacticsAttack : MonoBehaviour
                         outputStack.Push(" +20%: Target Running");
                         chanceToHit += 20;
                     }
-                    if(w.HasWeaponAttribute("Unarmed") && ( (target.LeftHand != null && target.LeftHand.HasWeaponAttribute("Melee")) || (target.RightHand != null && target.RightHand.HasWeaponAttribute("Melee"))))
+                    if(w.HasWeaponAttribute("Unarmed") && ( (target.LeftHand != null && target.LeftHand.IsWeaponClass("Melee")) || (target.RightHand != null && target.RightHand.IsWeaponClass("Melee"))))
                     {
                         outputStack.Push(" -20%: Unarmed");
                         chanceToHit -= 20;
@@ -552,7 +550,7 @@ public class TacticsAttack : MonoBehaviour
                 }
                 output.Add(w.DisplayDamageRange(myStats));
                 output.Add(target.GetAverageSoak());
-                if(!w.HasWeaponAttribute("Melee") && !myStats.hasCondition("Called"))
+                if(!w.IsWeaponClass("Melee") && !myStats.hasCondition("Called"))
                 {
                     Tile cover = CalculateCover(myStats.gameObject,target.gameObject,"Left Leg");
                     if(cover != null)
@@ -567,7 +565,7 @@ public class TacticsAttack : MonoBehaviour
     public static int adjacencyBonus( PlayerStats target, Weapon w)
     {
         int adjacentEnemies = target.GetComponent<TacticsMovement>().GetAdjacentEnemies(target.GetTeam());
-        if(w.HasWeaponAttribute("Melee"))
+        if(w.IsWeaponClass("Melee"))
         {
             if(adjacentEnemies > 2)
             {
@@ -593,7 +591,7 @@ public class TacticsAttack : MonoBehaviour
             return 0;
         }
         string attackSkill;
-        if(w.HasWeaponAttribute("Melee"))
+        if(w.IsWeaponClass("Melee"))
         {
             attackSkill = "WS";
         }
