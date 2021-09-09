@@ -79,7 +79,7 @@ public class PlayerStats : MonoBehaviour
         location: reveresed die roll for hit location
         takes unaltered damage and applies any damage reduction and subtracts from health
     */
-    public void takeDamage(int damage, string location)
+    public int takeDamage(int damage, string location)
     {
         //Debug.Log(playername + "'s " + location + " armor reduces the incoming damage to " + damage);
         if (damage > 0) {
@@ -87,23 +87,16 @@ public class PlayerStats : MonoBehaviour
         }
         if(Stats["Wounds"] < 0)
         {
-            TakeCritical();
+            return TakeCritical();
         }
+        return 0;
     }
 
-    public void TakeCritical()
+    public int TakeCritical()
     {
         Stats["Critical"] -= Stats["Wounds"];
         Stats["Wounds"] = 0;
-        if(Stats["Critical"] > 8)
-        {
-            PopUpText.CreateText("Slain!", Color.red, gameObject);
-            gameObject.SetActive(false);
-        }
-        else
-        {
-            PopUpText.CreateText("Death's Door!", Color.red, gameObject);
-        }
+        return Stats["Critical"];
     }
 
     public void takeFatigue(int levels)

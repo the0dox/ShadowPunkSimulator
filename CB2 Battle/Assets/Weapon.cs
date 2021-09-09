@@ -91,7 +91,25 @@ public class Weapon
         int value = 0;
         int i = 0;
         while(i < numDice){
-            int roll = Random.Range(1,sizeDice);
+            int roll;
+            if(HasWeaponAttribute("Tearing"))
+            {
+                CombatLog.Log(GetName() + " rolls two dice and takes the highest result because of its tearing quality");
+                int roll1 = Random.Range(1,sizeDice);
+                int roll2 = Random.Range(1,sizeDice);
+                if(roll1 >= roll2)
+                {
+                    roll = roll1;
+                }
+                else
+                {
+                    roll = roll2;
+                }
+            }
+            else
+            {
+                roll = Random.Range(1,sizeDice);
+            } 
             if(roll == sizeDice)
             {
                 roll += TacticsAttack.Critical(player, this, false);

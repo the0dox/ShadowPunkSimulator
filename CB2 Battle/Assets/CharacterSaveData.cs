@@ -184,11 +184,11 @@ public class CharacterSaveData
     {
         Dictionary<int,string> HitLocations = new Dictionary<int, string>();
         HitLocations.Add(10, "Head");
-        HitLocations.Add(20, "Right Arm");
-        HitLocations.Add(30, "Left Arm");
+        HitLocations.Add(20, "RightArm");
+        HitLocations.Add(30, "LeftArm");
         HitLocations.Add(70, "Body");
-        HitLocations.Add(85, "Right Leg");
-        HitLocations.Add(100, "Left Leg");
+        HitLocations.Add(85, "RightLeg");
+        HitLocations.Add(100, "LeftLeg");
         return HitLocations;
     }
 

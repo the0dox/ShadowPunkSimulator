@@ -142,7 +142,6 @@ public class TacticsAttack : MonoBehaviour
             if (location <= kvp.Key)
             {
                 CombatLog.Log("Reversed hit roll of " + location + " hits the target's " + kvp.Value);
-                Debug.Log("Reversed hit roll of " + location + " hits the target's " + kvp.Value);
                 return kvp.Value;  
             }
         }
@@ -181,7 +180,12 @@ public class TacticsAttack : MonoBehaviour
             }
             CombatLog.Log("Incoming damage is reduced by " + AP + " from armor/cover and " + soak + " Toughness for a total of " + result);
             PopUpText.CreateText("Hit " + hitBodyPart + "!: (-" + result + ")", Color.red, target.gameObject); 
-            target.takeDamage(result, hitBodyPart);
+            int CriticalBleed = target.takeDamage(result, hitBodyPart);
+            Debug.Log(CriticalBleed + "");
+            if(CriticalBleed > 0)
+            {
+                CriticalDamageReference.DealCritical(target,w,CriticalBleed,hitBodyPart);
+            }
     }
 
     public static bool HasValidTarget(PlayerStats target, PlayerStats myStats, Weapon w)
