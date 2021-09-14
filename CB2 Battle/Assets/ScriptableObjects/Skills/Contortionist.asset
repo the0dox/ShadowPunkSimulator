@@ -1,0 +1,32 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Contortionist
+  m_EditorClassIdentifier: 
+  basic: 1
+  characterisitc: A
+  visible: 1
+  Descriptor:
+  - Movement
+  displayText: "The Contortionist skill is used to  wriggle free from bonds, squeeze 
+    through a narrow opening, or slip out  of chains. Escape Bonds Whenever you attempt
+    to slip free  from any kind of bonds, you make  a Contortionist Test. The Difficulty 
+    depends on the Intelligence of the  person who secured you in the first  place.
+    If their Intelligence exceeds  your Agility Characteristic, the Test  is Hard
+    (\u201320). Escape Grapple When you have been Grappled  in combat, you may use
+    the  Contortionist skill to escape. Make  a Contortionist Test opposed by  the
+    grappler\u2019s Strength Test. If you  win you break free, otherwise you remain
+    Grappled. Squeeze through a Tight Space You can make a Contortionist Test  to
+    squeeze through a tight space. failure means that the  opening is too narrow
+    after all. If  you fail by five or more degrees,  you become stuck until you
+    can pass  a subsequent Contortionist Test or until someone helps you out of your 
+    predicament by dragging you out."

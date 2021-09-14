@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Forbidden Lore
+  m_EditorClassIdentifier: 
+  basic: 0
+  characterisitc: INT
+  visible: 1
+  Descriptor:
+  - Investigation
+  displayText: A character that learns the Forbidden  Lore skill in play, or who
+    uses it to  gain some insight into the mysteries of the galaxy, may also gain
+    a number of Corruption or Insanity Points,  depending on the danger the knowledge 
+    represents. So long as the subject of your investigation falls within a category
+    of Lore your trained in, it can be used as an investigation skill. When used
+    this way, investigation time is reduced by an additional 1d10 hours.

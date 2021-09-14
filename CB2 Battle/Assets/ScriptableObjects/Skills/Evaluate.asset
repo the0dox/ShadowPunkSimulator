@@ -1,0 +1,28 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Evaluate
+  m_EditorClassIdentifier: 
+  basic: 1
+  characterisitc: INT
+  visible: 1
+  Descriptor:
+  - Investigation
+  displayText: "You can use Evaluate to determine the  approximate value of everyday
+    objects,  as well as valuables such as archeotech  and other objects d\u2019art.
+    A successful  Test reveals the item\u2019s market price  and possibly a little
+    bit about the item  itself. Since a failed Test may result  in the miscalculation
+    of an item\u2019s true  value, it is recommended that the GM  rolls Evaluate
+    Tests in secret and tells  the player what his character believes  to be true.
+    If you have an object relevant to an investigation, then you can use this skill
+    as an investigation skill. When used this way, reduce the time be an additional
+    1d5 hours."

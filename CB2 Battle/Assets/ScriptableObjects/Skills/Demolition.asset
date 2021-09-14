@@ -1,0 +1,35 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Demolition
+  m_EditorClassIdentifier: 
+  basic: 0
+  characterisitc: INT
+  visible: 1
+  Descriptor:
+  - Crafting
+  displayText: 'The Demolition skill is used to blow things up without blowing yourself
+    up at the same time! \nManufacture Explosives this skill enables crafting of
+    any explosive. \nPlanting Explosives: Explosives are more effective when planted
+    on a target. Success indicates  that you have successfully planted the  explosive,
+    with a trigger mechanism  and condition of your choice.  Possible triggers include
+    timers, fuses,  proximity sensors or remote controls.  Failure indicates that
+    you believe the  explosives to be planted properly, but  when triggered they
+    fail to go off. If  you fail by five or more degrees, you  accidentally set the
+    explosives off  yourself ! Boom! You may voluntarily make the Test  more difficult,
+    for example increasing  the time to plant a bomb in a more  vulnerable location.
+    By doing so, the  Damage dealt is increased by +2.\n Defusing a bomb: A character
+    can also use the Demolition  skill to defuse a bomb. To defuse a  bomb before
+    it explodes requires you  to make an Opposed Demolition Test  against the Demolition
+    Test of the  character who set the bomb in the first  place. Five or more degrees
+    of failure means you accidentally set off the bomb by mistake! A demoltion test
+    outside of crafting is a full action.'

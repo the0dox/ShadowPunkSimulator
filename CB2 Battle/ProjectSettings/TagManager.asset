@@ -17,6 +17,7 @@ TagManager:
   - Blocker
   - Range
   - Canvas
+  - Lead
   layers:
   - Default
   - TransparentFX

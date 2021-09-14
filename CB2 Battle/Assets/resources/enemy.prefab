@@ -91,6 +91,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 572da5dce3dff044fb9b280e7cc951f6, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  Bar: {fileID: 622251851747000478}
   currentHealth: 0
   player: {fileID: 622251852739569443}
 --- !u!223 &622251851747000467
@@ -231,7 +232,11 @@ MonoBehaviour:
   grappleTarget: {fileID: 0}
   model: {fileID: 74298832063203455}
   SelectedColor: {fileID: 2100000, guid: 86fef40dfa990714096f696cac569c3f, type: 2}
-  WeaponInitalizer: []
+  myData:
+    team: 0
+    playername: 
+    weapons: []
+  MyCharacterSheet: {fileID: 0}
 --- !u!114 &8091653880719555550
 MonoBehaviour:
   m_ObjectHideFlags: 0

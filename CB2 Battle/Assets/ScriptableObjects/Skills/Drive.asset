@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Drive
+  m_EditorClassIdentifier: 
+  basic: 0
+  characterisitc: A
+  visible: 1
+  Descriptor:
+  - Operator
+  displayText: The Drive skill is used to control  autos, trucks, landspeeders and
+    other  land-based or hover vehicles. Driving  under normal conditions does not 
+    require a Test. However, Tests may be  called for when navigating treacherous 
+    terrain, going at excessive speed or  attempting dangerous manoeuvres.  Opposed
+    Drive Tests are made between  pursuers and pursued during a chase. Having a vehicle
+    will reduce the time of any time-based activity by 1d5 hours.

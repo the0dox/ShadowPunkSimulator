@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Silent Move
+  m_EditorClassIdentifier: 
+  basic: 1
+  characterisitc: A
+  visible: 1
+  Descriptor: []
+  displayText: The Silent Move skill is used to creep about without making a noise.
+    The difficulty depends on the surface on which you walk. A silent move test against
+    a target that is aware of you is an opposed skill. Silent moving is a free action
+    as a part of a move action.
