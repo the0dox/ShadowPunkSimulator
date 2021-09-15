@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 [CreateAssetMenu(fileName = "Weapons", menuName = "ScriptableObjects/Weapons")]
-public class WeaponTemplate : ScriptableObject
+public class WeaponTemplate : ItemTemplate
 {
     [SerializeField] public List<string> Attributes = new List<string>();
     [SerializeField] public string Class;

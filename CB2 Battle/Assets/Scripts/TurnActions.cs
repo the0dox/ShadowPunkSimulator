@@ -669,7 +669,7 @@ public class TurnActions : MonoBehaviour
     public void Ready()
     {
         List<string> l = new List<string>();
-        foreach(Weapon w in ActivePlayerStats.equipment)
+        foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
         {
             if (w != ActivePlayerStats.LeftHand && w != ActivePlayerStats.RightHand)
             {
@@ -721,7 +721,7 @@ public class TurnActions : MonoBehaviour
 
     public bool isWeaponInput(string input)
     {
-        foreach(Weapon w in ActivePlayerStats.equipment)
+        foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
         {
             if(w.GetName().Equals(input))
             {
@@ -733,7 +733,7 @@ public class TurnActions : MonoBehaviour
 
     public Weapon StringToWeapon(string input)
     {
-        foreach(Weapon w in ActivePlayerStats.equipment)
+        foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
         {
             if(w.GetName().Equals(input))
             {

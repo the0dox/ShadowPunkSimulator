@@ -14,11 +14,11 @@ public class WeaponAdder : MonoBehaviour
     public void Init()
     {
         Selector.ClearOptions();
-        weaponLibrary = WeaponsReference.WeaponTemplates();
+        weaponLibrary = ItemReference.WeaponTemplates();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
         foreach(string key in weaponLibrary.Keys)
         {
-            if(Melee && weaponLibrary[key].Attributes.Contains("Melee") || !Melee && !weaponLibrary[key].Attributes.Contains("Melee"))
+            if(Melee && weaponLibrary[key].Class.Equals("Melee") || !Melee && !weaponLibrary[key].Class.Equals("Melee"))
             {
                 Dropdown.OptionData newData = new Dropdown.OptionData(); 
                 newData.text = key;
@@ -28,7 +28,7 @@ public class WeaponAdder : MonoBehaviour
         Selector.AddOptions(results);
     }
 
-    public Weapon GetWeapon()
+    public Weapon GetItem()
     {
         Weapon output = new Weapon(weaponLibrary[Selector.captionText.text]);
         return output;

@@ -25,7 +25,7 @@ public class PlayerStats : MonoBehaviour
 
     //level of skill training a character has, is called first
     public List<Skill> Skills = new List<Skill>();
-    public List<Weapon> equipment = new List<Weapon>();
+    public List<Item> equipment = new List<Item>();
     public Weapon LeftHand;
     public Weapon RightHand; 
 
@@ -39,7 +39,7 @@ public class PlayerStats : MonoBehaviour
         this.team = myData.team;
         this.Stats = myData.GetStats();
         this.Skills = myData.GetSkills();
-        this.equipment = myData.GetWeapons();
+        this.equipment = myData.GetEquipment();
         this.HitLocations = myData.StandardHitLocations();
         Init();
     }
@@ -608,6 +608,20 @@ public class PlayerStats : MonoBehaviour
         }
         return null;
     }
+
+    public List<Weapon> GetWeaponsForEquipment()
+    {
+        List<Weapon> output = new List<Weapon>();
+        foreach(Item i in equipment)
+        {
+            if(i.GetType() == typeof(Weapon))
+            {
+                output.Add((Weapon)i);
+            }
+        }
+        return output;
+    }
+
     public bool IsOccupied()
     {
         return Occupied;

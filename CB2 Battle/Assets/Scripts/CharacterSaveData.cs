@@ -37,7 +37,7 @@ public class CharacterSaveData
     private bool[] SkillBasic = new bool[50];
     public int team = 0; 
     public string playername; 
-    public string[] weapons = new string[8];
+    public string[] equipment = new string[20];
     public CharacterSaveData(bool playable)
     {
         if(playable)
@@ -349,31 +349,39 @@ public class CharacterSaveData
         }
     }
 
-    public List<Weapon> GetWeapons()
+    public List<Item> GetEquipment()
     {
-        List<Weapon> output = new List<Weapon>();
+        List<Item> output = new List<Item>();
         for(int i = 0; i < 8; i++)
         {
-            if(weapons[i] != null)
+            if(equipment[i] != null)
             {
-                output.Add(new Weapon(WeaponsReference.GetWeapon(weapons[i])));
+                Dictionary<string, WeaponTemplate> WR = ItemReference.WeaponTemplates();
+                if(WR.ContainsKey(equipment[i]))
+                {
+                    output.Add(new Weapon(WR[equipment[i]]));
+                }
+                else
+                {
+                    output.Add(new Item(ItemReference.GetItem(equipment[i])));
+                }
             }
         }
         return output;
     }
 
-    public void ClearWeapons()
+    public void ClearEquipment()
     {
-        weapons = new string[8];
+        equipment = new string[20];
     }
 
-    public void AddWeapons(List<Weapon> input)
+    public void AddEquipment(List<Item> input)
     {
-        ClearWeapons();
+        ClearEquipment();
         int newIndex = 0;
-        foreach(Weapon w in input)
+        foreach(Item i in input)
         {
-            weapons[newIndex] = w.GetName();
+            equipment[newIndex] = i.GetName();
             newIndex++;
         }
     }
@@ -412,8 +420,8 @@ public class CharacterSaveData
                 {
                     addSkill(s);
                 }
-                ClearWeapons();
-                AddWeapons(myPlayer.equipment);
+                ClearEquipment();
+                AddEquipment(myPlayer.equipment);
             }
         }
     }

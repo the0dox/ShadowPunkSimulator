@@ -5,7 +5,8 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Item", menuName = "ScriptableObjects/Items")]
 public class ItemTemplate : ScriptableObject
 {
-    [SerializeField] public int weight;
+    [SerializeField] public float weight;
     [SerializeField] public int cost;
     [SerializeField] public string availablity;
+    [SerializeField] public string description;
 }

@@ -33,7 +33,7 @@ public class CharacterSheet : MonoBehaviour
     Vector3 PlacementWeaponMelee;
     private Dictionary<string, int> PlayerStats;
     private List<Skill> PlayerSkills;
-    private List<Weapon> PlayerWeapons;
+    private List<Item> PlayerEquipment;
     private string PlayerDisplayName;
     public void Init(){
         CameraButtons.UIFreeze(true);
@@ -90,16 +90,16 @@ public class CharacterSheet : MonoBehaviour
             PlayerSkills.Add(input.GetSkill());
             Destroy(g);
         }
-        PlayerWeapons.Clear();
+        PlayerEquipment.Clear();
         List<Weapon> newEquipment = new List<Weapon>();
         //weapons
         foreach(GameObject g in LastMeleeWeps)
         {
-            PlayerWeapons.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+            PlayerEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
         }
         foreach(GameObject g in LastRangedWeps)
         {
-            PlayerWeapons.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+            PlayerEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
         }
         Destroy(gameObject);
     }
@@ -108,7 +108,7 @@ public class CharacterSheet : MonoBehaviour
     public void UpdateStatsOut(CharacterSaveData output){
         output.playername = NameField.text;
         output.ClearSkills();
-        output.ClearWeapons();
+        output.ClearEquipment();
         //characterisitcs
         foreach (KeyValuePair<string, InputFieldScript> kvp in TextEntries){
             int newValue = kvp.Value.GetValue();
@@ -122,17 +122,17 @@ public class CharacterSheet : MonoBehaviour
             output.addSkill(input.GetSkill());
             Destroy(g);
         }
-        List<Weapon> newEquipment = new List<Weapon>();
+        List<Item> newEquipment = new List<Item>();
         //weapons
         foreach(GameObject g in LastMeleeWeps)
         {
-            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
         }
         foreach(GameObject g in LastRangedWeps)
         {
-            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetWeapon());
+            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
         }
-        ActivePlayer.AddWeapons(newEquipment);
+        ActivePlayer.AddEquipment(newEquipment);
         ActivePlayer = null;
         Destroy(gameObject);
     }
@@ -143,7 +143,7 @@ public class CharacterSheet : MonoBehaviour
         ActivePlayerStats = input;
         PlayerStats = input.Stats;
         PlayerSkills = input.Skills;
-        PlayerWeapons = input.equipment;
+        PlayerEquipment = input.equipment;
         PlayerDisplayName = input.playername;
         UpdateStatsIn();
     }
@@ -153,7 +153,7 @@ public class CharacterSheet : MonoBehaviour
         ActivePlayer = input;
         PlayerStats = input.GetStats();
         PlayerSkills = input.GetSkills();
-        PlayerWeapons = input.GetWeapons();
+        PlayerEquipment = input.GetEquipment();
         PlayerDisplayName = input.playername;
         UpdateStatsIn();
     }
@@ -190,7 +190,7 @@ public class CharacterSheet : MonoBehaviour
                 }
             }
         }
-        foreach(Weapon w in PlayerWeapons)
+        foreach(Weapon w in PlayerEquipment)
         {
             if(w.IsWeaponClass("Melee"))
             {
@@ -260,7 +260,7 @@ public class CharacterSheet : MonoBehaviour
     {
         if(LastMeleeWeps.Count < 4)
         {
-            LastMeleeWeps.Push(CreateWeapon(WeaponAdderMelee.GetComponent<WeaponAdder>().GetWeapon(), PlacementWeaponMelee));
+            LastMeleeWeps.Push(CreateWeapon(WeaponAdderMelee.GetComponent<WeaponAdder>().GetItem(), PlacementWeaponMelee));
             WeaponAdderMelee.transform.localPosition -= weaponDisplacementLeft;
             PlacementWeaponMelee -= weaponDisplacementLeft;
         }
@@ -269,7 +269,7 @@ public class CharacterSheet : MonoBehaviour
     {
         if(LastRangedWeps.Count < 4)
         {
-            LastRangedWeps.Push(CreateWeapon(WeaponAdderRanged.GetComponent<WeaponAdder>().GetWeapon(), PlacementWeaponRanged));
+            LastRangedWeps.Push(CreateWeapon(WeaponAdderRanged.GetComponent<WeaponAdder>().GetItem(), PlacementWeaponRanged));
             WeaponAdderRanged.transform.localPosition -= weaponDisplacementRight;
             PlacementWeaponRanged -= weaponDisplacementRight;
         }

@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 
 //[CreateAssetMenu(fileName = "Weapons", menuName = "ScriptableObjects/Weapons")]
-public class Weapon
+public class Weapon : Item
 { 
     //attributes are keywords a weapon would possess, should really be called "Special"
     [SerializeField] private List<string> Attributes = new List<string>();
@@ -34,16 +34,16 @@ public class Weapon
     [SerializeField] private int clip;
     //damage type for determining critical table
     [SerializeField] private string damageType;
-    //number of hands required to wield this weapon
-    [SerializeField] private string name;
-    //number of hands required to wield this weapon
     [SerializeField] private bool jammed = false;
-    //number of hands required to wield this weapon
     private string Class;
 
     public Weapon(WeaponTemplate template)
     {
         this.name = template.name;
+        this.weight = template.weight;
+        this.cost = template.cost;
+        this.availablity = template.availablity;
+        this.description = template.description;
         this.Attributes = template.Attributes;
         this.numDice = template.numDice;
         this.sizeDice = template.sizeDice;
@@ -79,12 +79,6 @@ public class Weapon
     public int GetReloads()
     {
         return reloadMax;
-    }
-
-
-    public string GetName()
-    {
-        return name;
     }
 
      public int rollDamage(PlayerStats player)
@@ -322,10 +316,7 @@ public class Weapon
         string output = "";
         foreach(string s in Attributes)
         {
-            if(!s.Equals("Melee")||!s.Equals("TwoHanded"))
-            {
-                output += s + " ";
-            }
+            output += s + " ";
         }
         return output;
     }

@@ -50,7 +50,7 @@ public class WeaponInputScript : MonoBehaviour
         Rules.text = input.AttributesToString();
     }
 
-    public Weapon GetWeapon()
+    public Weapon GetItem()
     {
         return myWeapon;
     }
