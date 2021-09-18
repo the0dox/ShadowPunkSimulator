@@ -6,7 +6,8 @@ using UnityEngine;
 public class ItemTemplate : ScriptableObject
 {
     [SerializeField] public float weight;
-    [SerializeField] public int cost;
+    [SerializeField] public float cost;
     [SerializeField] public string availablity;
     [SerializeField] public string description;
+    [SerializeField] public bool unique;
 }

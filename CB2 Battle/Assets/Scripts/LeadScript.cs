@@ -9,32 +9,13 @@ public class LeadScript : MonoBehaviour
     [SerializeField] private float CompletedHours = 0;
     private Vector3 dividerPos = new Vector3(0,-3.5f,0);
     [SerializeField] private GameObject DividerImage;
+    [SerializeField] private InputField Title;
     [SerializeField] private Text TextTime;
     [SerializeField] private Image pieChart;
     private PlayerStats[] players;
     [SerializeField] private GameObject player1;
     [SerializeField] private GameObject player2;
     [SerializeField] private GameObject player3;
-    private Dictionary<string, int> timeReference = new Dictionary<string, int>
-    {
-        {"Simple",1},
-        {"Basic",6},
-        {"Drudging",24},
-        {"Taxing",72},
-        {"Arduous",264},
-        {"Involved",744},
-        {"Labyrinthine",8640}
-    };
-    private Dictionary<string, int> modifierReference = new Dictionary<string, int>
-    {
-        {"Simple",30},
-        {"Basic",20},
-        {"Drudging",10},
-        {"Taxing",0},
-        {"Arduous",-10},
-        {"Involved",20},
-        {"Labyrinthine",30}
-    };
 
     void Update()
     {
@@ -46,20 +27,20 @@ public class LeadScript : MonoBehaviour
         TextTime.text = (MaxHours - CompletedHours) + " hours remaining";
         pieChart.fillAmount = (CompletedHours/MaxHours);
     }
-    public void UpdateLead(string Difficultly, PlayerStats[] players, string skill)
+    public void UpdateLead(int modifier, int time, PlayerStats[] players, string skill, string name)
     {
+        Title.text = name;
         this.players = players;
-        MaxHours = timeReference[Difficultly];
+        MaxHours = time;
         PlayerStats mainPlayer = players[0];
         player1.SetActive(true);
         player1.GetComponentInChildren<Text>().text = mainPlayer.GetName();
         mainPlayer.StartJob();
-        int modifier = modifierReference[Difficultly];
         for(int i = 1; i < players.Length; i++)
         {
             if (players[i] != null)
             {
-                Debug.Log(players[i].GetName() + " assists and gives a + 10 Bonus!");
+                CombatLog.Log(players[i].GetName() + " assists and gives a + 10 Bonus!");
                 modifier += 10;
                 players[i].StartJob();
                 if(!player2.activeInHierarchy)
@@ -81,6 +62,8 @@ public class LeadScript : MonoBehaviour
             string usedStat = SkillReference.GetSkill(skill).characterisitc;
             extrahours += mainPlayer.GetStatScore(usedStat);
             CombatLog.Log(mainPlayer.GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score (" + extrahours + ") hours of progress!");
+            extrahours += LeadResult.GetDOF();
+            CombatLog.Log("Each degree of success (" + LeadResult.GetDOF() + ") counts for one more hour of progress!");
             CompletedHours += extrahours;
         }
     }

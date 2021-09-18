@@ -31,4 +31,5 @@ public class WeaponTemplate : ItemTemplate
     //damage type for determining critical table
     [SerializeField] public string damageType;
     [SerializeField] public int blast;
+    [SerializeField] public ItemTemplate AmmoSource;
 }

@@ -1005,6 +1005,7 @@ MonoBehaviour:
   MaxHours: 24
   CompletedHours: 0
   DividerImage: {fileID: 7275498136903201508, guid: 889791991c367d84c89695a112cc1211, type: 3}
+  Title: {fileID: 5436456842090346629}
   TextTime: {fileID: 5436456842143759811}
   pieChart: {fileID: 5436456841689869841}
   player1: {fileID: 1321797414554705094}

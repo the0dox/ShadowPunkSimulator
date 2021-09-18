@@ -7,18 +7,17 @@ public class WeaponAdder : MonoBehaviour
 {
     //drop down menu for weapon selection
     [SerializeField] private Dropdown Selector;
-    private Dictionary<string,WeaponTemplate> weaponLibrary;
-    [SerializeField] private bool Melee;
+    private Dictionary<string,ItemTemplate> weaponLibrary;
     //indicates which kind of weapon should be shown in the selector
     
     public void Init()
     {
         Selector.ClearOptions();
-        weaponLibrary = ItemReference.WeaponTemplates();
+        weaponLibrary = ItemReference.ItemTemplates();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
         foreach(string key in weaponLibrary.Keys)
         {
-            if(Melee && weaponLibrary[key].Class.Equals("Melee") || !Melee && !weaponLibrary[key].Class.Equals("Melee"))
+            if(!key.Equals("Unarmed"))
             {
                 Dropdown.OptionData newData = new Dropdown.OptionData(); 
                 newData.text = key;
@@ -28,9 +27,26 @@ public class WeaponAdder : MonoBehaviour
         Selector.AddOptions(results);
     }
 
-    public Weapon GetItem()
+    public bool isWeapon()
     {
-        Weapon output = new Weapon(weaponLibrary[Selector.captionText.text]);
-        return output;
+        ItemTemplate selection = weaponLibrary[Selector.captionText.text];
+        if(selection.GetType() == typeof(ItemTemplate))
+        {
+            Debug.Log("selection is an item");
+            return false;
+        }
+        else
+        {
+            Debug.Log("selection is a weapon");
+            return true;
+        }
+    }
+    public Item GetItem()
+    {
+        if(isWeapon())
+        {
+            return new Weapon((WeaponTemplate) weaponLibrary[Selector.captionText.text]);
+        }
+        return new Item(weaponLibrary[Selector.captionText.text]);
     }
 }

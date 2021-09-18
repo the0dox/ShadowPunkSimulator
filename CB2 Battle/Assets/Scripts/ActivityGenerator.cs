@@ -7,6 +7,7 @@ public class ActivityGenerator : MonoBehaviour
 {
     [SerializeField] private GameObject TypeField;
     [SerializeField] private GameObject InvestigateField;
+    [SerializeField] private GameObject ItemField;
     [SerializeField] private GameObject SkillField;
     [SerializeField] private GameObject P1Field;
     [SerializeField] private GameObject P2Field;
@@ -16,16 +17,60 @@ public class ActivityGenerator : MonoBehaviour
     [SerializeField] private GameObject ActivityTab;
     private PlayerStats[] PlayerSelection;
     private string SkillChoice;
-    private string Difficultly;
+    private string ItemChoice;
+    private int Modifier;
+    private int Time;
+    private Dictionary<string,int> AvailablityToDifficulty = new Dictionary<string, int>{
+        {"Abundant",30},
+        {"Plentiful",20},
+        {"Common",10},
+        {"Average",0},
+        {"Scarce",-10},
+        {"Rare",-20},
+        {"Very Rare", -30}
+    };
+    private Dictionary<string,int[]> AvailablityToTime = new Dictionary<string, int[]>{
+        {"Abundant", new int[2]{1,1}},
+        {"Plentiful",new int[2]{1,1}},
+        {"Common",new int[2]{1,1}},
+        {"Average",new int[2]{10,1}},
+        {"Scarce", new int[2]{10,24}},
+        {"Rare", new int[2]{10,168}},
+        {"Very Rare", new int[2]{5,672}}
+    };
+    private Dictionary<string, int> ComplexityToDifficulty = new Dictionary<string, int>
+    {
+        {"Simple",30},
+        {"Basic",20},
+        {"Drudging",10},
+        {"Taxing",0},
+        {"Arduous",-10},
+        {"Involved",20},
+        {"Labyrinthine",30}
+    };
+    private Dictionary<string, int> ComplexitytoTime = new Dictionary<string, int>
+    {
+        {"Simple",1},
+        {"Basic",6},
+        {"Drudging",24},
+        {"Taxing",72},
+        {"Arduous",264},
+        {"Involved",744},
+        {"Labyrinthine",8640}
+    };
     void OnEnable()
     {
-        Difficultly = null;
+        Modifier = 0;
+        Time = 0;
         PlayerSelection = new PlayerStats[2];
         SkillChoice = null;
+        ItemChoice = null;
         TypeField.SetActive(true);
         ResetDD(TypeField);
         InvestigateField.SetActive(false);
         ResetDD(InvestigateField);
+        ItemField.SetActive(false);
+        ResetDD(ItemField);
         SkillField.SetActive(false);
         ResetDD(SkillField);
         P1Field.SetActive(false);
@@ -46,13 +91,53 @@ public class ActivityGenerator : MonoBehaviour
             disableDD(TypeField);
             InvestigateField.SetActive(true);
         }
+        if(GetChoice(TypeField).Equals("Find Equipment"))
+        {
+            disableDD(TypeField);
+            ItemField.SetActive(true);
+            ItemField.GetComponent<Dropdown>().ClearOptions();
+            List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
+            Dropdown.OptionData baseResponse = new Dropdown.OptionData();
+            baseResponse.text = "None";
+            results.Add(baseResponse);
+            Dictionary<string,ItemTemplate> Items = ItemReference.ItemTemplates();
+            foreach(string Key in Items.Keys)
+            {
+                if(!Key.Equals("Unarmed"))
+                {
+                    Dropdown.OptionData NewData = new Dropdown.OptionData();
+                    NewData.text = Key + " (" + Items[Key].availablity + ")";
+                    results.Add(NewData);
+                }
+            }
+            ItemField.GetComponent<Dropdown>().AddOptions(results);
+        }
     }
 
     public void InvestigationSelection()
     {
         if(!GetChoice(InvestigateField).Equals("None"))
         {
-            Difficultly = GetChoice(InvestigateField).Split()[0];
+            string Complexity = GetChoice(InvestigateField).Split()[0];
+            Modifier = ComplexityToDifficulty[Complexity];
+            Time = ComplexitytoTime[Complexity];
+            disableDD(InvestigateField);
+            P1Field.SetActive(true);
+            GetRemainingPlayers(P1Field);
+        }
+    }
+
+    public void ItemSelection()
+    {
+        if(!GetChoice(ItemField).Equals("None"))
+        {
+            ItemChoice = GetChoice(ItemField);
+            ItemChoice = ItemChoice.Split(new string[]{" ("}, System.StringSplitOptions.None)[0];
+            Debug.Log(ItemChoice);
+            string availablity = ItemReference.ItemTemplates()[ItemChoice].availablity;
+            Modifier = AvailablityToDifficulty[availablity];
+            Debug.Log(Modifier);
+            Time = Random.Range(1,AvailablityToTime[availablity][0]) * AvailablityToTime[availablity][1];
             disableDD(InvestigateField);
             P1Field.SetActive(true);
             GetRemainingPlayers(P1Field);
@@ -131,7 +216,13 @@ public class ActivityGenerator : MonoBehaviour
     public void MakeActivity()
     {
         GameObject newActivity = Instantiate(ActivityObjectReference) as GameObject;
-        newActivity.GetComponent<LeadScript>().UpdateLead(Difficultly,PlayerSelection,SkillChoice);
+        string name = "New Lead";
+        if(ItemChoice != null)
+        {
+            name = ItemChoice;
+            SkillChoice = "Inquiry";
+        }
+        newActivity.GetComponent<LeadScript>().UpdateLead(Modifier,Time,PlayerSelection,SkillChoice, name);
         ActionQueueDisplay.AddActivity(newActivity);
         gameObject.SetActive(false);
     }

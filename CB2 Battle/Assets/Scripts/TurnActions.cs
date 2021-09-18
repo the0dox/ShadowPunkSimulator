@@ -43,7 +43,12 @@ public class TurnActions : MonoBehaviour
             //if charging only melee weapons are usable
             if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.LeftHand.IsWeaponClass("Melee"))
             { 
-            d.Add(ActivePlayerStats.LeftHand.GetName(),"LeftHandWeapon");
+                string addition = "";
+                if(d.ContainsKey(ActivePlayerStats.LeftHand.GetName()))
+                {
+                    addition = " (Left Handed)";
+                }
+                d.Add(ActivePlayerStats.LeftHand.GetName() + addition,"LeftHandWeapon");
             }
         }
         d.Add("Unarmed","Unarmed");
@@ -337,13 +342,18 @@ public class TurnActions : MonoBehaviour
         Dictionary<string,string> d = new Dictionary<string, string>();
         Weapon rw = ActivePlayerStats.RightHand;
         Weapon lw = ActivePlayerStats.LeftHand;
-        if(rw != null && rw.CanReload())
+        if(rw != null && rw.CanReload(ActivePlayerStats))
         {
             d.Add(rw.GetName() + " (" + rw.GetReloads() + " half actions)", "ReloadRightHandWeapon");
         }
-        if(lw != null && lw != rw && lw.CanReload())
+        if(lw != null && lw != rw && lw.CanReload(ActivePlayerStats))
         {
-           d.Add(lw.GetName()  + " (" + lw.GetReloads() + " half actions)","ReloadLeftHandWeapon");
+            string addition = "";
+            if(rw.GetName() == lw.GetName())
+            {
+                addition = " (off hand)";
+            }
+           d.Add(lw.GetName()  + addition + " (" + lw.GetReloads() + " half actions)","ReloadLeftHandWeapon");
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
@@ -613,6 +623,10 @@ public class TurnActions : MonoBehaviour
         foreach(Transform t in targets)
         {
             AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(),ActivePlayerStats,ActiveWeapon,FireRate,1));
+        }
+        if(ActiveWeapon.HasWeaponAttribute("Thrown") && AttackQueue.Count == 0)
+        {
+            ActiveWeapon.ThrowWeapon(ActivePlayerStats);
         }
         RemoveRange(ActivePlayerStats);
         halfActions--;
@@ -973,9 +987,22 @@ public class TurnActions : MonoBehaviour
         {
             yield return new WaitForSeconds(0.2f);
         }
+
+        if(AttackQueue.Count == 0)
+        {
+            AttackSequenceEnd(CurrentAttack);
+        }
         
         CurrentAttack = null;
         Cancel();
+    }
+
+    private void AttackSequenceEnd(AttackSequence CurrentAttack)
+    {
+        if(CurrentAttack.ActiveWeapon.HasWeaponAttribute("Thrown"))
+        {
+            CurrentAttack.ActiveWeapon.ThrowWeapon(CurrentAttack.attacker);
+        }
     }
 
     public void ClearActions()

@@ -58,7 +58,6 @@ public class TacticsAttack : MonoBehaviour
         RollResult AttackResult = myStats.AbilityCheck(attackSkill, attackModifiers);
         if(TacticsAttack.Jammed(AttackResult.GetRoll(), w, type, myStats))
         {
-            w.SetJamStatus(true);
             return output;
         }
         if (AttackResult.Passed())
@@ -71,68 +70,6 @@ public class TacticsAttack : MonoBehaviour
             return output;
         }
     }
-    //depreciated
-    public static int Attack(PlayerStats target, PlayerStats myStats, Weapon w, string type, int modifiers)
-    {
-        string attackSkill;
-        int shotsFired;
-        if (w.IsWeaponClass("Melee"))
-        {
-            if(target.hasCondition("Defensive Stance"))
-            {
-                modifiers -= 20;
-            }
-            if(target.hasCondition("Grappled"))
-            {
-                modifiers += 20;
-            }
-            if(target.hasCondition("Running"))
-            {
-                modifiers += 20;
-            }
-            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand.IsWeaponClass("Melee") || target.RightHand.IsWeaponClass("Melee")))
-            {
-                modifiers -= 20;
-            }
-            attackSkill = "WS";
-            shotsFired = 1;
-        }
-        else
-        {
-            if(target.hasCondition("Running"))
-            {
-                modifiers -= 20;
-            }
-            attackSkill = "BS";
-            shotsFired = w.ExpendAmmo(type);
-        }
-        if(target.hasCondition("Stunned"))
-        {
-            modifiers += 20;
-        }
-        if(target.hasCondition("Prone"))
-        {
-            modifiers += 10;
-        }
-        modifiers += adjacencyBonus(target,w);
-        modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
-        int attackModifiers = w.RangeBonus(target.transform, myStats) + ROFBonus(type) + modifiers;
-        RollResult AttackResult = myStats.AbilityCheck(attackSkill, attackModifiers);
-        if(TacticsAttack.Jammed(AttackResult.GetRoll(), w, type, myStats))
-        {
-            w.SetJamStatus(true);
-            return 0;
-        }
-        if (AttackResult.Passed())
-        {    
-            return GetAdditionalHits(type, AttackResult.GetDOF(),shotsFired);
-        }
-        else
-        {
-            return 0;
-        }
-    }
-
     public static string HitLocation(int attackRoll, PlayerStats target)
     {
         int attackOnes = attackRoll % 10;
@@ -209,7 +146,7 @@ public class TacticsAttack : MonoBehaviour
             
         }
         //ranged weapons other than pistols can't be fired into melee 
-        else if (inCombat && !w.IsWeaponClass("Melee") && !w.HasWeaponAttribute("Pistol"))
+        else if (inCombat && !w.IsWeaponClass("Melee") && !w.IsWeaponClass("Pistol"))
         {
             CombatLog.Log(target.GetName() + " is too close to shoot!");
             return false;
@@ -548,7 +485,7 @@ public class TacticsAttack : MonoBehaviour
                 {
                     output.Add(outputStack.Pop());
                 }
-                output.Add(w.DisplayDamageRange(myStats));
+                output.Add(w.DisplayDamageRange());
                 output.Add(target.GetAverageSoak());
                 if(!w.IsWeaponClass("Melee") && !myStats.hasCondition("Called"))
                 {
@@ -576,7 +513,7 @@ public class TacticsAttack : MonoBehaviour
                 return 10;
             }
         }   
-        else if(adjacentEnemies > 0 && !w.HasWeaponAttribute("Pistol"))
+        else if(adjacentEnemies > 0 && !w.IsWeaponClass("Pistol"))
         {
             return -20;
         }

@@ -12,6 +12,14 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
   m_Name: Frag Grenade
   m_EditorClassIdentifier: 
+  weight: 0.5
+  cost: 10
+  availablity: Common
+  description: These grenades use an explosive charge and special fillers of shrapnel
+    fragments. Imperial frag grenades are roughly the size of a clenched fist and
+    covered with a heavily notched shell, both to increase the shrapnel produced
+    and provide a more secure grip for throwing.
+  unique: 0
   Attributes:
   - Blast
   - Thrown
@@ -28,3 +36,4 @@ MonoBehaviour:
   clipMax: 1
   damageType: X
   blast: 4
+  AmmoSource: {fileID: 11400000}

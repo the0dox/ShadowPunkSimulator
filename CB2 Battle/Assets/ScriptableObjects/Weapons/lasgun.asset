@@ -12,8 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
   m_Name: lasgun
   m_EditorClassIdentifier: 
+  weight: 4
+  cost: 75
+  availablity: Common
+  description: "Produced in a multitude of different styles and patterns, the lasgun
+    can be found on almost every world of the Imperium, where its robust design and
+    dependability make it a favoured weapon of both the Emperor\u2019s faithful and
+    many of their foes."
+  unique: 1
   Attributes:
-  - TwoHanded
+  - Full Reload
+  - Reliable
   Class: Basic
   numDice: 1
   sizeDice: 10
@@ -27,3 +36,4 @@ MonoBehaviour:
   clipMax: 30
   damageType: E
   blast: 0
+  AmmoSource: {fileID: 11400000, guid: 2dc45456b99ba4e4394913baa4878bce, type: 2}

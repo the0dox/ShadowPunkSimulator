@@ -18,19 +18,20 @@ public class CharacterSheet : MonoBehaviour
     [SerializeField] private GameObject SkillInputButton;
     [SerializeField] private GameObject SkillAdderButton;
     private Stack<GameObject> LastSkills;
-    private Stack<GameObject> LastMeleeWeps;
-    private Stack<GameObject> LastRangedWeps;
+    private List<Item> Equipment;
     [SerializeField] private Dropdown SkillAdderName;
-    [SerializeField] private GameObject WeaponAdderMelee;
-    [SerializeField] private GameObject WeaponAdderRanged;
+    [SerializeField] private GameObject ItemAdder;
+    [SerializeField] private GameObject ItemDisplay;
     private Vector3 weaponDisplacementRight = new Vector3(0,98.5f,0);
     private Vector3 weaponDisplacementLeft = new Vector3(0,82.5f,0);
     private Vector3 SkillDisplacement = new Vector3(0,14.5f,0);
     private Vector3 startingPos = new Vector3(-227.6f,73.3f,0);
+    private Vector3 ItemDisplacement = new Vector3(0,-16,0);
     Vector3 PlacementPosAdvanced;
     Vector3 PlacementPosBasic;
     Vector3 PlacementWeaponRanged;
     Vector3 PlacementWeaponMelee;
+    Vector3 PlacementItems;
     private Dictionary<string, int> PlayerStats;
     private List<Skill> PlayerSkills;
     private List<Item> PlayerEquipment;
@@ -40,10 +41,8 @@ public class CharacterSheet : MonoBehaviour
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
         transform.localPosition = startingPos;
         LastSkills = new Stack<GameObject>();
-        LastRangedWeps = new Stack<GameObject>();
-        LastMeleeWeps = new Stack<GameObject>();
-        WeaponAdderMelee.GetComponent<WeaponAdder>().Init();
-        WeaponAdderRanged.GetComponent<WeaponAdder>().Init();
+        Equipment = new List<Item>();
+        ItemAdder.GetComponent<WeaponAdder>().Init();
         UpdateSkillDropdown();
         GameObject[] EntryList = GameObject.FindGameObjectsWithTag("Input");
         TextEntries = new Dictionary<string, InputFieldScript>();
@@ -93,13 +92,9 @@ public class CharacterSheet : MonoBehaviour
         PlayerEquipment.Clear();
         List<Weapon> newEquipment = new List<Weapon>();
         //weapons
-        foreach(GameObject g in LastMeleeWeps)
+        foreach(Item i in Equipment)
         {
-            PlayerEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
-        }
-        foreach(GameObject g in LastRangedWeps)
-        {
-            PlayerEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
+            PlayerEquipment.Add(i);
         }
         Destroy(gameObject);
     }
@@ -124,13 +119,9 @@ public class CharacterSheet : MonoBehaviour
         }
         List<Item> newEquipment = new List<Item>();
         //weapons
-        foreach(GameObject g in LastMeleeWeps)
+        foreach(Item i in Equipment)
         {
-            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
-        }
-        foreach(GameObject g in LastRangedWeps)
-        {
-            newEquipment.Add(g.GetComponent<WeaponInputScript>().GetItem());
+            newEquipment.Add(i);
         }
         ActivePlayer.AddEquipment(newEquipment);
         ActivePlayer = null;
@@ -163,9 +154,8 @@ public class CharacterSheet : MonoBehaviour
         PlacementPosBasic = new Vector3(-258, 193,0);
         PlacementWeaponRanged = new Vector3(783, 212,0);
         PlacementWeaponMelee = new Vector3(375, 209,0);
+        PlacementItems = new Vector3(780,-202,0);
         SkillAdderButton.transform.localPosition = new Vector3(-16,164,0);
-        WeaponAdderMelee.transform.localPosition = new Vector3(500, 200,0);
-        WeaponAdderRanged.transform.localPosition = new Vector3(900, 200,0);
         //characterisitcs
         foreach (KeyValuePair<string, int> kvp in PlayerStats){
             if (TextEntries.ContainsKey(kvp.Key))
@@ -190,21 +180,9 @@ public class CharacterSheet : MonoBehaviour
                 }
             }
         }
-        foreach(Weapon w in PlayerEquipment)
+        foreach(Item i in PlayerEquipment)
         {
-            if(w.IsWeaponClass("Melee"))
-            {
-                LastMeleeWeps.Push(CreateWeapon(w,PlacementWeaponMelee));
-                PlacementWeaponMelee -= weaponDisplacementLeft;
-                WeaponAdderMelee.transform.localPosition -= weaponDisplacementLeft;
-
-            }
-            else
-            {
-                LastRangedWeps.Push(CreateWeapon(w,PlacementWeaponRanged));
-                PlacementWeaponRanged -= weaponDisplacementRight;
-                WeaponAdderRanged.transform.localPosition -= weaponDisplacementRight;
-            }
+            CreateItem(i);
         }
     }
     public bool IsInitalized(){
@@ -255,23 +233,50 @@ public class CharacterSheet : MonoBehaviour
         }
         SkillAdderName.AddOptions(results);
     }
-
-    public void CreateWeaponButtonLeft()
+    public void CreateItem()
     {
-        if(LastMeleeWeps.Count < 4)
-        {
-            LastMeleeWeps.Push(CreateWeapon(WeaponAdderMelee.GetComponent<WeaponAdder>().GetItem(), PlacementWeaponMelee));
-            WeaponAdderMelee.transform.localPosition -= weaponDisplacementLeft;
-            PlacementWeaponMelee -= weaponDisplacementLeft;
-        }
+        CreateItem(ItemAdder.GetComponent<WeaponAdder>().GetItem());
     }
-    public void CreateWeaponButtonRight()
+
+    public void CreateItem(Item input)
     {
-        if(LastRangedWeps.Count < 4)
+        bool stacked = false;
+        if(input.Stackable())
         {
-            LastRangedWeps.Push(CreateWeapon(WeaponAdderRanged.GetComponent<WeaponAdder>().GetItem(), PlacementWeaponRanged));
-            WeaponAdderRanged.transform.localPosition -= weaponDisplacementRight;
-            PlacementWeaponRanged -= weaponDisplacementRight;
+            Debug.Log(input.GetName() +"can be stacked");
+            foreach(Item i in Equipment)
+            {
+                if(i.GetName().Equals(input.GetName()))
+                {
+                    i.AddStack();
+                    Debug.Log("character now has " + i.GetStacks() + " " + i.GetName());
+                    stacked = true;
+                }
+            }
+        }
+        if(!stacked)
+        {
+            Equipment.Add(input);
+
+            if(input.GetType() == typeof(Weapon))
+            {
+                Weapon newWeapon = (Weapon) input;
+                if(newWeapon.GetClass().Equals("Melee"))
+                {
+                    CreateWeapon(newWeapon, PlacementWeaponMelee);
+                    PlacementWeaponMelee -= weaponDisplacementLeft;
+                }
+                else
+                {
+                    CreateWeapon(newWeapon, PlacementWeaponRanged);
+                    PlacementWeaponRanged -= weaponDisplacementRight;
+                }
+            }
+            GameObject newText = Instantiate(ItemDisplay) as GameObject;
+            newText.GetComponent<ItemInputField>().UpdateIn(input);
+            newText.transform.SetParent(gameObject.transform);
+            newText.transform.localPosition = PlacementItems;
+            PlacementItems += ItemDisplacement;
         }
     }
 
@@ -282,26 +287,6 @@ public class CharacterSheet : MonoBehaviour
             Destroy(LastSkills.Pop());
             PlacementPosAdvanced += SkillDisplacement;
             SkillAdderButton.transform.localPosition += SkillDisplacement;
-        }
-    }
-
-    public void DeleteMelee()
-    {
-        if(LastMeleeWeps.Count > 0)
-        {
-            Destroy(LastMeleeWeps.Pop());
-            WeaponAdderMelee.transform.localPosition += weaponDisplacementLeft;
-            PlacementWeaponMelee += weaponDisplacementLeft;
-        }
-    }
-
-    public void DeleteRanged()
-    {
-        if(LastRangedWeps.Count > 0)
-        {
-            Destroy(LastRangedWeps.Pop());
-            WeaponAdderRanged.transform.localPosition += weaponDisplacementRight;
-            PlacementWeaponRanged += weaponDisplacementRight;
         }
     }
 }

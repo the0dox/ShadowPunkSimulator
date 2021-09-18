@@ -9,28 +9,11 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Unarmed
+  m_Script: {fileID: 11500000, guid: 6da0ad1fd625bcd45832633e9540655c, type: 3}
+  m_Name: Common Clothing
   m_EditorClassIdentifier: 
   weight: 0
   cost: 0
   availablity: 
   description: 
   unique: 0
-  Attributes:
-  - Unarmed
-  - Flexible
-  Class: Melee
-  numDice: 1
-  sizeDice: 5
-  damageBonus: -3
-  range: 0
-  pen: 0
-  reloadMax: 0
-  single: 0
-  semi: 0
-  auto: 0
-  clipMax: 0
-  damageType: I
-  blast: 0
-  AmmoSource: {fileID: 0}

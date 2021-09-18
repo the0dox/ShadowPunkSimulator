@@ -12,9 +12,17 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
   m_Name: Flamer
   m_EditorClassIdentifier: 
+  weight: 6
+  cost: 300
+  availablity: Scarce
+  description: Flamers are terrifying and indiscriminate weapons ideal for attacking
+    enemies in cover or confined spaces. As an alternative to using a flamer with
+    an underslung canister, you may instead  have a backpack and fuel hose, which
+    doubles the clip size,  adds 6 kg to the weight and adds 100 Thrones to the cost.
+  unique: 1
   Attributes:
   - Flame
-  - TwoHanded
+  - Full Reload
   Class: Basic
   numDice: 1
   sizeDice: 10
@@ -28,3 +36,4 @@ MonoBehaviour:
   clipMax: 3
   damageType: E
   blast: 0
+  AmmoSource: {fileID: 0}

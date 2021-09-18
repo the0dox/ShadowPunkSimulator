@@ -1,0 +1,37 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Hand Cannon
+  m_EditorClassIdentifier: 
+  weight: 3
+  cost: 65
+  availablity: Average
+  description: "A variant of the stub revolver, the huge hand cannon fires enormous
+    rounds designed to not only take down a target but make a loud and intimidating
+    noise when doing so. These weapons produce ferocious recoil, and unless fired
+    two-handed, impose a \u201310 penalty to Ballistic Skill Tests."
+  unique: 1
+  Attributes: []
+  Class: Pistol
+  numDice: 1
+  sizeDice: 10
+  damageBonus: 4
+  range: 35
+  pen: 2
+  reloadMax: 4
+  single: 1
+  semi: 0
+  auto: 0
+  clipMax: 5
+  damageType: I
+  blast: 0
+  AmmoSource: {fileID: 11400000, guid: 791f3715f56f28d4299ab5d8fe45960c, type: 2}

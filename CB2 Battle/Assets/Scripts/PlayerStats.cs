@@ -39,20 +39,18 @@ public class PlayerStats : MonoBehaviour
         this.team = myData.team;
         this.Stats = myData.GetStats();
         this.Skills = myData.GetSkills();
-        this.equipment = myData.GetEquipment();
         this.HitLocations = myData.StandardHitLocations();
+        this.equipment = myData.GetEquipment();
         Init();
+
     }
     // Start is called before the first frame update
     public void Init()
     {
         UpdateMovement();
-        foreach(Weapon w in equipment)
+        foreach(Weapon w in GetWeaponsForEquipment())
         {   
-            if(LeftHand == null || RightHand == null)
-            {
-                Equip(w);
-            }
+            Equip(w);
         }
     }
 
@@ -102,12 +100,16 @@ public class PlayerStats : MonoBehaviour
 
     public void takeFatigue(int levels)
     {
+        if(!hasCondition("Fatigued"))
+        {
+            SetCondition("Fatigued",0,true);
+        }
         if (levels > 0)
         {
             CombatLog.Log(name + " takes " + levels + " levels of fatigue");
             Stats["Fatigue"] += levels;
         }
-        if(Stats["Fatigue"] > GetStatScore("T"))
+        if(Stats["Fatigue"] >= GetStatScore("T"))
         {
             CombatLog.Log(name + " takes more fatigue than their Toughness bonus and is knocked out!");
             SetCondition("Unconscious",0,true);
@@ -193,6 +195,18 @@ public class PlayerStats : MonoBehaviour
         {
             //Debug.Log("Can't equip a weapon! needs to free hands!");
             return false;
+        }
+    }
+
+    public void Unequip(Weapon w)
+    {
+        if(LeftHand == w)
+        {
+            LeftHand = null;
+        }
+        if(RightHand == w)
+        {
+            RightHand = null;
         }
     }
 
@@ -634,7 +648,6 @@ public class PlayerStats : MonoBehaviour
     {
         Occupied = false;
     }
-
     public override string ToString()
     {
         string output = GetName();

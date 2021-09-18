@@ -31,6 +31,8 @@ public class CharacterSaveData
     private int Critical = 0;
     private int Fate = 0;
     private int FateMax = 0;
+    private int Gelt = 0;
+    private int Income = 0;
     private string[] SkillNames = new string[50];
     private int[] SkillLevels = new int[50];
     private string[] SkillChars = new string[50];
@@ -38,6 +40,7 @@ public class CharacterSaveData
     public int team = 0; 
     public string playername; 
     public string[] equipment = new string[20];
+    public int[] equipmentSize = new int[20];
     public CharacterSaveData(bool playable)
     {
         if(playable)
@@ -228,6 +231,8 @@ public class CharacterSaveData
         output.Add("Fatigue", Fatigue);
         output.Add("Fate",Fate);
         output.Add("FateMax",FateMax);
+        output.Add("Gelt",Gelt);
+        output.Add("Income",Income);
         return output;
     }
 
@@ -310,6 +315,12 @@ public class CharacterSaveData
             case "FateMax":
             FateMax = value;
             break;
+            case "Gelt":
+            Gelt = value;
+            break;
+            case "Income":
+            Income = value;
+            break;
         }
     }
 
@@ -357,14 +368,17 @@ public class CharacterSaveData
             if(equipment[i] != null)
             {
                 Dictionary<string, WeaponTemplate> WR = ItemReference.WeaponTemplates();
+                Item current = null;
                 if(WR.ContainsKey(equipment[i]))
                 {
-                    output.Add(new Weapon(WR[equipment[i]]));
+                    current = new Weapon(WR[equipment[i]]);
                 }
                 else
                 {
-                    output.Add(new Item(ItemReference.GetItem(equipment[i])));
+                    current = new Item(ItemReference.GetItem(equipment[i]));
                 }
+                current.SetStack(equipmentSize[i]);
+                output.Add(current);
             }
         }
         return output;
@@ -373,6 +387,7 @@ public class CharacterSaveData
     public void ClearEquipment()
     {
         equipment = new string[20];
+        equipmentSize = new int[20];
     }
 
     public void AddEquipment(List<Item> input)
@@ -382,6 +397,7 @@ public class CharacterSaveData
         foreach(Item i in input)
         {
             equipment[newIndex] = i.GetName();
+            equipmentSize[newIndex] = i.GetStacks();
             newIndex++;
         }
     }

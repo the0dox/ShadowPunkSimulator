@@ -10,29 +10,31 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Chainsword
+  m_Name: Staff
   m_EditorClassIdentifier: 
-  weight: 6
-  cost: 275
-  availablity: Rare
-  description: Chainswords are roughly sword-like in shape as the name suggests,
-    with a large flat housing containing the chain. Generally only the forward curved
-    section is open, and is thrust at the enemy where the spinning chain teeth can
-    bite into flesh and bone.
+  weight: 3
+  cost: 10
+  availablity: Plentiful
+  description: Longer basic weapons use a staff of wood or other material, with the
+    longer reach useful for hitting an enemy before he can strike. The staff is just
+    that, and is a common sight especially among pilgrims trekking throughout the
+    galaxy to retrace the steps of the saints.
   unique: 1
   Attributes:
-  - Tearing
+  - TwoHanded
+  - Primitive
+  - Balanced
   Class: Melee
   numDice: 1
   sizeDice: 10
-  damageBonus: 2
+  damageBonus: 0
   range: 0
-  pen: 2
+  pen: 0
   reloadMax: 0
   single: 0
   semi: 0
   auto: 0
   clipMax: 0
-  damageType: R
+  damageType: I
   blast: 0
   AmmoSource: {fileID: 0}

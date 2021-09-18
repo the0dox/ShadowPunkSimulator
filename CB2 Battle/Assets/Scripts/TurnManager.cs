@@ -146,36 +146,44 @@ public class TurnManager : TurnActions
                     }
                 break;
                 case "ReloadRightHandWeapon":
-                    ActivePlayer.RemoveSelectableTiles();
-                    ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
-                    if(ActivePlayerStats.RightHand.Reload())
+                    if(halfActions < 1)
                     {
-                        ActivePlayerStats.CompleteRepeatingAction();
-                        PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
-                        currentAction = "Move";
+                        EndTurn();
                     }
                     else
                     {
-                        PopUpText.CreateText(ActivePlayerStats.RightHand.ReloadString(), Color.yellow, ActivePlayer.gameObject);
+                        if(ActivePlayerStats.RightHand.Reload(ActivePlayerStats))
+                        {
+                            ActivePlayerStats.CompleteRepeatingAction();
+                            PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
+                            Cancel();
+                        }
+                        else
+                        {
+                            PopUpText.CreateText(ActivePlayerStats.RightHand.ReloadString(), Color.yellow, ActivePlayer.gameObject);
+                        }
+                        halfActions--;
                     }
-                    halfActions--;
-                    ClearActions();
                 break;
                 case "ReloadLeftHandWeapon":
-                    ActivePlayer.RemoveSelectableTiles();
-                    ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
-                    if(ActivePlayerStats.LeftHand.Reload())
+                    if(halfActions < 1)
                     {
-                        ActivePlayerStats.CompleteRepeatingAction();
-                        PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
-                        currentAction = "Move";
+                        EndTurn();
                     }
                     else
                     {
-                        PopUpText.CreateText(ActivePlayerStats.LeftHand.ReloadString(), Color.yellow, ActivePlayer.gameObject);
+                        if(ActivePlayerStats.LeftHand.Reload(ActivePlayerStats))
+                        {
+                            ActivePlayerStats.CompleteRepeatingAction();
+                            PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
+                            Cancel();
+                        }
+                        else
+                        {
+                            PopUpText.CreateText(ActivePlayerStats.LeftHand.ReloadString(), Color.yellow, ActivePlayer.gameObject);
+                        }
+                        halfActions--;
                     }
-                    halfActions--;
-                    ClearActions();
                 break;
                 case "Stand":
                     AttackOfOppertunity();

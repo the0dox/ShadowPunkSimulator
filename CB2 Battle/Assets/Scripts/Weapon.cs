@@ -35,6 +35,7 @@ public class Weapon : Item
     //damage type for determining critical table
     [SerializeField] private string damageType;
     [SerializeField] private bool jammed = false;
+    [SerializeField] private ItemTemplate AmmoSource;
     private string Class;
 
     public Weapon(WeaponTemplate template)
@@ -42,6 +43,8 @@ public class Weapon : Item
         this.name = template.name;
         this.weight = template.weight;
         this.cost = template.cost;
+        this.unique = template.unique;
+        this.stacks = 1;
         this.availablity = template.availablity;
         this.description = template.description;
         this.Attributes = template.Attributes;
@@ -53,6 +56,7 @@ public class Weapon : Item
         this.reloadMax = template.reloadMax;
         this.reloads = 0;
         this.blast = template.blast;
+        this.AmmoSource = template.AmmoSource;
         ROF = new Dictionary<string, int>();
         ROF.Add("S", template.single);
         ROF.Add("Semi", template.semi);
@@ -178,19 +182,56 @@ public class Weapon : Item
     }
 
     //increments reloads by one half action, returns true when reload is complete
-    public bool Reload()
+    public bool Reload(PlayerStats owner)
     {
         reloads++;
-        if (reloads == reloadMax)
+        if (reloads >= reloadMax)
         {
-            clip = clipMax;
             reloads = 0;
+            if(AmmoSource != null)
+            {
+                //if ammo is from another source: i.e. shells for a shotgun
+                foreach(Item i in owner.equipment)
+                {
+                    //when i is equal to my ammo source
+                    if(i.GetName() == AmmoSource.name)
+                    {
+                        //las weaponry use charge packs instead of individual bullets
+                        if(HasWeaponAttribute("Full Reload"))
+                        {
+                            i.SubtractStack();
+                            clip = clipMax;
+                        }
+                        else
+                        {
+                            int AmmoNeeded = clipMax - clip;
+                            int Reserves = i.GetStacks();
+                            //if a full reload can't be completed, try to fill as much as you can
+                            if(AmmoNeeded > Reserves)
+                            {
+                                clip += Reserves;
+                                i.SetStack(0);
+                            }
+                            else
+                            {
+                                clip = clipMax;
+                                i.SubtractStack(AmmoNeeded);
+                            }
+                        }
+                        if(i.IsConsumed())
+                        {
+                            owner.equipment.Remove(i);
+                            return true;
+                        }
+                    }
+                }
+            }
             return true;
         }
         return false;
     }
     //whether of not to display this weapon on the reload screen
-    public bool CanReload()
+    public bool CanReload(PlayerStats owner)
     {
         if(IsWeaponClass("Melee"))
         {
@@ -198,6 +239,17 @@ public class Weapon : Item
         }
         if(jammed)
         {
+            return false;
+        }
+        if(AmmoSource != null)
+        {
+            foreach(Item i in owner.equipment)
+            {
+                if(i.GetName().Equals(AmmoSource.name))
+                {
+                    return clip != clipMax;
+                }
+            }
             return false;
         }
         return clip != clipMax;
@@ -296,18 +348,18 @@ public class Weapon : Item
         return jammed;
     }
 
-    public string DisplayDamageRange(PlayerStats user)
-    {
-        int DB = damageBonus;
-        if(IsWeaponClass("Melee"))
-        {
-            DB += user.GetStatScore("S");
-        }
-        return "Damage: " + numDice + "d" + sizeDice + " + " + DB + " " + damageType;  
-    }
     public string DisplayDamageRange()
     {
-        return numDice + "d" + sizeDice + " + " + damageType;  
+        string DB = " ";
+        if (damageBonus > 0)
+        {
+            DB += " + " + damageBonus;
+        }
+        if(IsWeaponClass("Melee"))
+        {
+            DB += " + SB";
+        }
+        return "Damage: " + numDice + "d" + sizeDice + DB + " " + damageType;  
     }
 
 
@@ -353,6 +405,29 @@ public class Weapon : Item
         else
         {
             return reloadMax + "Half";
+        }
+    }
+
+    public void ThrowWeapon(PlayerStats owner)
+    {
+        clip = clipMax;
+        owner.Unequip(this);
+        this.SubtractStack();
+        if(this.IsConsumed())
+        {
+            owner.equipment.Remove(this);
+        }
+    }
+
+    public int AmmoConsumed()
+    {
+        if(HasWeaponAttribute("Las"))
+        {
+            return 1;
+        }
+        else
+        {
+            return clipMax - clip;
         }
     }
 }
