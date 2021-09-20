@@ -430,7 +430,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117487058536511}
   m_Placeholder: {fileID: 1106117485972276329}
@@ -2515,7 +2515,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117486221962238}
   m_Placeholder: {fileID: 1106117485160736680}
@@ -2958,7 +2958,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117486333409209}
   m_Placeholder: {fileID: 1106117485247151087}
@@ -3179,7 +3179,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117486287039114}
   m_Placeholder: {fileID: 1106117485200778972}
@@ -3764,7 +3764,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117485853167502}
   m_Placeholder: {fileID: 1106117486939554776}
@@ -4523,7 +4523,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117485988960630}
   m_Placeholder: {fileID: 1106117487075349792}
@@ -5281,7 +5281,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117485830809484}
   m_Placeholder: {fileID: 1106117486891903962}
@@ -5654,7 +5654,7 @@ RectTransform:
   - {fileID: 1106117486922736981}
   - {fileID: 1106117485836478723}
   m_Father: {fileID: 9042909675615074338}
-  m_RootOrder: 18
+  m_RootOrder: 17
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -5708,7 +5708,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117485836478722}
   m_Placeholder: {fileID: 1106117486922736980}
@@ -6066,7 +6066,7 @@ RectTransform:
   - {fileID: 1106117486414370201}
   - {fileID: 1106117485336369615}
   m_Father: {fileID: 9042909675615074338}
-  m_RootOrder: 17
+  m_RootOrder: 16
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -6120,7 +6120,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117485336369614}
   m_Placeholder: {fileID: 1106117486414370200}
@@ -6484,7 +6484,7 @@ MonoBehaviour:
     m_PressedTrigger: Pressed
     m_SelectedTrigger: Selected
     m_DisabledTrigger: Disabled
-  m_Interactable: 1
+  m_Interactable: 0
   m_TargetGraphic: {fileID: 0}
   m_TextComponent: {fileID: 1106117485520433521}
   m_Placeholder: {fileID: 1106117486598307111}
@@ -12796,7 +12796,7 @@ RectTransform:
   - {fileID: 9042909674870643119}
   - {fileID: 5532428829150450482}
   m_Father: {fileID: 9042909675615074338}
-  m_RootOrder: 16
+  m_RootOrder: 18
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
@@ -13174,9 +13174,9 @@ RectTransform:
   - {fileID: 1106117485987904511}
   - {fileID: 1106117486801272119}
   - {fileID: 1106117485097174137}
-  - {fileID: 9042909675376755456}
   - {fileID: 1106117486752470408}
   - {fileID: 1106117486585685316}
+  - {fileID: 9042909675376755456}
   - {fileID: 1106117485072107542}
   - {fileID: 1106117486425237969}
   - {fileID: 1106117485895069500}

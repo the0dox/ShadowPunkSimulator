@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
 public class TurnManager : TurnActions
 {
@@ -38,7 +39,7 @@ public class TurnManager : TurnActions
             switch(currentAction)
             {
                 case "ThreatRange":
-                    ActivePlayer.GetValidAttackTargets(ActivePlayerStats.GetTeam());
+                    ActivePlayer.GetValidAttackTargets(ActiveWeapon);
                 break;
                 case "Move":
                     if(!ActivePlayerStats.ValidAction("Charge"))
@@ -79,10 +80,10 @@ public class TurnManager : TurnActions
                     }
                 break;
                 case "Attack":
-                    ActivePlayer.GetValidAttackTargets(ActivePlayerStats.GetTeam());
+                    ActivePlayer.GetValidAttackTargets(ActiveWeapon);
                 break;
                 case "CM":
-                    ActivePlayer.GetValidAttackTargets(ActivePlayerStats.GetTeam());
+                    ActivePlayer.GetValidAttackTargets(ActiveWeapon);
                 break;
                 case "Grapple":
                     ActivePlayer.GetGrapplePartner(ActivePlayerStats);
@@ -111,16 +112,25 @@ public class TurnManager : TurnActions
                     }
                     else 
                     {
+                        ActivePlayer.RemoveSelectableTiles();
                         ActivePlayer.Move();
                     }
                 break;
                 case "Run":
                     if (!ActivePlayer.moving)
                     {
-                        ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveRun"), ActivePlayerStats.GetTeam());     
+                        if(halfActions > 1)
+                        {
+                            ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveRun"), ActivePlayerStats.GetTeam());     
+                        }
+                        else
+                        {
+                            Cancel();
+                        }
                     }
                     else 
                     {
+                        ActivePlayer.RemoveSelectableTiles();
                         ActivePlayer.Move();
                     }
                 break;
@@ -145,44 +155,44 @@ public class TurnManager : TurnActions
                         ActivePlayer.Move();
                     }
                 break;
-                case "ReloadRightHandWeapon":
+                case "ReloadPrimaryWeapon":
                     if(halfActions < 1)
                     {
                         EndTurn();
                     }
                     else
                     {
-                        if(ActivePlayerStats.RightHand.Reload(ActivePlayerStats))
+                        if(ActivePlayerStats.PrimaryWeapon.Reload(ActivePlayerStats))
                         {
                             ActivePlayerStats.CompleteRepeatingAction();
                             PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
-                            Cancel();
                         }
                         else
                         {
-                            PopUpText.CreateText(ActivePlayerStats.RightHand.ReloadString(), Color.yellow, ActivePlayer.gameObject);
+                            PopUpText.CreateText(ActivePlayerStats.PrimaryWeapon.ReloadString(), Color.yellow, ActivePlayer.gameObject);
                         }
                         halfActions--;
+                        Cancel();
                     }
                 break;
-                case "ReloadLeftHandWeapon":
+                case "ReloadSecondaryWeapon":
                     if(halfActions < 1)
                     {
                         EndTurn();
                     }
                     else
                     {
-                        if(ActivePlayerStats.LeftHand.Reload(ActivePlayerStats))
+                        if(ActivePlayerStats.SecondaryWeapon.Reload(ActivePlayerStats))
                         {
                             ActivePlayerStats.CompleteRepeatingAction();
                             PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
-                            Cancel();
                         }
                         else
                         {
-                            PopUpText.CreateText(ActivePlayerStats.LeftHand.ReloadString(), Color.yellow, ActivePlayer.gameObject);
+                            PopUpText.CreateText(ActivePlayerStats.SecondaryWeapon.ReloadString(), Color.yellow, ActivePlayer.gameObject);
                         }
                         halfActions--;
+                        Cancel();
                     }
                 break;
                 case "Stand":
@@ -225,13 +235,23 @@ public class TurnManager : TurnActions
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
-            //if the mouse clicked on a thing
-            if (Physics.Raycast(ray, out hit))
+            bool hitUi = false;
+            GameObject[] ui = GameObject.FindGameObjectsWithTag("ActionInput");
+            foreach(GameObject g in ui)
             {
+                if(EventSystem.current.IsPointerOverGameObject())
+                {
+                    hitUi = true;
+                }
+            }
+            //if the mouse clicked on a thing
+            if (Physics.Raycast(ray, out hit) && !hitUi )
+            {
+
                 switch(currentAction)
                 {
                 case "Move":
-                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving)
+                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving && currentAction != null)
                     {
                         Tile t = hit.collider.GetComponent<Tile>();
 
@@ -362,6 +382,10 @@ public class TurnManager : TurnActions
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
             ActivePlayerStats.UpdateConditions(true);
+            foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
+            {
+                w.OnTurnStart();
+            }
         }
     }
    public void StartTurn(TacticsMovement newPlayer)
@@ -384,6 +408,10 @@ public class TurnManager : TurnActions
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
             ActivePlayerStats.UpdateConditions(true);
+            foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
+            {
+                w.OnTurnStart();
+            }
         }
     }
     //sorts initative order on beginning of game
@@ -483,6 +511,19 @@ public class TurnManager : TurnActions
             PopUpText.CreateText("Unconscious!", Color.yellow, ActivePlayerStats.gameObject);
             halfActions -= 2;
             ActivePlayerStats.SpendAction("reaction");
+        }
+        if(ActivePlayerStats.hasCondition("On Fire"))
+        {
+            if(!ActivePlayerStats.AbilityCheck("WP",0).Passed())
+            {
+                CombatLog.Log(ActivePlayerStats.GetName() + " is too distracted by the fire to act!");
+                halfActions -= 2;
+            }
+            int damage = Random.Range(1,10);
+            ActivePlayerStats.takeDamage(damage,"Body","E");
+            ActivePlayerStats.takeFatigue(1);
+            CombatLog.Log(ActivePlayerStats.GetName() + " takes 1d10 = " + damage + " damage from the fire!");
+            PopUpText.CreateText("Burning! (-" + damage +")",Color.red,ActivePlayerStats.gameObject);
         }
     }
     
@@ -628,13 +669,13 @@ public class TurnManager : TurnActions
             foreach(PlayerStats enemy in adjacentEnemies)
             {
                 Weapon currentWeapon = null;
-                if(enemy.LeftHand != null && enemy.LeftHand.IsWeaponClass("Melee"))
+                if(enemy.PrimaryWeapon != null && enemy.PrimaryWeapon.IsWeaponClass("Melee"))
                 {
-                    currentWeapon = enemy.LeftHand;
+                    currentWeapon = enemy.PrimaryWeapon;
                 }
-                else if (enemy.RightHand != null && enemy.RightHand.IsWeaponClass("Melee"))
+                else if (enemy.SecondaryWeapon != null && enemy.SecondaryWeapon.IsWeaponClass("Melee"))
                 {
-                    currentWeapon = enemy.RightHand;
+                    currentWeapon = enemy.SecondaryWeapon;
                 }
                 if(currentWeapon != null)
                 {    

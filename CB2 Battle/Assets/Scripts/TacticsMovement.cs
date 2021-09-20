@@ -303,14 +303,20 @@ public class TacticsMovement : MonoBehaviour
    {
       velocity = heading * moveSpeed;
    }
-   public void GetValidAttackTargets(int team)
+   public void GetValidAttackTargets(Weapon w)
    {
       ComputeAdjacencyLists();
       GetCurrentTile();
       GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+      PlayerStats myStats = gameObject.GetComponent<PlayerStats>();
       foreach (GameObject p in players)
       {
-         if(p.GetComponent<PlayerStats>().GetTeam() != team)
+         PlayerStats target = p.GetComponent<PlayerStats>();
+         if(w == null && target.GetTeam() != myStats.GetTeam())
+         {
+            p.GetComponent<TacticsMovement>().GetTargetTile(p).attack = true;
+         }
+         else if(TacticsAttack.HasValidTarget(target,myStats,w))
          {
             p.GetComponent<TacticsMovement>().GetTargetTile(p).attack = true;
          }

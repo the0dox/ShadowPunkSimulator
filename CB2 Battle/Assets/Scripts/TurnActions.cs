@@ -30,25 +30,25 @@ public class TurnActions : MonoBehaviour
         currentAction = null;
         Dictionary<string,string> d = new Dictionary<string, string>();
         
-        if(ActivePlayerStats.RightHand != null) 
+        if(ActivePlayerStats.PrimaryWeapon != null) 
         {
             //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.RightHand.IsWeaponClass("Melee"))
+            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.PrimaryWeapon.IsWeaponClass("Melee"))
             {    
-                d.Add(ActivePlayerStats.RightHand.GetName(), "RightHandWeapon");
+                d.Add(ActivePlayerStats.PrimaryWeapon.GetName(), "PrimaryWeapon");
             }
         }
-        if (ActivePlayerStats.LeftHand != null && ActivePlayerStats.LeftHand != ActivePlayerStats.RightHand)
+        if (ActivePlayerStats.SecondaryWeapon != null && ActivePlayerStats.SecondaryWeapon != ActivePlayerStats.PrimaryWeapon)
         {
             //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.LeftHand.IsWeaponClass("Melee"))
+            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.SecondaryWeapon.IsWeaponClass("Melee"))
             { 
                 string addition = "";
-                if(d.ContainsKey(ActivePlayerStats.LeftHand.GetName()))
+                if(d.ContainsKey(ActivePlayerStats.SecondaryWeapon.GetName()))
                 {
                     addition = " (Left Handed)";
                 }
-                d.Add(ActivePlayerStats.LeftHand.GetName() + addition,"LeftHandWeapon");
+                d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + addition,"SecondaryWeapon");
             }
         }
         d.Add("Unarmed","Unarmed");
@@ -62,6 +62,7 @@ public class TurnActions : MonoBehaviour
 
     public void Movement()
     {
+        currentAction = null;
         List<string> l = new List<string>();
         
         if(ActivePlayerStats.hasCondition("Prone"))
@@ -88,15 +89,16 @@ public class TurnActions : MonoBehaviour
         ConstructActions(l);
     }
 
-    public void RightHandWeapon()
+    public void PrimaryWeapon()
     {
-        ActiveWeapon = ActivePlayerStats.RightHand;
+        ActiveWeapon = ActivePlayerStats.PrimaryWeapon;
+        Debug.Log(ActiveWeapon.GetName());
         GetWeaponActions();
     }
 
-    public void LeftHandWeapon()
+    public void SecondaryWeapon()
     {
-        ActiveWeapon = ActivePlayerStats.LeftHand;
+        ActiveWeapon = ActivePlayerStats.SecondaryWeapon;
         GetWeaponActions();
     }
 
@@ -118,7 +120,7 @@ public class TurnActions : MonoBehaviour
                 d.Add("Grapple","GrappleAttack");    
             }
         }
-        else if(ActivePlayerStats.ValidAction("Attack"))
+        else if(ActivePlayerStats.ValidAction("Attack") && halfActions > 0)
         {
             if(ActiveWeapon.HasWeaponAttribute("Unarmed"))
             {
@@ -264,6 +266,7 @@ public class TurnActions : MonoBehaviour
         Cancel();
     }
 
+    //restricted actions: actions that are only available when the player is restricted somehow
     public void GrappleControl()
     {
         int result = ActivePlayerStats.OpposedAbilityCheck("S",ActivePlayerStats.grappler,0,0);
@@ -292,6 +295,37 @@ public class TurnActions : MonoBehaviour
         Cancel();
     }
 
+    public void BreakSnare()
+    {
+        if(ActivePlayerStats.AbilityCheck("S",0).Passed())
+        {
+            ActivePlayerStats.RemoveCondition("Immobilised");
+            PopUpText.CreateText("Freed!", Color.green,ActivePlayerStats.gameObject);
+            CombatLog.Log(ActivePlayerStats.GetName() + " breaks their bonds!");
+        }
+        else
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " is unable to break their bonds!");
+        }
+        halfActions -= 2;
+        Cancel();
+    }
+
+    public void EscapeBonds()
+    {
+        if(ActivePlayerStats.AbilityCheck("A",0).Passed())
+        {
+            ActivePlayerStats.RemoveCondition("Immobilised");
+            PopUpText.CreateText("Freed!", Color.green,ActivePlayerStats.gameObject);
+            CombatLog.Log(ActivePlayerStats.GetName() + " escapes their bonds!");
+        }
+        else
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " is unable to escape their bonds!");
+        }
+        halfActions -= 2;
+        Cancel();
+    }
     public void Run()
     {
         currentAction = "Run";
@@ -322,17 +356,29 @@ public class TurnActions : MonoBehaviour
 
     public void Misc()
     {
+        currentAction = null;
         Dictionary<string,string> d = new Dictionary<string, string>();
-        if(ActivePlayerStats.ValidAction("Aim"))
+        if(halfActions > 0)
         {
-            d.Add("Aim (Half)","Aim1");
+            if(ActivePlayerStats.ValidAction("Aim"))
+            {
+                d.Add("Aim (Half)","Aim1");
+                
+                if(halfActions > 1)
+                {
+                    d.Add("Aim (Full)","Aim2");
+                                }
+            } 
             d.Add("Reload","Reload");
             if(halfActions > 1)
             {
-                d.Add("Aim (Full)","Aim2");
                 d.Add("Defensive","DefensiveStance");
+                if(ActivePlayerStats.hasCondition("On Fire"))
+                {
+                    d.Add("Extinguish Fire","Extinguish");
+                }
             }
-        } 
+        }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
@@ -340,11 +386,11 @@ public class TurnActions : MonoBehaviour
     public void Reload()
     {
         Dictionary<string,string> d = new Dictionary<string, string>();
-        Weapon rw = ActivePlayerStats.RightHand;
-        Weapon lw = ActivePlayerStats.LeftHand;
+        Weapon rw = ActivePlayerStats.PrimaryWeapon;
+        Weapon lw = ActivePlayerStats.SecondaryWeapon;
         if(rw != null && rw.CanReload(ActivePlayerStats))
         {
-            d.Add(rw.GetName() + " (" + rw.GetReloads() + " half actions)", "ReloadRightHandWeapon");
+            d.Add(rw.GetName() + " (" + rw.GetReloads() + " half actions)", "ReloadPrimaryWeapon");
         }
         if(lw != null && lw != rw && lw.CanReload(ActivePlayerStats))
         {
@@ -353,20 +399,20 @@ public class TurnActions : MonoBehaviour
             {
                 addition = " (off hand)";
             }
-           d.Add(lw.GetName()  + addition + " (" + lw.GetReloads() + " half actions)","ReloadLeftHandWeapon");
+           d.Add(lw.GetName()  + addition + " (" + lw.GetReloads() + " half actions)","ReloadSecondaryWeapon");
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
 
-    public void ReloadRightHandWeapon()
+    public void ReloadPrimaryWeapon()
     {
-        ActivePlayerStats.SetRepeatingAction("ReloadRightHandWeapon");
+        ActivePlayerStats.SetRepeatingAction("ReloadPrimaryWeapon");
         Cancel();
     }
-    public void ReloadLeftHandWeapon()
+    public void ReloadSecondaryWeapon()
     {
-        ActivePlayerStats.SetRepeatingAction("ReloadLeftHandWeapon");
+        ActivePlayerStats.SetRepeatingAction("ReloadSecondaryWeapon");
         Cancel();
     }
 
@@ -384,7 +430,12 @@ public class TurnActions : MonoBehaviour
     public void ConstructActions()
     {   
         Dictionary<string,string> d = new Dictionary<string, string>();
-        if(ActivePlayerStats.grappling())
+        if(ActivePlayerStats.hasCondition("Immobilised"))
+        {
+            d.Add("Break Bonds", "BreakSnare");
+            d.Add("Escape Bonds", "EscapeBonds");
+        }
+        else if(ActivePlayerStats.grappling())
         {
             if(halfActions > 1)
             {
@@ -443,8 +494,9 @@ public class TurnActions : MonoBehaviour
             ActiveWeapon = StringToWeapon(input);
             if (currentAction.Equals("Ready"))
             {
-                if(ActivePlayerStats.Equip(ActiveWeapon))
+                if(ActivePlayerStats.PrimaryWeapon == null && ActivePlayerStats.SecondaryWeapon == null)
                 {   
+                    ActivePlayerStats.EquipPrimary(ActiveWeapon);
                     halfActions--;
                     ActivePlayerStats.SpendAction("Ready");
                     Cancel();
@@ -474,17 +526,17 @@ public class TurnActions : MonoBehaviour
         return false;
     }
     
-    public void RightHandUnequip()
+    public void PrimaryWeaponUnequip()
     {
-        ActivePlayerStats.Equip(ActiveWeapon, "Right");
+        ActivePlayerStats.EquipPrimary(ActiveWeapon);
         ActivePlayerStats.SpendAction("Ready");
         halfActions--;
         Cancel();
     }
 
-    public void LeftHandUnequip()
+    public void SecondaryWeaponUnequip()
     {
-        ActivePlayerStats.Equip(ActiveWeapon, "Left");
+        ActivePlayerStats.EquipSecondary(ActiveWeapon);
         ActivePlayerStats.SpendAction("Ready");
         halfActions--;
         Cancel();
@@ -624,7 +676,7 @@ public class TurnActions : MonoBehaviour
         {
             AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(),ActivePlayerStats,ActiveWeapon,FireRate,1));
         }
-        if(ActiveWeapon.HasWeaponAttribute("Thrown") && AttackQueue.Count == 0)
+        if(ActiveWeapon.IsWeaponClass("Thrown") && AttackQueue.Count == 0)
         {
             ActiveWeapon.ThrowWeapon(ActivePlayerStats);
         }
@@ -644,37 +696,40 @@ public class TurnActions : MonoBehaviour
     public void FlameAttack(List<Transform> targets)
     {
         FireRate = "S";
-        ActiveWeapon.ExpendAmmo(FireRate);
-        int roll = Random.Range(1,10);
-        if(!TacticsAttack.Jammed(roll, ActiveWeapon,FireRate,ActivePlayerStats))
+        if(targets.Count > 0)
         {
-            foreach(Transform t in targets)
+            ActiveWeapon.ExpendAmmo(FireRate);
+            int roll = Random.Range(1,10);
+            if(!TacticsAttack.Jammed(roll, ActiveWeapon,FireRate,ActivePlayerStats))
             {
-                PlayerStats CurrentStats = t.GetComponent<PlayerStats>();
-                //only attacker is out of range of the spray. ALLIES CAN GET HIT TOO
-                if(CurrentStats != ActivePlayerStats)
+                foreach(Transform t in targets)
                 {
-                    CurrentStats.SetCondition("Under Fire", 1,false);
-                    RollResult AvoidResult = CurrentStats.AbilityCheck("A",0);
-                    if(!AvoidResult.Passed())
+                    PlayerStats CurrentStats = t.GetComponent<PlayerStats>();
+                    //only attacker is out of range of the spray. ALLIES CAN GET HIT TOO
+                    if(CurrentStats != ActivePlayerStats)
                     {
-                        CombatLog.Log(CurrentStats.GetName() + " is caught in the fire!");
-                        RollResult FireResult = CurrentStats.AbilityCheck("A",0);
-                        if(!FireResult.Passed())
+                        CurrentStats.SetCondition("Under Fire", 1,false);
+                        RollResult AvoidResult = CurrentStats.AbilityCheck("A",0);
+                        if(!AvoidResult.Passed())
                         {
-                            CombatLog.Log(CurrentStats.GetName() + " is set ablaze!");
-                            CurrentStats.SetCondition("On Fire", 0, true);
+                            CombatLog.Log(CurrentStats.GetName() + " is caught in the fire!");
+                            RollResult FireResult = CurrentStats.AbilityCheck("A",0);
+                            if(!FireResult.Passed())
+                            {
+                                CombatLog.Log(CurrentStats.GetName() + " is set ablaze!");
+                                CurrentStats.SetCondition("On Fire", 0, true);
+                            }
+                            TacticsAttack.DealDamage(CurrentStats, ActivePlayerStats, "Body", ActiveWeapon);
                         }
-                        TacticsAttack.DealDamage(CurrentStats, ActivePlayerStats, "Body", ActiveWeapon);
-                    }
-                    else
-                    {
-                        CombatLog.Log(CurrentStats.GetName() + " avoids the fire!");
+                        else
+                        {
+                            CombatLog.Log(CurrentStats.GetName() + " avoids the fire!");
+                        }
                     }
                 }
             }
-        }
         halfActions--;
+        }
         Cancel();
     }
 
@@ -682,32 +737,57 @@ public class TurnActions : MonoBehaviour
 
     public void Ready()
     {
-        List<string> l = new List<string>();
+        currentAction = null;
+        Dictionary<string,string> d = new Dictionary<string, string>();
         foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
         {
-            if (w != ActivePlayerStats.LeftHand && w != ActivePlayerStats.RightHand)
+            if (w != ActivePlayerStats.SecondaryWeapon && w != ActivePlayerStats.PrimaryWeapon && !d.ContainsKey(w.GetName()))
             {
-                l.Add(w.GetName());
+                d.Add(w.GetName(),w.GetName());
             }
         }
-        //if no equipment exists!
-        if(l.Count == 0)
+        if(d.Count == 0 || halfActions < 1)
         {
             Debug.Log("No equipment to display!");
         }
         else
-        {   
-            l.Add("Cancel");
+        {
+            if(ActivePlayerStats.PrimaryWeapon != null)
+            {
+                d.Add("Unequip Primary (" + ActivePlayerStats.PrimaryWeapon.GetName() +")", "PrimaryWeaponUnequip");
+            }
+            if(ActivePlayerStats.SecondaryWeapon != null)
+            {
+                d.Add("Unequip Secondary (" + ActivePlayerStats.SecondaryWeapon.GetName() +")", "SecondaryWeaponUnequip");
+            }
             currentAction = "Ready";
-            ConstructActions(l);
         }
+        d.Add("Cancel","Cancel");
+        ConstructActions(d);
     }
+
+
 
     public void Ready2()
     {
-        Dictionary<string,string> d = new Dictionary<string, string>();
-        d.Add(ActivePlayerStats.RightHand.GetName(), "RightHandUnequip");
-        d.Add(ActivePlayerStats.LeftHand.GetName(), "LeftHandUnequip");
+        Dictionary<string,string> d = new Dictionary<string,string>();
+        string firstButtonName = "Equip Primary";
+        string SecondButtonName = null;
+        if(ActivePlayerStats.PrimaryWeapon != null)
+        {
+            firstButtonName = "Swap Primary (" + ActivePlayerStats.PrimaryWeapon.GetName() +")";
+            SecondButtonName = "Equip Secondary";
+            if(ActivePlayerStats.SecondaryWeapon != null)
+            {
+                SecondButtonName = "Swap Secondary (" + ActivePlayerStats.SecondaryWeapon.GetName() +")";
+            }
+        }
+        d.Add(firstButtonName,"PrimaryWeaponUnequip");
+        if(SecondButtonName != null)
+        {
+            d.Add(SecondButtonName,"SecondaryWeaponUnequip");
+        }
+        d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
 
@@ -730,6 +810,22 @@ public class TurnActions : MonoBehaviour
         ActivePlayerStats.SpendAction("Aim");
         ActivePlayerStats.SetCondition("Full Aiming", 2, true);
         halfActions-= 2;
+        Cancel();
+    }
+
+    public void Extinguish()
+    {
+        if(ActivePlayerStats.AbilityCheck("A",20).Passed())
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " extinguishes the flames!");
+            PopUpText.CreateText("Extinguished!",Color.green,ActivePlayerStats.gameObject);
+            ActivePlayerStats.RemoveCondition("On Fire");
+        }
+        else
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " fails to extinguish the flames!");
+        }
+        halfActions -= 2;
         Cancel();
     }
 
@@ -824,7 +920,13 @@ public class TurnActions : MonoBehaviour
         RollResult DodgeResult = CurrentAttack.target.AbilityCheck("Dodge",0);
         if(DodgeResult.Passed())
         {
+            int dodgedAttacks = CurrentAttack.attacks - DodgeResult.GetDOF() + 1;
+            CombatLog.Log(target.GetName() + " dodges " + dodgedAttacks + " attack(s)");
             CurrentAttack.attacks -= (DodgeResult.GetDOF() + 1); 
+        }
+        else
+        {
+            CombatLog.Log(target.GetName() + " fails to dodge the incoming attack");
         }
         RemoveRange(target);
         ClearActions();
@@ -834,11 +936,23 @@ public class TurnActions : MonoBehaviour
     public void Parry()
     { 
         CurrentAttack.target.SpendAction("reaction");
-        int modifier = 0;
-        RollResult ParryResult = CurrentAttack.target.AbilityCheck("Parry",modifier);
+        int modifier = target.ParryBonus();
+        Debug.Log(modifier);
+        RollResult ParryResult = CurrentAttack.target.AbilityCheck("WS",modifier);
         if(ParryResult.Passed())
         {
+            CombatLog.Log(target.GetName() + " parries the incoming attack!");
             CurrentAttack.attacks--; 
+            if(target.PowerFieldAbility())
+            {
+                PopUpText.CreateText(CurrentAttack.ActiveWeapon.GetName() + " Shattered!", Color.red, CurrentAttack.attacker.gameObject);
+                CurrentAttack.attacker.Unequip(CurrentAttack.ActiveWeapon);
+                CurrentAttack.attacker.equipment.Remove(CurrentAttack.ActiveWeapon);
+            }
+        }
+        else
+        {
+            CombatLog.Log(target.GetName() + " fails to parry the incoming attack!");
         }
         RemoveRange(target);
         ClearActions();
@@ -946,18 +1060,19 @@ public class TurnActions : MonoBehaviour
             }
             for(int i = 0; i < RepeatedAttacks; i++)
             {
-                int randomIndex = Random.Range(1,targets.Count);
+                int randomIndex = Random.Range(0,targets.Count - 1);
                 PlayerStats currentStats = targets[randomIndex].GetComponent<PlayerStats>();
-                //to prevent the shots from hitting the user
                 AttackQueue.Enqueue(new AttackSequence (currentStats, ActivePlayerStats, ActiveWeapon,FireRate,1));
             }
         }
         halfActions -= 2;
+        RemoveRange(ActivePlayerStats);
+        Cancel();
     }
 
     public void CreateThreatRange(string type)
     {
-        GameObject newThreatRange = Instantiate(ThreatRangePrefab, ActivePlayer.transform.position - new Vector3(0,ActivePlayer.transform.position.y - 0.05f,0), Quaternion.identity);
+        GameObject newThreatRange = Instantiate(ThreatRangePrefab, ActivePlayer.transform.position + new Vector3(0,0.05f,0), Quaternion.identity);
         newThreatRange.GetComponent<ThreatRangeBehavior>().SetParameters(type, ActiveWeapon, ActivePlayerStats);
     }
     IEnumerator AttackCoroutine()
@@ -999,7 +1114,7 @@ public class TurnActions : MonoBehaviour
 
     private void AttackSequenceEnd(AttackSequence CurrentAttack)
     {
-        if(CurrentAttack.ActiveWeapon.HasWeaponAttribute("Thrown"))
+        if(CurrentAttack.ActiveWeapon.IsWeaponClass("Thrown"))
         {
             CurrentAttack.ActiveWeapon.ThrowWeapon(CurrentAttack.attacker);
         }

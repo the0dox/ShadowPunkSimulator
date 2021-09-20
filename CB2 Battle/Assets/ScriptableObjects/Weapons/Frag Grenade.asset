@@ -22,7 +22,6 @@ MonoBehaviour:
   unique: 0
   Attributes:
   - Blast
-  - Thrown
   Class: Thrown
   numDice: 2
   sizeDice: 10

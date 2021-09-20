@@ -36,4 +36,4 @@ MonoBehaviour:
   clipMax: 3
   damageType: E
   blast: 0
-  AmmoSource: {fileID: 0}
+  AmmoSource: {fileID: 11400000, guid: 131838402b982c0458d3b829a22bbf5b, type: 2}

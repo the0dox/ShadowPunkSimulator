@@ -58,6 +58,19 @@ public class ThreatRange : MonoBehaviour
 					}
                     visibleTargets.Add (target);
 				}
+				if (!Physics.Raycast (transform.position - new Vector3(0,-0.1f,0), dirToTarget - new Vector3(0,-0.1f,0), dstToTarget, obstacleMask)) {
+					//on hit
+                    //Debug.Log("found you!");
+					
+					if(!visibleTargets.Contains(target))
+					{
+						if(draw)
+						{
+							target.GetComponent<PlayerStats>().PaintTarget();
+						}
+						visibleTargets.Add (target);
+					}
+				}
 			}
 		}
 	}

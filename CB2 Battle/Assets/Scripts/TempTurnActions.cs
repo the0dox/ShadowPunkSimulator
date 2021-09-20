@@ -97,8 +97,8 @@ public class PlayerStats : MonoBehaviour
     public List<Weapon> equipment = new List<Weapon>();
 
     public List<WeaponTemplate> WeaponInitalizer = new List<WeaponTemplate>();
-    public Weapon LeftHand;
-    public Weapon RightHand; 
+    public Weapon SecondaryWeapon;
+    public Weapon PrimaryWeapon; 
 
     //quick reference for what die rolls correspond to a hit location
     private Dictionary<int, string> HitLocations;
@@ -113,7 +113,7 @@ public class PlayerStats : MonoBehaviour
             Weapon w = new Weapon(wt);
             equipment.Add(w);
             
-            if(LeftHand == null || RightHand == null)
+            if(SecondaryWeapon == null || PrimaryWeapon == null)
             {
                 Equip(w);
             }
@@ -218,28 +218,28 @@ public class PlayerStats : MonoBehaviour
     //simple equip reference, returns true if possible
     public bool Equip(Weapon w)
     {
-        if(LeftHand != null && LeftHand.IsWeaponClass("Basic"))
+        if(SecondaryWeapon != null && SecondaryWeapon.IsWeaponClass("Basic"))
         {
-            LeftHand = null;
-            RightHand = null; 
+            SecondaryWeapon = null;
+            PrimaryWeapon = null; 
         } 
         //replacement required for a two handed weapon
         if (w.IsWeaponClass("Basic"))
         {
-            LeftHand = w;
-            RightHand = w; 
+            SecondaryWeapon = w;
+            PrimaryWeapon = w; 
             //Debug.Log("Equiped " + w.GetName() + "!");
             return true;
         }
-        else if ( RightHand == null)
+        else if ( PrimaryWeapon == null)
         {
-            RightHand = w;
+            PrimaryWeapon = w;
             //Debug.Log("Equiped " + w.GetName() + " in the right hand!");
             return true;
         }
-        else if ( LeftHand == null)
+        else if ( SecondaryWeapon == null)
         {
-            LeftHand = w;
+            SecondaryWeapon = w;
             //Debug.Log("Equiped " + w.GetName() + " in the left hand!");
             return true;
         }
@@ -256,25 +256,25 @@ public class PlayerStats : MonoBehaviour
         if (w.IsWeaponClass("Basic"))
         {
             CombatLog.Log("put away all weapons and equiped " + w);
-            LeftHand = null;
-            RightHand = null;
+            SecondaryWeapon = null;
+            PrimaryWeapon = null;
 
             Equip(w);
         } 
         // if holding a two handed weapon, it must be put away with both hands, regardless of the number required for new weapon
         else if (!isDualWielding())
         {
-            CombatLog.Log("put away " + LeftHand.GetName());
-            LeftHand = null;
-            RightHand = null;
+            CombatLog.Log("put away " + SecondaryWeapon.GetName());
+            SecondaryWeapon = null;
+            PrimaryWeapon = null;
         }
         if(location.Equals("Left"))
         {
-            LeftHand = w;
+            SecondaryWeapon = w;
         }
         else if(location.Equals("Right"))
         {
-            RightHand = w;
+            PrimaryWeapon = w;
         }
         else
         {
@@ -284,11 +284,11 @@ public class PlayerStats : MonoBehaviour
 
     public bool isDualWielding()
     {
-        return ( LeftHand != null && RightHand != null &&  LeftHand != RightHand);
+        return ( SecondaryWeapon != null && PrimaryWeapon != null &&  SecondaryWeapon != PrimaryWeapon);
     }
     public bool isHoldingDualWeapon()
     {
-        return ( LeftHand != null && RightHand == LeftHand);
+        return ( SecondaryWeapon != null && PrimaryWeapon == SecondaryWeapon);
     }
 
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
@@ -406,7 +406,7 @@ public class PlayerStats : MonoBehaviour
 
     public bool CanParry()
     {
-        return (LeftHand != null && LeftHand.IsWeaponClass("Melee")) || (RightHand != null && RightHand.IsWeaponClass("Melee")); 
+        return (SecondaryWeapon != null && SecondaryWeapon.IsWeaponClass("Melee")) || (PrimaryWeapon != null && PrimaryWeapon.IsWeaponClass("Melee")); 
     }
 
     //enforces rules on movement, must be called whenever A is changed

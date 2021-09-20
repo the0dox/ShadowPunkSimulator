@@ -44,11 +44,7 @@ public class RollResult
 
     public string Print()
     {
-        if (Passed())
-        {
-            return type + ": " + DieRoll + " > " + Target + " DOF: " + DegreeSuccess;
-        }
-        return type + ": " + DieRoll + " < " + Target + " DOF: " + DegreeSuccess;
+        return type + ": " + DieRoll + " ("  + DegreeSuccess + ")";
     }
 
     public Color GetColor()

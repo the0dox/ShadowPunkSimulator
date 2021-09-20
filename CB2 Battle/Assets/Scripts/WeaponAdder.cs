@@ -27,26 +27,19 @@ public class WeaponAdder : MonoBehaviour
         Selector.AddOptions(results);
     }
 
-    public bool isWeapon()
-    {
-        ItemTemplate selection = weaponLibrary[Selector.captionText.text];
-        if(selection.GetType() == typeof(ItemTemplate))
-        {
-            Debug.Log("selection is an item");
-            return false;
-        }
-        else
-        {
-            Debug.Log("selection is a weapon");
-            return true;
-        }
-    }
     public Item GetItem()
     {
-        if(isWeapon())
+        if(weaponLibrary[Selector.captionText.text].GetType() == typeof(WeaponTemplate))
         {
-            return new Weapon((WeaponTemplate) weaponLibrary[Selector.captionText.text]);
+            return new Weapon((WeaponTemplate)weaponLibrary[Selector.captionText.text]);
         }
-        return new Item(weaponLibrary[Selector.captionText.text]);
+        else if(weaponLibrary[Selector.captionText.text].GetType() == typeof(ArmorTemplate))
+        {
+            return new Armor((ArmorTemplate)weaponLibrary[Selector.captionText.text]);
+        }
+        else
+        {    
+            return new Item(weaponLibrary[Selector.captionText.text]);
+        }
     }
 }

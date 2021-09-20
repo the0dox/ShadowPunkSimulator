@@ -21,22 +21,13 @@ public class UIPlayerInfo : MonoBehaviour
         Text wpTwo = WeaponTwo.GetComponent<Text>();
         wpOne.text = null;
         wpTwo.text = null;
-        if(ps.isHoldingDualWeapon())
+        if(ps.PrimaryWeapon != null)
         {
-            wpOne.text = ps.LeftHand.ToString();
+            wpOne.text = ps.PrimaryWeapon.ToString();
         }
-        else if(ps.LeftHand != null && ps.RightHand == null)
+        if(ps.SecondaryWeapon != null)
         {
-            wpOne.text = ps.LeftHand.ToString();
-        }
-        else if(ps.LeftHand == null && ps.RightHand != null)
-        {
-            wpOne.text = ps.RightHand.ToString();
-        }
-        else if(ps.isDualWielding())
-        {
-            wpOne.text = ps.RightHand.ToString();
-            wpTwo.text = ps.LeftHand.ToString();
+            wpTwo.text = ps.SecondaryWeapon.ToString();
         }
     }
 }

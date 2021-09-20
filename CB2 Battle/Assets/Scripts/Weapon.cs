@@ -37,6 +37,7 @@ public class Weapon : Item
     [SerializeField] private bool jammed = false;
     [SerializeField] private ItemTemplate AmmoSource;
     private string Class;
+    private int Recharging;
 
     public Weapon(WeaponTemplate template)
     {
@@ -65,6 +66,7 @@ public class Weapon : Item
         this.clip = this.clipMax;
         this.damageType = template.damageType;
         this.Class = template.Class;
+        Recharging = 0;
     }
 
     public int GetStat(string key)
@@ -85,15 +87,20 @@ public class Weapon : Item
         return reloadMax;
     }
 
-     public int rollDamage(PlayerStats player)
+     public int rollDamage(PlayerStats player, PlayerStats target)
     {
         int value = 0;
         int i = 0;
+        if(HasWeaponAttribute("Tearing"))
+        {
+            CombatLog.Log(GetName() + " rolls two dice and takes the highest result because of its tearing quality");
+        }
+        string output = "";
+
         while(i < numDice){
             int roll;
-            if(HasWeaponAttribute("Tearing"))
+            if(HasWeaponAttribute("Tearing") || target.IsHelpless())
             {
-                CombatLog.Log(GetName() + " rolls two dice and takes the highest result because of its tearing quality");
                 int roll1 = Random.Range(1,sizeDice);
                 int roll2 = Random.Range(1,sizeDice);
                 if(roll1 >= roll2)
@@ -113,10 +120,37 @@ public class Weapon : Item
             {
                 roll += TacticsAttack.Critical(player, this, false);
             }
+            output += "[" + roll + "] +";
             value += roll; 
             i++;
         }
-        return rollDamage(value, player);
+
+        int DB = damageBonus;
+        //damageBonus is calculated differently for melee weapons SB is added on top of everything else 
+        if (IsWeaponClass("Melee"))
+        {
+            DB += player.GetStatScore("S");
+        }
+        output += " " + DB;
+        value += DB;
+        if(HasWeaponAttribute("Unstable"))
+        {
+            int unstableResult = Random.Range(1,10);
+            if(unstableResult == 10)
+            {
+                CombatLog.Log(GetName() + "'s unstable attribute doubles its damage!");
+                value *= 2;
+                output += " x 2";
+            }
+            else if(unstableResult == 1)
+            {
+                CombatLog.Log(GetName() + "'s unstable attribute halves its damage!");
+                value /= 2;
+                output += " % 2";
+            }
+        }
+        CombatLog.Log(name + ": " + output + " = " + value);
+        return value;
     }
 
     public int rollDamage( int value, PlayerStats player){
@@ -127,7 +161,21 @@ public class Weapon : Item
             DB += player.GetStatScore("S");
         }
         value += DB;
-        CombatLog.Log(name + ": " + numDice + "d" + sizeDice + " + " + DB + " = " + value);
+        if(HasWeaponAttribute("Unstable"))
+        {
+            int unstableResult = Random.Range(1,10);
+            if(unstableResult == 10)
+            {
+                CombatLog.Log(GetName() + "'s unstable attribute doubles its damage!");
+                value *= 2;
+            }
+            else if(unstableResult == 1)
+            {
+                CombatLog.Log(GetName() + "'s unstable attribute halves its damage!");
+                value /= 2;
+            }
+        }
+        CombatLog.Log(name + ": " + DisplayDamageRange() + " = " + value);
         return value;
     }
 
@@ -148,6 +196,10 @@ public class Weapon : Item
 
     public bool CanFire(string FireMode)
     {
+        if(HasWeaponAttribute("Recharge") && Recharging > 0)
+        {
+            return false;
+        }
         if(jammed)
         {
             return false;
@@ -177,6 +229,7 @@ public class Weapon : Item
             {
                 clip = 0;
             }
+            Recharging = 2;
             return cost;
         }
     }
@@ -262,7 +315,7 @@ public class Weapon : Item
 
     public int RangeBonus(Transform target, PlayerStats myStats)
     {
-        if (IsWeaponClass("Melee") || IsWeaponClass("Thrown"))
+        if (IsWeaponClass("Melee"))
         {
             return 0;
         }
@@ -348,6 +401,15 @@ public class Weapon : Item
         return jammed;
     }
 
+    public bool CanParry()
+    {
+        if(!IsWeaponClass("Melee") || HasWeaponAttribute("Unwieldy"))
+        {
+            return false;
+        }
+        return true;
+    }
+
     public string DisplayDamageRange()
     {
         string DB = " ";
@@ -359,9 +421,8 @@ public class Weapon : Item
         {
             DB += " + SB";
         }
-        return "Damage: " + numDice + "d" + sizeDice + DB + " " + damageType;  
+        return "Damage: " + numDice + "d" + sizeDice + DB;  
     }
-
 
     public string AttributesToString()
     {
@@ -396,6 +457,14 @@ public class Weapon : Item
         return clipMax;
     }
 
+    public void OnTurnStart()
+    {
+        if(HasWeaponAttribute("Recharge") && Recharging > 0)
+        {
+            Recharging--;
+        }
+    }
+
     public string reloadToString()
     {
         if(reloadMax % 2 == 0)
@@ -407,6 +476,34 @@ public class Weapon : Item
             return reloadMax + "Half";
         }
     }
+
+    public int GetAdditionalHits(string type, int DOF, int FireRate, bool scatterDistance)
+    {
+        bool scatterExtraAttacks = scatterDistance && HasWeaponAttribute("Scatter");
+        int scatterAttacks = 0;
+        if(scatterExtraAttacks)
+        {
+            Debug.Log("extra attack");
+            scatterAttacks = DOF / 2;
+        }
+        if(type.Equals("S"))
+        {
+            return 1 + scatterAttacks;
+        }
+        int extraAttacks = DOF;
+        if(type.Equals("Semi"))
+        {
+            extraAttacks /= 2;
+        }
+        int numAttacks = 1 + extraAttacks;
+        //cannot get a number of extra attacks equal to 
+        if((numAttacks > FireRate))
+        {
+            numAttacks = FireRate;
+        }
+        return numAttacks + scatterAttacks;
+    }
+
 
     public void ThrowWeapon(PlayerStats owner)
     {

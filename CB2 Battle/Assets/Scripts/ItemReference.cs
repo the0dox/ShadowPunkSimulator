@@ -27,17 +27,4 @@ public class ItemReference : MonoBehaviour
     {
         return Library;
     }
-
-    public static Dictionary<string, WeaponTemplate> WeaponTemplates()
-    {
-        Dictionary<string,WeaponTemplate> output = new Dictionary<string, WeaponTemplate>();
-        foreach(string key in Library.Keys)
-        {
-            if(Library[key].GetType() == typeof(WeaponTemplate))
-            {
-                output.Add(key, (WeaponTemplate) Library[key]);
-            }
-        }
-        return output;
-    }
 }

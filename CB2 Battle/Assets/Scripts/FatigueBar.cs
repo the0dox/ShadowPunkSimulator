@@ -20,7 +20,7 @@ public class FatigueBar : MonoBehaviour
     {
         transform.LookAt(transform.position + Camera.main.transform.rotation *- Vector3.back, Camera.main.transform.rotation *- Vector3.down);
         currentFatigue = player.GetStat("Fatigue");
-        maxFatigue = player.GetStatScore("T");
+        maxFatigue = player.GetStatScore("T") + 1;
         float difference = maxFatigue - currentFatigue;
         if(difference == maxFatigue)
         {

@@ -22,6 +22,7 @@ MonoBehaviour:
   unique: 1
   Attributes:
   - Tearing
+  - Balanced
   Class: Melee
   numDice: 1
   sizeDice: 10

@@ -21,7 +21,7 @@ MonoBehaviour:
     galaxy to retrace the steps of the saints.
   unique: 1
   Attributes:
-  - TwoHanded
+  - Two Handed
   - Primitive
   - Balanced
   Class: Melee

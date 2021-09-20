@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Needle Pistol
+  m_EditorClassIdentifier: 
+  weight: 1.5
+  cost: 1250
+  availablity: Very Rare
+  description: Needle pistols use a low-power laser beam to propel small slivers
+    of crystalline coated in viral toxins. Enemies wounded by them are almost instantly
+    paralysed or dead within moments. As they are virtually silent and have no muzzle
+    flash, needle weapons are ideal for assassins.
+  unique: 1
+  Attributes:
+  - Toxic
+  - Accurate
+  - Silent
+  Class: Pistol
+  numDice: 1
+  sizeDice: 10
+  damageBonus: 0
+  range: 30
+  pen: 0
+  reloadMax: 2
+  single: 1
+  semi: 0
+  auto: 0
+  clipMax: 6
+  damageType: R
+  blast: 0
+  AmmoSource: {fileID: 11400000, guid: 539a8ac10c221e34e858e7b7041dd59f, type: 2}

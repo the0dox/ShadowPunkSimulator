@@ -237,9 +237,9 @@ public class CriticalDamageReference : MonoBehaviour
         Rending.Add("Leg", RendingLeg);
         Master.Add("R",Rending);
     }
-    public static void DealCritical(PlayerStats target, Weapon w, int Damage, string HitLocation)
+    public static void DealCritical(PlayerStats target, string damageType, int Damage, string HitLocation)
     {
-        Dictionary<string,string[]> DamageType = Master[w.GetDamageType()];
+        Dictionary<string,string[]> DamageType = Master[damageType];
         
         string location;
         if(HitLocation.Equals("LeftArm") || HitLocation.Equals("RightArm"))
@@ -265,7 +265,7 @@ public class CriticalDamageReference : MonoBehaviour
         {
             result = LocationType[Damage - 1];
         }
-        string header = target.GetName() + " takes critical (" + Damage + ") " + w.GetDamageType() + " damage!";
+        string header = target.GetName() + " takes critical (" + Damage + ") " + damageType + " damage!";
         GameObject newPopup = Instantiate(Popup);
         newPopup.GetComponent<CriticalPopup>().DisplayText(header, result);
     }

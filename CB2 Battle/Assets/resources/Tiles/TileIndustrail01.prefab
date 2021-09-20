@@ -11,7 +11,7 @@ GameObject:
   - component: {fileID: 6073068602247506578}
   - component: {fileID: 6073068602247506669}
   - component: {fileID: 6073068602247506668}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: Indicator
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -94,7 +94,7 @@ GameObject:
   - component: {fileID: 6073068602674731440}
   - component: {fileID: 6073068602674731447}
   - component: {fileID: 6073068602674731443}
-  m_Layer: 0
+  m_Layer: 3
   m_Name: TileIndustrail01
   m_TagString: Tile
   m_Icon: {fileID: 0}
@@ -194,6 +194,7 @@ MonoBehaviour:
   current: 0
   target: 0
   selectable: 0
+  attack: 0
   selectableRunning: 0
   adjacencyList: []
   visited: 0

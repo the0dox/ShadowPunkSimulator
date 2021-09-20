@@ -67,129 +67,6 @@ public class CharacterSaveData
                 addSkill(new Skill(templates[key], 0));
             }
         }
-        /*
-        SkillNames[0] = "Parry";
-        SkillLevels[0] = 0;
-        SkillChars[0] = "WS";
-        SkillBasic[0] = true;
-
-        SkillNames[1] = "Awareness";
-        SkillLevels[1] = 0;
-        SkillChars[1] = "PER";
-        SkillBasic[1] = true;
-        
-        SkillNames[3] = "Barter";
-        SkillLevels[3] = 0;
-        SkillChars[3] = "FEL";
-        SkillBasic[3] = true;
-
-        SkillNames[4] = "Carouse";
-        SkillLevels[4] = 0;
-        SkillChars[4] = "T";
-        SkillBasic[4] = true;
-        
-        SkillNames[5] = "Charm";
-        SkillLevels[5] = 0;
-        SkillChars[5] = "FEL";
-        SkillBasic[5] = true;
-        
-        SkillNames[6] = "Concealment";
-        SkillLevels[6] = 0;
-        SkillChars[6] = "A";
-        SkillBasic[6] = true;
-        
-        SkillNames[7] = "Contortionist";
-        SkillLevels[7] = 0;
-        SkillChars[7] = "A";
-        SkillBasic[7] = true;
-
-        SkillNames[8] = "Deceive";
-        SkillLevels[8] = 0;
-        SkillChars[8] = "FEL";
-        SkillBasic[8] = true;
-
-        SkillNames[9] = "Disguise";
-        SkillLevels[9] = 0;
-        SkillChars[9] = "FEL";
-        SkillBasic[9] = true;
-        
-        SkillNames[10] = "Dodge";
-        SkillLevels[10] = 0;
-        SkillChars[10] = "A";
-        SkillBasic[10] = true;
-        
-        SkillNames[11] = "Evaluate";
-        SkillLevels[11] = 0;
-        SkillChars[11] = "INT";
-        SkillBasic[11] = true;
-
-        SkillNames[12] = "Gamble";
-        SkillLevels[12] = 0;
-        SkillChars[12] = "INT";
-        SkillBasic[12] = true;
-        
-        SkillNames[13] = "Inquiry";
-        SkillLevels[13] = 0;
-        SkillChars[13] = "FEL";
-        SkillBasic[13] = true;
-
-        SkillNames[14] = "Intimidate";
-        SkillLevels[14] = 0;
-        SkillChars[14] = "S";
-        SkillBasic[14] = true;
-
-        SkillNames[15] = "Logic";
-        SkillLevels[15] = 0;
-        SkillChars[15] = "INT";
-        SkillBasic[15] = true;
-        
-        SkillNames[16] = "Climb";
-        SkillLevels[16] = 0;
-        SkillChars[16] = "S";
-        SkillBasic[16] = true;
-        
-        SkillNames[17] = "Scrutiny";
-        SkillLevels[17] = 0;
-        SkillChars[17] = "PER";
-        SkillBasic[17] = true;
-        
-        SkillNames[18] = "Search";
-        SkillLevels[18] = 0;
-        SkillChars[18] = "PER";
-        SkillBasic[18] = true;
-        
-        SkillNames[19] = "SilentMove";
-        SkillLevels[19] = 0;
-        SkillChars[19] = "A";
-        SkillBasic[19] = true;
-
-        SkillNames[20] = "Swim";
-        SkillLevels[20] = 0;
-        SkillChars[20] = "S";
-        SkillBasic[20] = true;
-        
-        Skills = new List<Skill>();
-        Skills.Add(new Skill("Parry",0,"WS",true));
-        Skills.Add(new Skill("Awareness",0,"PER",true));
-        Skills.Add(new Skill("Barter",0,"FEL",true));
-        Skills.Add(new Skill("Carouse",0,"T",true));
-        Skills.Add(new Skill("Charm",0,"FEL",true));
-        Skills.Add(new Skill("Concealment",0,"A",true));
-        Skills.Add(new Skill("Contortionist",0,"A",true));
-        Skills.Add(new Skill("Deceive",0,"FEL",true));
-        Skills.Add(new Skill("Disguise",0,"FEL",true));
-        Skills.Add(new Skill("Dodge",0,"A",true));
-        Skills.Add(new Skill("Evaluate",0,"INT",true));
-        Skills.Add(new Skill("Gamble",0,"INT",true));
-        Skills.Add(new Skill("Inquiry",0,"FEL",true));
-        Skills.Add(new Skill("Intimidate",0,"S",true));
-        Skills.Add(new Skill("Logic",0,"INT",true));
-        Skills.Add(new Skill("Climb",0,"S",true));
-        Skills.Add(new Skill("Scrutiny",0,"PER",true));
-        Skills.Add(new Skill("Search",0,"PER",true));
-        Skills.Add(new Skill("SilentMove",0,"A",true));
-        Skills.Add(new Skill("Swim",0,"S",true));
-        */
     }
     public Dictionary<int,string> StandardHitLocations()
     {
@@ -367,11 +244,14 @@ public class CharacterSaveData
         {
             if(equipment[i] != null)
             {
-                Dictionary<string, WeaponTemplate> WR = ItemReference.WeaponTemplates();
                 Item current = null;
-                if(WR.ContainsKey(equipment[i]))
+                if(ItemReference.ItemTemplates()[equipment[i]].GetType() == typeof(WeaponTemplate))
                 {
-                    current = new Weapon(WR[equipment[i]]);
+                    current = new Weapon((WeaponTemplate)ItemReference.ItemTemplates()[equipment[i]]);
+                }
+                else if(ItemReference.ItemTemplates()[equipment[i]].GetType() == typeof(ArmorTemplate))
+                {
+                    current = new Armor((ArmorTemplate)ItemReference.ItemTemplates()[equipment[i]]);
                 }
                 else
                 {

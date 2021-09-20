@@ -16,20 +16,34 @@ public class TacticsAttack : MonoBehaviour
         int shotsFired;
         if (w.IsWeaponClass("Melee"))
         {
+            if(w.HasWeaponAttribute("Two Handed") && myStats.IsDualWielding())
+            {
+                Debug.Log("dualwielding");
+                modifiers -= 20;
+            }
+            if(w.HasWeaponAttribute("Defensive"))
+            {
+                Debug.Log("defensive");
+                modifiers -= 10;
+            }
             if(target.hasCondition("Defensive Stance"))
             {
+                Debug.Log("defensive stance");
                 modifiers -= 20;
             }
             if(target.hasCondition("Grappled"))
             {
+                Debug.Log("Grappled");
                 modifiers += 20;
             }
             if(target.hasCondition("Running"))
             {
+                Debug.Log("Running");
                 modifiers += 20;
             }
-            if(w.HasWeaponAttribute("Unarmed") && (target.LeftHand != null && target.LeftHand.IsWeaponClass("Melee")) || (target.LeftHand != null && target.RightHand.IsWeaponClass("Melee")))
+            if(w.HasWeaponAttribute("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.SecondaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee")))) 
             {
+                Debug.Log(w.GetName());
                 modifiers -= 20;
             }
             attackSkill = "WS";
@@ -37,19 +51,50 @@ public class TacticsAttack : MonoBehaviour
         }
         else
         {
+            if(w.IsWeaponClass("Basic") && myStats.IsDualWielding())
+            {
+                Debug.Log("dualwielding");
+                modifiers -= 20;
+            }
             if(target.hasCondition("Running"))
             {
+                Debug.Log("Running");
                 modifiers -= 20;
             }
             attackSkill = "BS";
             shotsFired = w.ExpendAmmo(type);
         }
+        if(w.HasWeaponAttribute("Accurate") && (myStats.hasCondition("Half Aiming") || myStats.hasCondition("Full Aiming")))
+        {
+            Debug.Log("Accurate");
+            modifiers += 10;  
+        }
+        if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Half Aiming")))
+        {
+            modifiers -= 10;  
+        }
+        if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Full Aiming")))
+        {
+            modifiers -= 20;  
+        }
+        if(myStats.OffHandPenalty(w))
+        {
+            Debug.Log("offhand");
+            modifiers -= 20;
+        }
         if(target.hasCondition("Stunned"))
         {
+            Debug.Log("Stunned");
             modifiers += 20;
+        }
+        if(target.hasCondition("Obscured"))
+        {
+            modifiers -= 20;
         }
         if(target.hasCondition("Prone"))
         {
+            
+            Debug.Log("Prone");
             modifiers += 10;
         }
         modifiers += adjacencyBonus(target,w);
@@ -60,9 +105,10 @@ public class TacticsAttack : MonoBehaviour
         {
             return output;
         }
-        if (AttackResult.Passed())
-        {    
-            output.attacks = GetAdditionalHits(type, AttackResult.GetDOF(),shotsFired);
+        if (AttackResult.Passed() || target.IsHelpless())
+        {
+            bool scatterDistance = Vector3.Distance(myStats.gameObject.transform.position, target.gameObject.transform.position) <= 3;
+            output.attacks = w.GetAdditionalHits(type, AttackResult.GetDOF(),shotsFired, scatterDistance);
             return output;
         }
         else
@@ -94,8 +140,8 @@ public class TacticsAttack : MonoBehaviour
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
     {
             Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
-            int damageRoll = w.rollDamage(myStats);
-            int AP = target.Stats[hitBodyPart] + myStats.GetAdvanceBonus(hitBodyPart);
+            int damageRoll = w.rollDamage(myStats,target);
+            int AP = target.GetAP(hitBodyPart, w) + myStats.GetAdvanceBonus(hitBodyPart);
             int soak = target.GetStatScore("T");
             if(cover != null && !w.HasWeaponAttribute("Flame") && !w.HasWeaponAttribute("Blast"))
             {
@@ -117,20 +163,75 @@ public class TacticsAttack : MonoBehaviour
             }
             CombatLog.Log("Incoming damage is reduced by " + AP + " from armor/cover and " + soak + " Toughness for a total of " + result);
             PopUpText.CreateText("Hit " + hitBodyPart + "!: (-" + result + ")", Color.red, target.gameObject); 
-            int CriticalBleed = target.takeDamage(result, hitBodyPart);
-            Debug.Log(CriticalBleed + "");
-            if(CriticalBleed > 0)
+            target.takeDamage(result, hitBodyPart,w.GetDamageType());
+            
+            TacticsAttack.ApplySpecialEffects(target,myStats,hitBodyPart,w,result);
+            
+    }
+
+    public static void ApplySpecialEffects(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w, int result)
+    {
+        if(result > 0 && w.HasWeaponAttribute("Shocking"))
+        {
+            int shockModifier = target.GetStat(hitBodyPart) * 10;
+            if(!target.AbilityCheck("T",shockModifier).Passed())
             {
-                CriticalDamageReference.DealCritical(target,w,CriticalBleed,hitBodyPart);
+                int rounds = result;
+                if(rounds / 2 > 0)
+                {
+                    rounds = rounds/2;
+                }
+                CombatLog.Log("The shocking attribute of " +myStats.GetName() +"'s " + w.GetName() + " stuns " +target.GetName() + " for " + rounds + " rounds");
+                target.SetCondition("Stunned",rounds,true);
             }
+            else
+            {
+                CombatLog.Log(target.GetName() + " resists the shocking attribute of " +myStats.GetName() +"'s " + w.GetName());
+                PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
+            }
+        }
+        if(result > 0 && w.HasWeaponAttribute("Toxic"))
+        {
+            int toxicModifier = result * -5;
+            if(!target.AbilityCheck("T",toxicModifier).Passed())
+            {
+                int damage = Random.Range(1,10);
+                target.takeDamage(damage,"Body");
+                CombatLog.Log("The toxic attribute of " +myStats.GetName() +"'s " + w.GetName() + " deals an additional 1d10 = " + damage + " ignoring soak");
+                PopUpText.CreateText("Posioned!", Color.red, target.gameObject);
+            }
+            else
+            {
+                CombatLog.Log(target.GetName() + " resists the toxic attribute of " +myStats.GetName() +"'s " + w.GetName());
+                PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
+            }
+        }
+        if(w.HasWeaponAttribute("Snare"))
+        {
+            if(!target.AbilityCheck("A",0).Passed())
+            {
+                CombatLog.Log("The snare attribute of " +myStats.GetName() +"'s " + w.GetName() + " immobilises " + target.GetName());
+                target.SetCondition("Immobilised",0,true);
+                target.SetCondition("Prone",0,true);
+                target.SpendAction("Reaction");
+            }
+            else
+            {
+                CombatLog.Log(target.GetName() + " avoids the snare attribute of " +myStats.GetName() +"'s " + w.GetName());
+            }
+        }
+        if(w.HasWeaponAttribute("Smoke"))
+        {
+            CombatLog.Log("Target is covered by smoke!");
+            target.SetCondition("Obscured",3,true);
+        }
     }
 
     public static bool HasValidTarget(PlayerStats target, PlayerStats myStats, Weapon w)
     {
         //if they are on the same team
         if (target.GetTeam() == myStats.GetTeam()){
-            CombatLog.Log(myStats.GetName() + " (team " + myStats.GetTeam() + ": But thats my friend!"); 
-                    
+            //CombatLog.Log(myStats.GetName() + " (team " + myStats.GetTeam() + ": But thats my friend!"); 
             return false;
         }
         float distance = Vector3.Distance(myStats.transform.position, target.transform.position);
@@ -138,20 +239,28 @@ public class TacticsAttack : MonoBehaviour
         List<PlayerStats> meleeCombatants = myStats.gameObject.GetComponent<TacticsMovement>().AdjacentPlayers();
         bool inCombat = (myStats.gameObject.GetComponent<TacticsMovement>().GetAdjacentEnemies(myStats.GetTeam()) > 0);
 
-        //melee weapons can't be used unless adjacent
-        if (!meleeCombatants.Contains(target) && w.IsWeaponClass("Melee"))
-        {
-            Debug.Log(target.GetName() + " is out of melee range");
-            return false;
-            
+        if(w.IsWeaponClass("Melee"))
+        {    
+            return meleeCombatants.Contains(target);
         }
-        //ranged weapons other than pistols can't be fired into melee 
-        else if (inCombat && !w.IsWeaponClass("Melee") && !w.IsWeaponClass("Pistol"))
+        else
         {
-            CombatLog.Log(target.GetName() + " is too close to shoot!");
-            return false;
+            //ranged weapons other than pistols can't be fired into melee 
+            if (inCombat && !w.IsWeaponClass("Pistol"))
+            {
+                //CombatLog.Log(target.GetName() + " is too close to shoot!");
+                return false;
+            }
+
+            //ranged weapons require line of sight 
+            Vector3 myPOV = myStats.gameObject.transform.position + new Vector3(0, myStats.gameObject.GetComponent<Collider>().bounds.extents.y,0);
+            Vector3 TargetPOV = target.gameObject.transform.position + new Vector3(0, target.gameObject.GetComponent<Collider>().bounds.extents.y,0);
+            if(Physics.Linecast(myPOV, TargetPOV, LayerMask.GetMask("Obstacle")))
+            {
+                return false;
+            }
+            return true;
         }
-        return true; 
     }
 
     public static Tile CalculateCover(GameObject attacker,  GameObject target, string HitLocation)
@@ -274,27 +383,6 @@ public class TacticsAttack : MonoBehaviour
         }
         return 0;
     }
-    
-    
-    public static int GetAdditionalHits(string type, int DOF, int ROF)
-    {
-        if(type.Equals("S"))
-        {
-            return 1;
-        }
-        int extraAttacks = DOF;
-        if(type.Equals("Semi"))
-        {
-            extraAttacks /= 2;
-        }
-        int numAttacks = 1 + extraAttacks;
-        //cannot get a number of extra attacks equal to 
-        if(numAttacks > ROF)
-        {
-            numAttacks = ROF;
-        }
-        return numAttacks;
-    }
 
     public static int ROFBonus(string type)
     {
@@ -348,7 +436,7 @@ public class TacticsAttack : MonoBehaviour
        {
            JamTarget = 94;
        }
-       if(w.HasWeaponAttribute("Unreliable"))
+       if(w.HasWeaponAttribute("Unreliable") || w.HasWeaponAttribute("Overheats"))
        {
            JamTarget = 91; 
        }
@@ -377,7 +465,40 @@ public class TacticsAttack : MonoBehaviour
            }
            else
            {
-               PopUpText.CreateText("Jammed!",Color.red,owner.gameObject);
+               if(w.HasWeaponAttribute("Overheats"))
+               {
+                    int overheatResult = Random.Range(1,10);
+                    if(overheatResult > 8)
+                    {
+                        foreach(PlayerStats p in owner.GetComponent<TacticsMovement>().AdjacentPlayers())
+                        {
+                            DealDamage(p,owner,"Body",w);
+                        }
+                        DealDamage(owner,owner,"Body",w);
+                        owner.Unequip(w);
+                        owner.equipment.Remove(w);
+                        CombatLog.Log("The " + w.GetName() +" explodes! hiting everyone within a meter of " + owner.GetName());
+                    }
+                    else if(overheatResult > 5)
+                    {
+                        int energyDamage = Random.Range(1,10) + 2;
+                        int rounds = Random.Range(1,10);
+                        owner.Unequip(w);
+                        owner.takeDamage(energyDamage - owner.GetStat("RightArm") - owner.GetStat("T"), "RightArm");
+                        CombatLog.Log("The " + w.GetName() + " burns the hands of " + owner.GetName() + " dealing 1d10 + 2 = " + energyDamage + "Energy Damage" + "and cannot be used for " + rounds + " rounds");
+                    }
+                    else
+                    {
+                        int rounds = Random.Range(1,10);
+                        owner.Unequip(w);
+                        CombatLog.Log("The " + w.GetName() + " overheats and cannot be used for " + rounds + " rounds");
+                    }
+                   PopUpText.CreateText("Overheats!",Color.red,owner.gameObject);
+               }
+               else
+               {
+                    PopUpText.CreateText("Jammed!",Color.red,owner.gameObject);
+               }
                w.SetJamStatus(true);
                return true;
            }
@@ -400,6 +521,16 @@ public class TacticsAttack : MonoBehaviour
                 {
                     chanceToHit = myStats.GetStat("WS") + myStats.CalculateStatModifiers("WS");// + myStats.CalculateStatModifiers("WS");
                     conditionStack = myStats.DisplayStatModifiers("WS");
+                    if(w.HasWeaponAttribute("Two Handed") && myStats.IsDualWielding())
+                    {
+                        outputStack.Push(" -20%: One Handing");
+                        chanceToHit -= 20;
+                    }        
+                    if(w.HasWeaponAttribute("Defensive"))
+                    {
+                        outputStack.Push("- -10%: Shield Bashing");
+                        chanceToHit -= 10;
+                    }
                     if(target.hasCondition("Defensive Stance"))
                     {
                         outputStack.Push(" -20%: Target Defending");
@@ -415,7 +546,7 @@ public class TacticsAttack : MonoBehaviour
                         outputStack.Push(" +20%: Target Running");
                         chanceToHit += 20;
                     }
-                    if(w.HasWeaponAttribute("Unarmed") && ( (target.LeftHand != null && target.LeftHand.IsWeaponClass("Melee")) || (target.RightHand != null && target.RightHand.IsWeaponClass("Melee"))))
+                    if(w.HasWeaponAttribute("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.PrimaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee"))))
                     {
                         outputStack.Push(" -20%: Unarmed");
                         chanceToHit -= 20;
@@ -431,9 +562,14 @@ public class TacticsAttack : MonoBehaviour
                 {
                     chanceToHit = myStats.GetStat("BS") + myStats.CalculateStatModifiers("BS");
                     conditionStack = myStats.DisplayStatModifiers("BS");
+                    if(w.IsWeaponClass("Basic") && myStats.IsDualWielding())
+                    {
+                        outputStack.Push(" -20%: One Handing");
+                        chanceToHit -= 20;
+                    }
                     if(target.hasCondition("Running"))
                     {
-                        outputStack.Push(" -20: Target Running");
+                        outputStack.Push(" -20%: Target Running");
                         chanceToHit -= 20;
                     }
                     int rangemodifier = w.RangeBonus(target.transform, myStats);
@@ -464,10 +600,35 @@ public class TacticsAttack : MonoBehaviour
                         outputStack.Push(" +" + heightbonus +"%: Height");    
                     }
                 }
+                if(w.HasWeaponAttribute("Accurate") && (myStats.hasCondition("Half Aiming") || myStats.hasCondition("Full Aiming")))
+                {
+                    outputStack.Push(" +10%: Accurate");
+                    chanceToHit += 10;    
+                }
+                if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Half Aiming")))
+                {
+                    outputStack.Push(" -10%: Inaccurate");
+                    chanceToHit -= 10;  
+                }
+                if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Full Aiming")))
+                {
+                    outputStack.Push(" -20%: Inaccurate");
+                    chanceToHit -= 20;  
+                }
+                if(myStats.OffHandPenalty(w))
+                { 
+                    outputStack.Push(" -20%: Using Off Hand");
+                    chanceToHit -= 20;
+                }
                 if(target.hasCondition("Stunned"))
                 {
                     outputStack.Push(" +20%: Target Stunned");
                     chanceToHit += 20;
+                }
+                if(target.hasCondition("Obscured"))
+                {
+                    outputStack.Push(" -20%: Target Obscured");
+                    chanceToHit -= 20;
                 }
                 if(target.hasCondition("Prone"))
                 {
@@ -554,35 +715,3 @@ public class TacticsAttack : MonoBehaviour
         }
     }
 }
-
-
-
-
-/* Instantiate(displayText, transform.position + new Vector3(0, 1.75f, 0), Quaternion.identity).GetComponent<DisplayTextScript>().setText(AttackResult.Print(), Color.green);
-            int numAttacks = GetAdditionalHits(type, AttackResult.GetDOF(),shotsFired);
-
-            int dodgeModifiers = 0; 
-            
-            if (HasReaction(target.gameObject))
-            {
-                //to implement: choice to dodge
-            }
-            
-            RollResult dodgeResult = target.AbilityCheck("Dodge", dodgeModifiers);
-
-            if (dodgeResult.Passed())
-            {
-                Instantiate(displayText, target.gameObject.transform.position + new Vector3(0, 1.75f, 0), Quaternion.identity).GetComponent<DisplayTextScript>().setText(dodgeResult.Print(), Color.yellow);
-            }
-            else
-            {
-                //Instantiate(displayText, target.gameObject.transform.position + new Vector3(0, 1.75f, 0), Quaternion.identity).GetComponent<DisplayTextScript>().setText("Failed Dodge!: (" + dodgeRoll + " < " + (target.GetStat("A")/2) + ")", Color.red);
-                
-                DealDamage(target, myStats, AttackResult.GetRoll(), w);          
-            }
-        }
-        else
-        {
-            Instantiate(displayText, transform.position + new Vector3(0, 1.75f, 0), Quaternion.identity).GetComponent<DisplayTextScript>().setText(AttackResult.Print(), Color.red);
-        }
-*/

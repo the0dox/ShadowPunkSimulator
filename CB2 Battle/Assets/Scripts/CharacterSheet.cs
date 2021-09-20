@@ -90,12 +90,13 @@ public class CharacterSheet : MonoBehaviour
             Destroy(g);
         }
         PlayerEquipment.Clear();
-        List<Weapon> newEquipment = new List<Weapon>();
         //weapons
         foreach(Item i in Equipment)
         {
+            Debug.Log(i.GetName() + " " + i.GetType());
             PlayerEquipment.Add(i);
         }
+        output.CompleteDownload();
         Destroy(gameObject);
     }
 
@@ -180,6 +181,15 @@ public class CharacterSheet : MonoBehaviour
                 }
             }
         }
+        foreach(Skill s in PlayerSkills)
+        {
+            if(!s.visible)
+            {
+                GameObject hiddenSkill = CreateSkill(s,PlacementPosBasic);
+                LastSkills.Push(hiddenSkill);
+                hiddenSkill.transform.SetParent(null);
+            }
+        }
         foreach(Item i in PlayerEquipment)
         {
             CreateItem(i);
@@ -240,16 +250,15 @@ public class CharacterSheet : MonoBehaviour
 
     public void CreateItem(Item input)
     {
+        
         bool stacked = false;
         if(input.Stackable())
         {
-            Debug.Log(input.GetName() +"can be stacked");
             foreach(Item i in Equipment)
             {
                 if(i.GetName().Equals(input.GetName()))
                 {
                     i.AddStack();
-                    Debug.Log("character now has " + i.GetStacks() + " " + i.GetName());
                     stacked = true;
                 }
             }

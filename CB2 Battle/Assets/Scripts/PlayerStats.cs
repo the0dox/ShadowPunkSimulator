@@ -14,6 +14,7 @@ public class PlayerStats : MonoBehaviour
     public PlayerStats grappleTarget;
     public GameObject model;
     public Material SelectedColor;
+    private Material DefaultColor;
     public CharacterSaveData myData;
     private int AdvanceBonus;
     public GameObject MyCharacterSheet;
@@ -26,8 +27,8 @@ public class PlayerStats : MonoBehaviour
     //level of skill training a character has, is called first
     public List<Skill> Skills = new List<Skill>();
     public List<Item> equipment = new List<Item>();
-    public Weapon LeftHand;
-    public Weapon RightHand; 
+    public Weapon SecondaryWeapon;
+    public Weapon PrimaryWeapon; 
 
     //quick reference for what die rolls correspond to a hit location
     private Dictionary<int, string> HitLocations;
@@ -48,9 +49,12 @@ public class PlayerStats : MonoBehaviour
     public void Init()
     {
         UpdateMovement();
-        foreach(Weapon w in GetWeaponsForEquipment())
-        {   
-            Equip(w);
+        UpdateAP();
+        DefaultColor = model.GetComponent<MeshRenderer>().material;
+        Weapon firstWep = GetWeaponsForEquipment().ToArray()[0];
+        if(firstWep != null)
+        {
+            EquipPrimary(firstWep);
         }
     }
 
@@ -78,38 +82,37 @@ public class PlayerStats : MonoBehaviour
         location: reveresed die roll for hit location
         takes unaltered damage and applies any damage reduction and subtracts from health
     */
-    public int takeDamage(int damage, string location)
+    public void takeDamage(int damage, string location)
+    {
+        takeDamage(damage,location, "I");
+    }
+
+    public void takeDamage(int damage, string location,string damageType)
     {
         //Debug.Log(playername + "'s " + location + " armor reduces the incoming damage to " + damage);
         if (damage > 0) {
             Stats["Wounds"] -= damage;
         }
         if(Stats["Wounds"] < 0)
-        {
-            return TakeCritical();
+        {    
+            Stats["Critical"] -= Stats["Wounds"];
+            Stats["Wounds"] = 0;
+            CriticalDamageReference.DealCritical(this, damageType, Stats["Critical"],location);
         }
-        return 0;
-    }
-
-    public int TakeCritical()
-    {
-        Stats["Critical"] -= Stats["Wounds"];
-        Stats["Wounds"] = 0;
-        return Stats["Critical"];
     }
 
     public void takeFatigue(int levels)
     {
-        if(!hasCondition("Fatigued"))
-        {
-            SetCondition("Fatigued",0,true);
-        }
         if (levels > 0)
         {
+            if(!hasCondition("Fatigued"))
+            {
+                SetCondition("Fatigued",0,true);
+            }
             CombatLog.Log(name + " takes " + levels + " levels of fatigue");
             Stats["Fatigue"] += levels;
         }
-        if(Stats["Fatigue"] >= GetStatScore("T"))
+        if(Stats["Fatigue"] > GetStatScore("T"))
         {
             CombatLog.Log(name + " takes more fatigue than their Toughness bonus and is knocked out!");
             SetCondition("Unconscious",0,true);
@@ -143,7 +146,12 @@ public class PlayerStats : MonoBehaviour
     public void SetStat(string key, int value)
     {
         Stats[key] = value; 
+    }
+
+    public void CompleteDownload()
+    {
         UpdateMovement();
+        UpdateAP();
     }
 
     public void SetSkill(Skill input)
@@ -163,92 +171,35 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
-    //simple equip reference, returns true if possible
-    public bool Equip(Weapon w)
-    {
-        if(LeftHand != null && LeftHand.IsWeaponClass("Basic"))
-        {
-            LeftHand = null;
-            RightHand = null; 
-        } 
-        //replacement required for a two handed weapon
-        if (w.IsWeaponClass("Basic"))
-        {
-            LeftHand = w;
-            RightHand = w; 
-            //Debug.Log("Equiped " + w.GetName() + "!");
-            return true;
-        }
-        else if ( RightHand == null)
-        {
-            RightHand = w;
-            //Debug.Log("Equiped " + w.GetName() + " in the right hand!");
-            return true;
-        }
-        else if ( LeftHand == null)
-        {
-            LeftHand = w;
-            //Debug.Log("Equiped " + w.GetName() + " in the left hand!");
-            return true;
-        }
-        else
-        {
-            //Debug.Log("Can't equip a weapon! needs to free hands!");
-            return false;
-        }
-    }
-
     public void Unequip(Weapon w)
     {
-        if(LeftHand == w)
+        if(SecondaryWeapon == w)
         {
-            LeftHand = null;
+            SecondaryWeapon = null;
         }
-        if(RightHand == w)
+        if(PrimaryWeapon == w)
         {
-            RightHand = null;
-        }
-    }
-
-    public void Equip(Weapon w, string location)
-    {
-        // double replacement required for a two handed weapon
-        if (w.IsWeaponClass("Basic"))
-        {
-            CombatLog.Log("put away all weapons and equiped " + w);
-            LeftHand = null;
-            RightHand = null;
-
-            Equip(w);
-        } 
-        // if holding a two handed weapon, it must be put away with both hands, regardless of the number required for new weapon
-        else if (!isDualWielding())
-        {
-            CombatLog.Log("put away " + LeftHand.GetName());
-            LeftHand = null;
-            RightHand = null;
-        }
-        if(location.Equals("Left"))
-        {
-            LeftHand = w;
-        }
-        else if(location.Equals("Right"))
-        {
-            RightHand = w;
-        }
-        else
-        {
-            CombatLog.Log("Invalid location entered!");
+            PrimaryWeapon = null;
         }
     }
 
-    public bool isDualWielding()
+    public void EquipPrimary(Weapon w)
     {
-        return ( LeftHand != null && RightHand != null &&  LeftHand != RightHand);
+        PrimaryWeapon = w;
     }
-    public bool isHoldingDualWeapon()
+    public void EquipSecondary(Weapon w)
     {
-        return ( LeftHand != null && RightHand == LeftHand);
+        SecondaryWeapon = w;
+    }
+
+    public bool IsDualWielding()
+    {
+        return(PrimaryWeapon != null && SecondaryWeapon != null);
+    }
+
+    public bool OffHandPenalty(Weapon w)
+    {
+        return (w == SecondaryWeapon);
     }
 
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
@@ -269,15 +220,8 @@ public class PlayerStats : MonoBehaviour
             SkillTarget = GetStat(type);
             if (LevelsTrained < 1)
                 {
-                    if(convertedSkill.basic)
-                    {
-                        SkillTarget = SkillTarget/2;
-                    }
-                    else
-                    {
-                        Debug.Log("Cannot attempt untrained advanced skill!");
-                        SkillTarget = 0;
-                    }
+                    //to implement, custom basic skills    
+                    SkillTarget = SkillTarget/2;
                 }
                 else
                 {
@@ -297,7 +241,18 @@ public class PlayerStats : MonoBehaviour
 
         SkillTarget += modifiers += ConditionalModifiers;   
         int DOF = (SkillTarget - Roll)/10;
-        CombatLog.Log(input + ": rolled a " + Roll + " against a " + SkillTarget + " for " + DOF + "Degrees of success");
+        
+        string clstring = GetName() + ": "  + input + " check \n    Target:" + SkillTarget +"\n     Roll: " + Roll +"\n     Result: ";
+        
+        if(Roll <= SkillTarget)
+        {   
+            clstring += "passed by " + DOF + " degree(s)";
+        }
+        else
+        {
+            clstring += "failed by " + DOF + " degree(s)";
+        }
+        CombatLog.Log(clstring);
         RollResult output = new RollResult(DOF, Roll, SkillTarget, type);
         PopUpText.CreateText(output.Print(),output.GetColor(),gameObject);
         return output;
@@ -395,7 +350,71 @@ public class PlayerStats : MonoBehaviour
 
     public bool CanParry()
     {
-        return (LeftHand != null && LeftHand.IsWeaponClass("Melee")) || (RightHand != null && RightHand.IsWeaponClass("Melee")); 
+        return (SecondaryWeapon != null && SecondaryWeapon.CanParry() || (PrimaryWeapon != null && PrimaryWeapon.CanParry())); 
+    }
+
+    public int ParryBonus()
+    {
+        int primaryBonus = -99;
+        if(PrimaryWeapon != null && PrimaryWeapon.CanParry())
+        {
+            primaryBonus = 0;
+            if (PrimaryWeapon.HasWeaponAttribute("Defensive"))
+            {
+                primaryBonus += 15;
+            }
+            if(PrimaryWeapon.HasWeaponAttribute("Balanced"))
+            {
+                primaryBonus += 10;
+            }
+            if(PrimaryWeapon.HasWeaponAttribute("Unbalanced"))
+            {
+                primaryBonus -= 10;
+            }
+        }
+        
+        int secondaryBonus = -99;
+        if(SecondaryWeapon != null && SecondaryWeapon.CanParry())
+        {
+            secondaryBonus = 0;
+            if (SecondaryWeapon != null && SecondaryWeapon.HasWeaponAttribute("Defensive"))
+            {
+                secondaryBonus += 15;
+            }
+            if(SecondaryWeapon != null && SecondaryWeapon.HasWeaponAttribute("Balanced"))
+            {
+                secondaryBonus += 10;
+            }
+            if(SecondaryWeapon.HasWeaponAttribute("Unbalanced"))
+            {
+                secondaryBonus -= 10;
+            }
+        }
+        if((primaryBonus > secondaryBonus))
+        {
+            return primaryBonus;
+        }
+        else
+        {
+            return secondaryBonus;
+        }
+    }
+
+    public bool PowerFieldAbility()
+    {
+        if((PrimaryWeapon == null || !PrimaryWeapon.HasWeaponAttribute("Power Field")) && (SecondaryWeapon == null || !SecondaryWeapon.HasWeaponAttribute("Power Field")))
+        {
+            return false;
+        }
+        else
+        {
+            if (Random.Range(1,100) >= 25)
+            {
+                CombatLog.Log(GetName() + " 's power field shatters the attackers weapon!");
+                return true;
+            }
+            return false;  
+        }
     }
 
     //enforces rules on movement, must be called whenever A is changed
@@ -480,6 +499,35 @@ public class PlayerStats : MonoBehaviour
             }
         }
         return outputStack;
+    }
+
+    //given a hitlocation and if the damage source is primitive, returns if the player has any armor covering that point 
+    public int GetAP(string HitLocation, Weapon w)
+    {
+        int bestAP = 0;
+        foreach(Item i in equipment)
+        {
+            //only check armor
+            if(i.GetType() == typeof(Armor))
+            {
+                Armor a = (Armor)i;
+                int currentAP = a.GetAP(HitLocation, w);
+                if(currentAP > bestAP)
+                {
+                    bestAP = currentAP;
+                }
+            }
+        }
+        return bestAP;
+    }
+
+    //like updatemovement, players can't actually input their AP instead the display is modified to show their best AP from their equiped armor
+    public void UpdateAP()
+    {
+        foreach(KeyValuePair<int,string> kvp in HitLocations)
+        {
+            Stats[kvp.Value] = GetAP(kvp.Value, null);
+        }
     }
 
     //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
@@ -572,10 +620,11 @@ public class PlayerStats : MonoBehaviour
 
     IEnumerator PaintCoroutine()
     {
-        Material original = model.GetComponent<MeshRenderer>().material;
-        model.GetComponent<MeshRenderer>().material = SelectedColor;;
+        model.GetComponent<MeshRenderer>().material = SelectedColor;
+        Debug.Log("painted");
         yield return new WaitForSeconds (0.2f);
-        model.GetComponent<MeshRenderer>().material = original;
+        Debug.Log("unpainted");
+        model.GetComponent<MeshRenderer>().material = DefaultColor;
     }
 
     public void ApplyAdvanceBonus(int bonus)
@@ -634,6 +683,19 @@ public class PlayerStats : MonoBehaviour
             }
         }
         return output;
+    }
+
+    public bool IsHelpless()
+    {
+        if(hasCondition("Immobilised") || hasCondition("Unconscious"))
+        {
+            CombatLog.Log(GetName() + " is helpless! attacks automatically succeded and take the highest of two results for damage!");
+            return true;
+        }
+        else
+        {
+            return false;
+        }
     }
 
     public bool IsOccupied()
