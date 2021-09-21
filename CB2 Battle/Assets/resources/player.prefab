@@ -235,7 +235,8 @@ MonoBehaviour:
   myData:
     team: 0
     playername: 
-    weapons: []
+    equipment: []
+    equipmentSize: 
   MyCharacterSheet: {fileID: 0}
 --- !u!114 &3973098909683050136
 MonoBehaviour:

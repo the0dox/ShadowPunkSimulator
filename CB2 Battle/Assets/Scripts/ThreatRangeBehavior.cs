@@ -5,13 +5,14 @@ using UnityEngine;
 public class ThreatRangeBehavior : MonoBehaviour
 {
     [SerializeField]
-    public ThreatRange myRange;
+    public ThreatCone myRange;
     public string threatType;
     public TurnManager TurnManager;
     private RaycastHit hit;
     private PlayerStats attacker;
     private Weapon w;
     bool controllable = true;
+    public GameObject ConeToken;
     public GameObject BlastToken;
     void Update()
     {
@@ -103,7 +104,31 @@ public class ThreatRangeBehavior : MonoBehaviour
     {
         TurnManager = GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>();
         threatType = type;
-        BlastToken.SetActive(type.Equals("Blast"));
+        Vector3 dimensions;
+        if(type.Equals("Blast"))
+        {
+            BlastToken.SetActive(true);
+            ConeToken.SetActive(false);
+            myRange = BlastToken.GetComponent<ThreatCone>();
+            dimensions = new Vector3(w.GetBlast() * 2,w.GetBlast() * 2,w.GetBlast() * 2);
+        }
+        else
+        {
+            BlastToken.SetActive(false);
+            ConeToken.SetActive(true);
+            myRange = ConeToken.GetComponent<ThreatCone>();
+            myRange.avoidOwner = attacker.transform;
+            if(type.Equals("Flame"))
+            {
+                dimensions = new Vector3((float) w.getRange(attacker) * 0.66f,w.getRange(attacker),w.getRange(attacker));
+            }
+            else
+            {
+                dimensions = new Vector3(w.getRange(attacker)/2,w.getRange(attacker)/2,w.getRange(attacker)/2);
+            }
+        }
+        myRange.transform.localScale = dimensions;
+        /*
         if(type.Equals("Flame"))
         {
             myRange.viewAngle = 30f;
@@ -122,6 +147,7 @@ public class ThreatRangeBehavior : MonoBehaviour
         {
             myRange.viewRadius = w.getRange(attacker)/2;
         }
+        */
         this.attacker = attacker;
         this.w = w;
     }

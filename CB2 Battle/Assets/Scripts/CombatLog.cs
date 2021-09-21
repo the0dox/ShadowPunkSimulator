@@ -14,7 +14,6 @@ public class CombatLog : MonoBehaviour
         string output = text + "\n-----------------------------------------------------\n";  
         g.GetComponent<Text>().text += (output);
         int indents = output.Split('\n').Length - 1;
-        Debug.Log("output has " + indents + "indents");
         g.GetComponent<RectTransform>().transform.position += new Vector3(0, 7.25f * indents, 0);
     }
 

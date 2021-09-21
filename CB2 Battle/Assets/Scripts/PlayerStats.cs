@@ -15,6 +15,7 @@ public class PlayerStats : MonoBehaviour
     public GameObject model;
     public Material SelectedColor;
     private Material DefaultColor;
+    private bool painted;
     public CharacterSaveData myData;
     private int AdvanceBonus;
     public GameObject MyCharacterSheet;
@@ -50,11 +51,33 @@ public class PlayerStats : MonoBehaviour
     {
         UpdateMovement();
         UpdateAP();
+        StartCoroutine(modelDisplayDelay());
         DefaultColor = model.GetComponent<MeshRenderer>().material;
-        Weapon firstWep = GetWeaponsForEquipment().ToArray()[0];
-        if(firstWep != null)
+        Weapon[] startingequipment = GetWeaponsForEquipment().ToArray();
+        if (startingequipment.Length > 0)
         {
-            EquipPrimary(firstWep);
+            Weapon firstWep = startingequipment[0];
+            if(firstWep != null)
+            {
+                EquipPrimary(firstWep);
+            }
+        }
+    }
+
+    IEnumerator modelDisplayDelay()
+    {
+        while(true)
+        {
+            yield return new WaitForSeconds (0.02f);
+            if(painted)
+            {
+                painted = false;
+                model.GetComponent<MeshRenderer>().material = SelectedColor;
+            }
+            else
+            {    
+                model.GetComponent<MeshRenderer>().material = DefaultColor;
+            }
         }
     }
 
@@ -583,7 +606,7 @@ public class PlayerStats : MonoBehaviour
 
     public void PaintTarget()
     {
-        StartCoroutine(PaintCoroutine());    
+        painted = true;
     }
 
     public void SetGrappler(PlayerStats attacker)
@@ -616,15 +639,6 @@ public class PlayerStats : MonoBehaviour
     public bool grappling()
     {
         return (grappleTarget != null || grappler != null);
-    }
-
-    IEnumerator PaintCoroutine()
-    {
-        model.GetComponent<MeshRenderer>().material = SelectedColor;
-        Debug.Log("painted");
-        yield return new WaitForSeconds (0.2f);
-        Debug.Log("unpainted");
-        model.GetComponent<MeshRenderer>().material = DefaultColor;
     }
 
     public void ApplyAdvanceBonus(int bonus)

@@ -137,7 +137,11 @@ public class TurnManager : TurnActions
                 case "Disengage":
                     if (!ActivePlayer.moving)
                     {
-                            ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveHalf"), ActivePlayerStats.GetTeam());         
+                        ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveHalf"), ActivePlayerStats.GetTeam());     
+                        if(halfActions < 1)
+                        {
+                            Cancel();
+                        }   
                     }
                     else 
                     {
@@ -299,7 +303,15 @@ public class TurnManager : TurnActions
                         {
                             //make tile green
                             ActivePlayer.moveToTile(t);
-                            halfActions-=2;
+                            if(ActivePlayerStats.AbilityCheck("Acrobatics",0).Passed())
+                            {
+                                CombatLog.Log(ActivePlayerStats.GetName() + "'s successful acrobatics check reduces the cost of disengaging to a half action");
+                                halfActions--;
+                            }
+                            else
+                            {
+                                halfActions -= 2;
+                            }
                         }
                     }
                     break;

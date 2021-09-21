@@ -272,9 +272,23 @@ public class TurnActions : MonoBehaviour
         int result = ActivePlayerStats.OpposedAbilityCheck("S",ActivePlayerStats.grappler,0,0);
         if(result > 0)
         {
+            CombatLog.Log(ActivePlayerStats.GetName() + " gains control of the grapple!");
             ActivePlayerStats.ControlGrapple();
         }
+        CombatLog.Log(ActivePlayerStats.GetName() + " fails to control the grapple!");
         halfActions -= 2;
+        Cancel();
+    }
+
+    public void GrappleContortionist()
+    {
+        if(ActivePlayerStats.AbilityCheck("Contortionist",0).Passed())
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " escapes the grapple!");
+            ActivePlayerStats.grappler.ReleaseGrapple();
+        }
+        CombatLog.Log(ActivePlayerStats.GetName() + " is unable to escape the grapple.");
+        halfActions -=2;
         Cancel();
     }
 
@@ -283,14 +297,17 @@ public class TurnActions : MonoBehaviour
         int result = ActivePlayerStats.OpposedAbilityCheck("S",ActivePlayerStats.grappleTarget,0,0);
         if(result > 0)
         {
+            CombatLog.Log(ActivePlayerStats.GetName() + " strikes their grapple target!");
             TacticsAttack.DealDamage(ActivePlayerStats.grappleTarget,ActivePlayerStats,"Body",new Weapon(unarmed));
         }
+        CombatLog.Log(ActivePlayerStats.GetName() + " is unable to strike their grapple target.");
         halfActions -= 2;
         Cancel();
     }
 
     public void GrappleRelease()
     {
+        CombatLog.Log(ActivePlayerStats.GetName() + " chooses to end the grapple!");
         ActivePlayerStats.ReleaseGrapple();
         Cancel();
     }
@@ -442,11 +459,12 @@ public class TurnActions : MonoBehaviour
                 if(ActivePlayerStats.hasCondition("Grappled"))
                 {
                     d.Add("Control Grapple","GrappleControl");
+                    d.Add("Escape Grapple","GrappleContortionist");
                 }
                 else
                 {
                     d.Add("Scuffle", "GrappleScuffle");
-                    d.Add("Release Grappe","GrappleRelease");
+                    d.Add("Release Grapple","GrappleRelease");
                 }
             }
         }
@@ -739,19 +757,16 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = null;
         Dictionary<string,string> d = new Dictionary<string, string>();
-        foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
+        
+        if(halfActions > 0)
         {
-            if (w != ActivePlayerStats.SecondaryWeapon && w != ActivePlayerStats.PrimaryWeapon && !d.ContainsKey(w.GetName()))
+            foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
             {
-                d.Add(w.GetName(),w.GetName());
+                if (w != ActivePlayerStats.SecondaryWeapon && w != ActivePlayerStats.PrimaryWeapon && !d.ContainsKey(w.GetName()))
+                {
+                    d.Add(w.GetName(),w.GetName());
+                }
             }
-        }
-        if(d.Count == 0 || halfActions < 1)
-        {
-            Debug.Log("No equipment to display!");
-        }
-        else
-        {
             if(ActivePlayerStats.PrimaryWeapon != null)
             {
                 d.Add("Unequip Primary (" + ActivePlayerStats.PrimaryWeapon.GetName() +")", "PrimaryWeaponUnequip");
@@ -920,8 +935,8 @@ public class TurnActions : MonoBehaviour
         RollResult DodgeResult = CurrentAttack.target.AbilityCheck("Dodge",0);
         if(DodgeResult.Passed())
         {
-            int dodgedAttacks = CurrentAttack.attacks - DodgeResult.GetDOF() + 1;
-            CombatLog.Log(target.GetName() + " dodges " + dodgedAttacks + " attack(s)");
+            int dodgedAttacks = DodgeResult.GetDOF() + 1;
+            CombatLog.Log(CurrentAttack.target.GetName() + " dodges " + dodgedAttacks + " attack(s)");
             CurrentAttack.attacks -= (DodgeResult.GetDOF() + 1); 
         }
         else
