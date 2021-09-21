@@ -9,6 +9,7 @@ public class TurnManager : TurnActions
     static Dictionary<TacticsMovement, float> units = new Dictionary<TacticsMovement, float>();
     static Queue<string> turnKey = new Queue<string>();
     private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
+    [SerializeField] private GameObject DebugToolTipReference; 
     public GameObject CharacterSheet;
     public GameObject SkillModifierScript;
     public InitativeTrackerScript It;
@@ -29,7 +30,7 @@ public class TurnManager : TurnActions
             TryReaction();
         }
         //Where all possible actions take place
-        else if (CurrentAttack == null && !CameraButtons.UIActive()) 
+        else if (ActivePlayer != null && CurrentAttack == null && !CameraButtons.UIActive()) 
         {
             if (halfActions < 0)
             {
@@ -227,7 +228,10 @@ public class TurnManager : TurnActions
                     case "Move":
                         if(hit.collider.tag == "Player" && !ActivePlayer.moving)
                         {
-                            StartTurn(hit.collider.GetComponent<TacticsMovement>());
+                            GameObject DBT = Instantiate(DebugToolTipReference) as GameObject;
+                            DBT.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
+                            DBT.transform.position = Input.mousePosition;
+                            DBT.GetComponent<DebugTooltip>().UpdateStatIn(hit.collider.GetComponent<PlayerStats>());
                         }
                     break;
                     default:
@@ -764,5 +768,46 @@ public class TurnManager : TurnActions
             InitativeOrder.Enqueue(tm);
             StartTurn(tm);
         }
+        PrintInitiative();
+    }
+
+    public void RemovePlayer(GameObject Player)
+    {
+        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
+        TacticsMovement tm = Player.GetComponent<TacticsMovement>();
+        if(InitativeOrder.Peek() == tm)
+        {
+            EndTurn();
+        }
+        Sorter.Remove(units[tm]);
+        units.Remove(tm);
+        if(InitativeOrder.Count > 1)
+        {
+            TacticsMovement SavedPostion = InitativeOrder.Dequeue();
+            InitativeOrder.Clear();
+            //moved to a stack to reverse order 
+            foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) {
+                TempStack.Push(kvp.Value);
+            }
+
+            //finally added to Queue in correct order
+            while(TempStack.Count != 0){
+                InitativeOrder.Enqueue(TempStack.Pop());
+            }
+
+            while(InitativeOrder.Peek() != SavedPostion)
+            {
+                InitativeOrder.Enqueue(InitativeOrder.Dequeue());
+            }
+        }
+        else
+        {
+            Player.GetComponent<TacticsMovement>().RemoveSelectableTiles();
+            ActivePlayerStats = null;
+            ActivePlayer = null;
+            InitativeOrder.Clear();
+        }
+        Destroy(Player);
+        PrintInitiative();
     }
 }

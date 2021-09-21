@@ -23,4 +23,9 @@ public class ConditionsReference : MonoBehaviour
         }
         return Library[name];
     }
+
+    public static Dictionary<string, ConditionTemplate> ConditionTemplates()
+    {
+        return Library;
+    }
 }

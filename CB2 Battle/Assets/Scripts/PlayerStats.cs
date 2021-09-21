@@ -132,12 +132,12 @@ public class PlayerStats : MonoBehaviour
             {
                 SetCondition("Fatigued",0,true);
             }
-            CombatLog.Log(name + " takes " + levels + " levels of fatigue");
+            CombatLog.Log(GetName() + " takes " + levels + " levels of fatigue");
             Stats["Fatigue"] += levels;
         }
         if(Stats["Fatigue"] > GetStatScore("T"))
         {
-            CombatLog.Log(name + " takes more fatigue than their Toughness bonus and is knocked out!");
+            CombatLog.Log(GetName() + " takes more fatigue than their Toughness bonus and is knocked out!");
             SetCondition("Unconscious",0,true);
         }
     }
