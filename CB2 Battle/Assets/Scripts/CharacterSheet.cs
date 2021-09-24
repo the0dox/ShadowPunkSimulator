@@ -3,25 +3,38 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// UI window used for editing characters, can take save data or active map tokens
 public class CharacterSheet : MonoBehaviour
 {
+    // editable fields for basic stats like BS,WS etc
     private Dictionary<string, InputFieldScript> TextEntries;
-    
+    // depreciated
     private Dictionary<string, SkillScript> BasicSkillEntries;
-    
+    // depreciated
     private Dictionary<int, WeaponInputScript> WeaponEntries;
-
+    // reference for editing savedata
     private static CharacterSaveData ActivePlayer; 
+    // reference for editing map tokens
     private static PlayerStats ActivePlayerStats; 
+    // an indvidual field for displaying weapon stats
     [SerializeField] private GameObject WeaponDisplay;
+    // unique inputfield that saves the players name
     [SerializeField] private InputField NameField;
+    // reference to the skillinputfield prefab
     [SerializeField] private GameObject SkillInputButton;
+    // reference to the skill adder button so that its position can be modified
     [SerializeField] private GameObject SkillAdderButton;
+    // Stack used to preserve order all skills when one is removed
     private Stack<GameObject> LastSkills;
+    // All equipment held by the player
     private List<Item> Equipment;
+    // Dropdown used to select what skill is created by the skill adder button
     [SerializeField] private Dropdown SkillAdderName;
+    // Reference to the Item Adder button so items can be created
     [SerializeField] private GameObject ItemAdder;
+    // Individual displays of the names/quantities of each item
     [SerializeField] private GameObject ItemDisplay;
+    // Vectors are used to ensure proper spacing of ui elements when new skills/items are added
     private Vector3 weaponDisplacementRight = new Vector3(0,98.5f,0);
     private Vector3 weaponDisplacementLeft = new Vector3(0,82.5f,0);
     private Vector3 SkillDisplacement = new Vector3(0,14.5f,0);
@@ -32,10 +45,15 @@ public class CharacterSheet : MonoBehaviour
     Vector3 PlacementWeaponRanged;
     Vector3 PlacementWeaponMelee;
     Vector3 PlacementItems;
+    // dicitionary form of map tokens stats for translating into the sheet
     private Dictionary<string, int> PlayerStats;
+    // list of original players skills for translating into the sheet
     private List<Skill> PlayerSkills;
+    // same but for equipment
     private List<Item> PlayerEquipment;
+    // players original name
     private string PlayerDisplayName;
+    // Called when created downloads player data onto the sheet and freezes the screen
     public void Init(){
         CameraButtons.UIFreeze(true);
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
@@ -51,14 +69,9 @@ public class CharacterSheet : MonoBehaviour
             InputFieldScript t = g.GetComponent<InputFieldScript>();
             TextEntries.Add(t.GetStat(), t);
         }
-        
-        /*
-            WeaponEntries = new Dictionary<int, WeaponInputScript>();
-            WeaponEntries.Add(0, GameObject.FindGameObjectWithTag("WeaponInput").GetComponent<WeaponInputScript>());
-        */
-    
     }
 
+    // Uploading data is different depending on if we are editing save data of a map token
     public void UpdateStatsOut()
     {
         CameraButtons.UIFreeze(false);
@@ -72,7 +85,7 @@ public class CharacterSheet : MonoBehaviour
         }
     }
 
-    //transfers sheet info to player
+    //transfers sheet info to player for a map token
     public void UpdateStatsOut(PlayerStats output){
         output.playername = NameField.text;
         //characterisitcs
@@ -100,7 +113,7 @@ public class CharacterSheet : MonoBehaviour
         Destroy(gameObject);
     }
 
-    //transfers sheet info to player
+    //transfers sheet info to player for save data
     public void UpdateStatsOut(CharacterSaveData output){
         output.playername = NameField.text;
         output.ClearSkills();
@@ -129,6 +142,7 @@ public class CharacterSheet : MonoBehaviour
         Destroy(gameObject);
     }
 
+    // Downloads data from a map token
     public void UpdateStatsIn(PlayerStats input)
     {
         Init();
@@ -139,6 +153,7 @@ public class CharacterSheet : MonoBehaviour
         PlayerDisplayName = input.playername;
         UpdateStatsIn();
     }
+    // Doownloads data from savedata
     public void UpdateStatsIn(CharacterSaveData input)
     {
         Init();
@@ -149,6 +164,7 @@ public class CharacterSheet : MonoBehaviour
         PlayerDisplayName = input.playername;
         UpdateStatsIn();
     }
+    // Generic info that both kinds of download needs to know
     public void UpdateStatsIn(){
         NameField.text = PlayerDisplayName;
         PlacementPosAdvanced = new Vector3(149.5f, 166,0);
@@ -199,6 +215,9 @@ public class CharacterSheet : MonoBehaviour
         return TextEntries != null; 
     }
 
+    // input: a skill gameobject that was added by skilladderbutton
+    // location: where the skill ought to be placed relative to the charactersheet
+    // creates a skill input field at the designated location and increments the position for the next skill
     private GameObject CreateSkill(Skill input, Vector3 location)
     {
         GameObject newEntry = Instantiate(SkillInputButton) as GameObject;
@@ -208,6 +227,9 @@ public class CharacterSheet : MonoBehaviour
         return newEntry;
     }
 
+    // w: a weapon gameobject that was added itemadder 
+    // location: where the weapon ought to be placed
+    // creates a weapon display seperate from the regular equipment area
     private GameObject CreateWeapon(Weapon w, Vector3 location)
     {
         GameObject newEntry = Instantiate(WeaponDisplay) as GameObject;
@@ -217,6 +239,7 @@ public class CharacterSheet : MonoBehaviour
         return newEntry;
     }
 
+    // used to create advanced skills, should say buttonright not left
     public void CreateSkillButtonLeft()
     {
         if(LastSkills.Count < 24)
@@ -227,6 +250,7 @@ public class CharacterSheet : MonoBehaviour
         }
     }
 
+    // uploads the names of all advanced skills to the dropdown, to be converted into skills later
     public void UpdateSkillDropdown()
     {
         SkillAdderName.ClearOptions();
@@ -243,15 +267,18 @@ public class CharacterSheet : MonoBehaviour
         }
         SkillAdderName.AddOptions(results);
     }
+    // Takes the current selection in the item adder button and creates an item out of it
     public void CreateItem()
     {
         CreateItem(ItemAdder.GetComponent<WeaponAdder>().GetItem());
     }
 
+    // given an Item from either the item adder or savedata, places it on the equipment display
     public void CreateItem(Item input)
     {
         
         bool stacked = false;
+        // stackable items just automatically stack onto exisiting items of the same type
         if(input.Stackable())
         {
             foreach(Item i in Equipment)
@@ -263,6 +290,7 @@ public class CharacterSheet : MonoBehaviour
                 }
             }
         }
+        // unique items like weapons that can be dual wielded can't be stacked
         if(!stacked)
         {
             Equipment.Add(input);
@@ -289,6 +317,7 @@ public class CharacterSheet : MonoBehaviour
         }
     }
 
+    // Deletes the last skill in the queue and updates the position of the ui elements accordingly 
     public void DeleteSkill()
     {
         if(LastSkills.Count > 0)

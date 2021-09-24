@@ -56,6 +56,11 @@ public class TacticsAttack : MonoBehaviour
                 Debug.Log("dualwielding");
                 modifiers -= 20;
             }
+            if(w.IsWeaponClass("Heavy") && !myStats.hasCondition("Braced"))
+            {
+                Debug.Log("Not bracing");
+                modifiers -= 30;
+            }
             if(target.hasCondition("Running"))
             {
                 Debug.Log("Running");
@@ -139,34 +144,39 @@ public class TacticsAttack : MonoBehaviour
 
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
     {
-            Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
-            int damageRoll = w.rollDamage(myStats,target);
-            int AP = target.GetAP(hitBodyPart, w) + myStats.GetAdvanceBonus(hitBodyPart);
-            int soak = target.GetStatScore("T");
-            if(cover != null && !w.HasWeaponAttribute("Flame") && !w.HasWeaponAttribute("Blast"))
-            {
-                AP += cover.CoverReduction(damageRoll, w.GetAP());
-            } 
-            AP -= w.GetAP();
-            if(AP < 0)
-            {
-                AP = 0;
-            }
-            int result = damageRoll - AP - soak;
-            if (result < 0)
-            {
-                result = 0;
-            }
-            if(w.HasWeaponAttribute("Unarmed"))
-            {
-                target.takeFatigue(1);
-            }
-            CombatLog.Log("Incoming damage is reduced by " + AP + " from armor/cover and " + soak + " Toughness for a total of " + result);
-            PopUpText.CreateText("Hit " + hitBodyPart + "!: (-" + result + ")", Color.red, target.gameObject); 
-            target.takeDamage(result, hitBodyPart,w.GetDamageType());
-            
-            TacticsAttack.ApplySpecialEffects(target,myStats,hitBodyPart,w,result);
-            
+        Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
+        int damageRoll = w.rollDamage(myStats,target);
+        int AP = target.GetAP(hitBodyPart, w);
+        if(w.HasWeaponAttribute("Scatter") && w.RangeBonus(target.transform, myStats) < 0)
+        {
+            CombatLog.Log(w.GetName() + "'s scatter attribute makes armor twice as effective at long range!");
+            AP *= 2;
+        } 
+        AP += myStats.GetAdvanceBonus(hitBodyPart);
+        int soak = target.GetStatScore("T");
+        if(cover != null && !w.HasWeaponAttribute("Flame") && !w.HasWeaponAttribute("Blast"))
+        {
+            AP += cover.CoverReduction(damageRoll, w.GetAP());
+        } 
+        AP -= w.GetAP();
+        if(AP < 0)
+        {
+            AP = 0;
+        }
+        int result = damageRoll - AP - soak;
+        if (result < 0)
+        {
+            result = 0;
+        }
+        if(w.HasWeaponAttribute("Unarmed"))
+        {
+            target.takeFatigue(1);
+        }
+        CombatLog.Log("Incoming damage is reduced by " + AP + " from armor/cover and " + soak + " Toughness for a total of " + result);
+        PopUpText.CreateText("Hit " + hitBodyPart + "!: (-" + result + ")", Color.red, target.gameObject); 
+        target.takeDamage(result, hitBodyPart,w.GetDamageType());
+        
+        TacticsAttack.ApplySpecialEffects(target,myStats,hitBodyPart,w,result);
     }
 
     public static void ApplySpecialEffects(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w, int result)
@@ -566,6 +576,11 @@ public class TacticsAttack : MonoBehaviour
                     {
                         outputStack.Push(" -20%: One Handing");
                         chanceToHit -= 20;
+                    }
+                    if(w.IsWeaponClass("Heavy") && !myStats.hasCondition("Braced"))
+                    {
+                        outputStack.Push(" -30%: Not Bracing");
+                        chanceToHit -= 30;
                     }
                     if(target.hasCondition("Running"))
                     {

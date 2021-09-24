@@ -272,6 +272,13 @@ public class TurnManager : TurnActions
                             ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
                             AttackOfOppertunity();
 
+                            
+                            if(ActivePlayerStats.hasCondition("Braced"))
+                            {
+                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                                ActivePlayerStats.RemoveCondition("Braced");
+                            }
                         } 
                         else if (t.selectableRunning)
                         {
@@ -279,6 +286,14 @@ public class TurnManager : TurnActions
                             ActivePlayer.moveToTile(t);
                             halfActions = 0;
                             AttackOfOppertunity();
+
+                            
+                            if(ActivePlayerStats.hasCondition("Braced"))
+                            {
+                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                                ActivePlayerStats.RemoveCondition("Braced");
+                            }
                         }
                         Cancel();
                     }
@@ -295,6 +310,14 @@ public class TurnManager : TurnActions
                             ActivePlayer.moveToTile(t);
                             AttackOfOppertunity();
                             halfActions-=2;
+
+                            
+                            if(ActivePlayerStats.hasCondition("Braced"))
+                            {
+                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                                ActivePlayerStats.RemoveCondition("Braced");
+                            }
                         }
                     }
                     break;
@@ -315,6 +338,12 @@ public class TurnManager : TurnActions
                             else
                             {
                                 halfActions -= 2;
+                            }                    
+                            if(ActivePlayerStats.hasCondition("Braced"))
+                            {
+                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                                ActivePlayerStats.RemoveCondition("Braced");
                             }
                         }
                     }
@@ -330,6 +359,13 @@ public class TurnManager : TurnActions
                             ActivePlayer.moveToTile(t);
                             ActivePlayerStats.ApplyAdvanceBonus(TacticsAttack.SaveCoverBonus(ActivePlayerStats)); 
                             halfActions-=2;
+
+                            if(ActivePlayerStats.hasCondition("Braced"))
+                            {
+                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                                ActivePlayerStats.RemoveCondition("Braced");
+                            }
                         }
                 }
                 break;
@@ -345,6 +381,13 @@ public class TurnManager : TurnActions
                             AttackOfOppertunity();
                             ActivePlayerStats.SetCondition("Charging",1,true);
                             ActivePlayerStats.SpendAction("Charge");
+                            
+                            if(ActivePlayerStats.hasCondition("Braced"))
+                            {
+                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                                ActivePlayerStats.RemoveCondition("Braced");
+                            }
                         }
                     }
                     break;

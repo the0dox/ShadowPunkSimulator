@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Heavy Stubber
+  m_EditorClassIdentifier: 
+  weight: 35
+  cost: 750
+  availablity: Scarce
+  description: A mainstay support weapon on lower-tech planets, and also popular
+    with outlaws and hive gangers, the heavy stubber is ideal for fighting off large
+    numbers of enemies or even lightly armoured vehicles. Heavy stubbers can also
+    be used with an ammunition drum (rather than belt fed), changing its clip size
+    to 40 and increasing is cost by 100 Thrones but decreasing its reload time to
+    a single Full Action.
+  unique: 1
+  Attributes: []
+  Class: Heavy
+  numDice: 1
+  sizeDice: 10
+  damageBonus: 4
+  range: 120
+  pen: 3
+  reloadMax: 4
+  single: 0
+  semi: 0
+  auto: 10
+  clipMax: 200
+  damageType: I
+  blast: 0
+  AmmoSource: {fileID: 11400000, guid: a215cba5c4221634a8934640ef7dbfd2, type: 2}

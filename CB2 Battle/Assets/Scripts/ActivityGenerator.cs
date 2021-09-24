@@ -3,23 +3,40 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
+// UI manager to create new overworld activities
 public class ActivityGenerator : MonoBehaviour
 {
+    // Selects type of activity
     [SerializeField] private GameObject TypeField;
+    // Selects difficulty of investigation
     [SerializeField] private GameObject InvestigateField;
+    // Selects item quality for investigation
     [SerializeField] private GameObject ItemField;
+    // Selects skill used to investigate
     [SerializeField] private GameObject SkillField;
+    // Selects player in charge of the investigation
     [SerializeField] private GameObject P1Field;
+    // Selects player assisting in the investigation
     [SerializeField] private GameObject P2Field;
+    // Selects player assisting in the investigation
     [SerializeField] private GameObject P3Field;
+    // Creates the activity
     [SerializeField] private GameObject adderButton;
+    // Reference to create more activity objects
     [SerializeField] private GameObject ActivityObjectReference;
+    // Reference to ActionQueueDisplay to store newly created investigations
     [SerializeField] private GameObject ActivityTab;
+    // All players participating in the investigation
     private PlayerStats[] PlayerSelection;
+    // Skill selected by SkillField, can help advance the investigation if passed
     private string SkillChoice;
+    // Item selected by ItemField
     private string ItemChoice;
+    // Conditional modifiers on the Skillchoice depending on type of investigation
     private int Modifier;
+    // Amount of Time required to complete Acitivity
     private int Time;
+    // Keys correspond to item availability, values correspond to difficulty of finding item.
     private Dictionary<string,int> AvailablityToDifficulty = new Dictionary<string, int>{
         {"Abundant",30},
         {"Plentiful",20},
@@ -29,6 +46,7 @@ public class ActivityGenerator : MonoBehaviour
         {"Rare",-20},
         {"Very Rare", -30}
     };
+    // Keys correspond to item availability, values correspond to time to find item.
     private Dictionary<string,int[]> AvailablityToTime = new Dictionary<string, int[]>{
         {"Abundant", new int[2]{1,1}},
         {"Plentiful",new int[2]{1,1}},
@@ -38,6 +56,7 @@ public class ActivityGenerator : MonoBehaviour
         {"Rare", new int[2]{10,168}},
         {"Very Rare", new int[2]{5,672}}
     };
+    // Keys correspond to lead complexity, values correspond to difficulty of completing lead.
     private Dictionary<string, int> ComplexityToDifficulty = new Dictionary<string, int>
     {
         {"Simple",30},
@@ -48,6 +67,7 @@ public class ActivityGenerator : MonoBehaviour
         {"Involved",20},
         {"Labyrinthine",30}
     };
+    // Keys correspond to lead complexity, values correspond to time to complete lead.
     private Dictionary<string, int> ComplexitytoTime = new Dictionary<string, int>
     {
         {"Simple",1},
@@ -58,6 +78,7 @@ public class ActivityGenerator : MonoBehaviour
         {"Involved",744},
         {"Labyrinthine",8640}
     };
+    // When enabled, this object resets all of its fields 
     void OnEnable()
     {
         Modifier = 0;
@@ -83,7 +104,7 @@ public class ActivityGenerator : MonoBehaviour
         ResetDD(P3Field);
         adderButton.SetActive(false);
     }
-
+    // Selects investigation type, depending on selection, enables branching paths
     public void TypeSelection()
     {
         if(GetChoice(TypeField).Equals("Investigate"))
@@ -113,7 +134,7 @@ public class ActivityGenerator : MonoBehaviour
             ItemField.GetComponent<Dropdown>().AddOptions(results);
         }
     }
-
+    // On selecting investigation, players then select the complexity of the investigation
     public void InvestigationSelection()
     {
         if(!GetChoice(InvestigateField).Equals("None"))
@@ -126,7 +147,7 @@ public class ActivityGenerator : MonoBehaviour
             GetRemainingPlayers(P1Field);
         }
     }
-
+    // On selecting item, players can select an item and applies modifiers depending on item availability 
     public void ItemSelection()
     {
         if(!GetChoice(ItemField).Equals("None"))
@@ -143,7 +164,7 @@ public class ActivityGenerator : MonoBehaviour
             GetRemainingPlayers(P1Field);
         }
     }
-
+    // On selecting player, allows player to select the appropriate skill they have for the investigation
     public void PlayerSelectionOne()
     {
         if(!GetChoice(P1Field).Equals("None"))
@@ -180,27 +201,7 @@ public class ActivityGenerator : MonoBehaviour
         }
     }
 
-    public void PlayerSelectionTwo()
-    {
-        if(!GetChoice(P2Field).Equals("None"))
-        {
-            PlayerSelection[1] = OverworldManager.Party[GetChoice(P2Field)];
-            disableDD(P2Field);
-            P3Field.SetActive(true);
-            GetRemainingPlayers(P3Field);
-        }
-    }
-
-    public void PlayerSelectionThree()
-    {
-        if(!GetChoice(P2Field).Equals("None"))
-        {
-            PlayerSelection[2] = OverworldManager.Party[GetChoice(P2Field)];
-            disableDD(P2Field);
-            P3Field.SetActive(true);
-        }
-    }
-
+    // On selecting skills, allows player to add one or two others to aid, or just attempt by themselves
     public void SkillSelection()
     {
         if(!GetChoice(SkillField).Equals("None"))
@@ -213,6 +214,29 @@ public class ActivityGenerator : MonoBehaviour
         } 
     }
 
+    // Each player adds a +10 modifier
+    public void PlayerSelectionTwo()
+    {
+        if(!GetChoice(P2Field).Equals("None"))
+        {
+            PlayerSelection[1] = OverworldManager.Party[GetChoice(P2Field)];
+            disableDD(P2Field);
+            P3Field.SetActive(true);
+            GetRemainingPlayers(P3Field);
+        }
+    }
+    // Each player adds a +10 modifier
+    public void PlayerSelectionThree()
+    {
+        if(!GetChoice(P2Field).Equals("None"))
+        {
+            PlayerSelection[2] = OverworldManager.Party[GetChoice(P2Field)];
+            disableDD(P2Field);
+            P3Field.SetActive(true);
+        }
+    }
+
+    // Creates a new activity and sends it to the queue to be displayed
     public void MakeActivity()
     {
         GameObject newActivity = Instantiate(ActivityObjectReference) as GameObject;
@@ -227,14 +251,21 @@ public class ActivityGenerator : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    // dropdown: A gameobject containing a dropwdown component
+    // given dropdown returns a string of whatever the dropdown had currently selected
     private string GetChoice(GameObject dropdown)
     {
         return dropdown.GetComponent<Dropdown>().captionText.text;
     }
+    // dropdown: A gameobject containing a dropdown component
+    // given dropdown, prevents players from changing options
     private void disableDD(GameObject dropdown)
     {
         dropdown.GetComponent<Dropdown>().interactable = false;
     }
+    
+    // dropdown: A gameobject containing a dropdown component
+    // given dropdown, clears the values within dropdown and allows it be used again
     private void ResetDD(GameObject dropdown)
     {
         Dropdown myDD = dropdown.GetComponent<Dropdown>();
@@ -242,6 +273,8 @@ public class ActivityGenerator : MonoBehaviour
         myDD.value = 0;
     }
 
+    // dropdown: A gameobject containing a dropdown component
+    // given dropdown, adds players to options that aren't already busy with an activity
     private void GetRemainingPlayers(GameObject dropdown)
     {
         dropdown.GetComponent<Dropdown>().ClearOptions();

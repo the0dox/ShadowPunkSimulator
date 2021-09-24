@@ -3,9 +3,11 @@ using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 
+// Save data for stored players, accessed through the DM menu, used to permanently save characters
 [System.Serializable]
 public class CharacterSaveData
 {
+    // Basic character stats
     private int BS = 20;
     private int WS = 20;
     private int S = 20;
@@ -33,14 +35,19 @@ public class CharacterSaveData
     private int FateMax = 0;
     private int Gelt = 0;
     private int Income = 0;
-    private string[] SkillNames = new string[50];
-    private int[] SkillLevels = new int[50];
-    private string[] SkillChars = new string[50];
-    private bool[] SkillBasic = new bool[50];
     public int team = 0; 
-    public string playername; 
+    public string playername;
+    // Each entry is a unique skill name for the skillreference
+    private string[] SkillNames = new string[50];
+    // Each entry is the levels the player has in the skill of the same index
+    private int[] SkillLevels = new int[50]; 
+    // Each entry is a unique skill name for the itemReference
     public string[] equipment = new string[20];
+    // Each entry is the number of each equipment piece a player has of the same index
     public int[] equipmentSize = new int[20];
+    
+    // Playable: whether to create an NPC or Player character
+    // Creates a new Save Data with default skills and hit locations
     public CharacterSaveData(bool playable)
     {
         if(playable)
@@ -56,18 +63,24 @@ public class CharacterSaveData
         BasicSkills();
         StandardHitLocations();
     }
-    
+
+    // Saves a set of basic skills every player will have to SkillNames and SkillLevels
     private void BasicSkills()
     {
         Dictionary<string, SkillTemplate> templates = SkillReference.SkillsTemplates(); 
         foreach (string key in templates.Keys)
         {
+            // Advanced skills are excluded
             if(templates[key].basic)
             {
+                // By default all skills are level 0, untrained
                 addSkill(new Skill(templates[key], 0));
             }
         }
     }
+
+    // Determines what a body part is hit depending on the hit result, same for all humanoids
+    // To implement: new hitlocations for monsters/vehicles
     public Dictionary<int,string> StandardHitLocations()
     {
         Dictionary<int,string> HitLocations = new Dictionary<int, string>();
@@ -80,6 +93,8 @@ public class CharacterSaveData
         return HitLocations;
     }
 
+    // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
+    // a dictionary when the player is created 
     public Dictionary<string,int> GetStats()
     {
         Dictionary<string, int> output = new Dictionary<string, int>();
@@ -113,6 +128,9 @@ public class CharacterSaveData
         return output;
     }
 
+    // Key: Specific stat being modified
+    // Value: New value of modified stat
+    // updates a stat's value 
     public void SetStat(string key, int value)
     {
         switch (key)
@@ -201,6 +219,7 @@ public class CharacterSaveData
         }
     }
 
+    // Converts SkillNames and Skill Levels into a list of skill objects that playerstats can read
     public List<Skill> GetSkills()
     {
         List<Skill> output = new List<Skill>();
@@ -214,14 +233,15 @@ public class CharacterSaveData
         return output;
     }
 
+    // Resets all Skills, used when charactersheet is editing skills
     public void ClearSkills()
     {
         SkillNames = new string[50];
         SkillLevels = new int[50];
-        SkillChars = new string[50];
-        SkillBasic = new bool[50];
     }
 
+    // Skill: an specific skill object
+    // Converts object into back into basic structures 
     public void addSkill(Skill input)
     {
         int newindex = 1;
@@ -237,6 +257,7 @@ public class CharacterSaveData
         }
     }
 
+    // Converts Equipment and EquipmentSize into a readable list of Item objects
     public List<Item> GetEquipment()
     {
         List<Item> output = new List<Item>();
@@ -244,6 +265,7 @@ public class CharacterSaveData
         {
             if(equipment[i] != null)
             {
+                // specific types of items have to be created seperately
                 Item current = null;
                 if(ItemReference.ItemTemplates()[equipment[i]].GetType() == typeof(WeaponTemplate))
                 {
@@ -264,12 +286,14 @@ public class CharacterSaveData
         return output;
     }
 
+    // Resets all Items, used when charactersheet is editing equipment
     public void ClearEquipment()
     {
         equipment = new string[20];
         equipmentSize = new int[20];
     }
 
+    // Takes a series of Gameobjects and converts them back into basic datastructures
     public void AddEquipment(List<Item> input)
     {
         ClearEquipment();
@@ -282,12 +306,15 @@ public class CharacterSaveData
         }
     }
 
+    // Saves my data on to the computer for later play sessions
     public void Quit()
     {
         UploadSaveData();
         SaveSystem.SavePlayer(this);
     }
 
+    // If this is a player character with a single map token, save the stats of the map token instead
+    // Not done for NPCs because there can be multiple copies of them
     public void UploadSaveData()
     {
         if(team == 0)

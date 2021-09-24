@@ -146,30 +146,42 @@ public class TurnActions : MonoBehaviour
             }
             else if(ActivePlayerStats.ValidAction("Attack"))
             {
-                if (ActiveWeapon.CanFire("S"))
-                {
-                    if(ActiveWeapon.HasWeaponAttribute("Flame"))
+                if(!ActiveWeapon.HasWeaponAttribute("Heavy") || (ActiveWeapon.HasWeaponAttribute("Heavy") && !ActivePlayerStats.IsDualWielding()))
                     {
-                        d.Add("Standard","FlameAttack");
-                    }
-                    else if(ActiveWeapon.HasWeaponAttribute("Blast"))
+                    if (ActiveWeapon.CanFire("S"))
                     {
-                        d.Add("Standard","BlastAttack");
+                        if(ActiveWeapon.HasWeaponAttribute("Flame"))
+                        {
+                            d.Add("Standard","FlameAttack");
+                        }
+                        else if(ActiveWeapon.HasWeaponAttribute("Blast"))
+                        {
+                            d.Add("Standard","BlastAttack");
+                        }
+                        else{
+                        d.Add("Standard","StandardAttack");
+                        d.Add("Called","CalledShot");
+                        }
                     }
-                    else{
-                    d.Add("Standard","StandardAttack");
-                    d.Add("Called","CalledShot");
+                    // Heavy weapons cannot be fired in semi or full automatic unless a character braces
+                    if(ActiveWeapon.IsWeaponClass("Heavy") && !ActivePlayerStats.hasCondition("Braced"))
+                    {
+                        d.Add("Brace (cover)","Brace");
+                        d.Add("Brace (prone)","BraceProne");
                     }
-                }
-                if (ActiveWeapon.CanFire("Semi") && halfActions > 1)
-                {
-                    d.Add("Semi Auto","SemiAuto");
-                }
-                if (ActiveWeapon.CanFire("Auto") && halfActions > 1)
-                {
-                    d.Add("Full Auto","FullAuto");
-                    d.Add("Overwatch","Overwatch");
-                    d.Add("Supression","SupressingFire");
+                    else
+                    {
+                        if (ActiveWeapon.CanFire("Semi") && halfActions > 1)
+                        {
+                            d.Add("Semi Auto","SemiAuto");
+                        }
+                        if (ActiveWeapon.CanFire("Auto") && halfActions > 1 )
+                        {
+                            d.Add("Full Auto","FullAuto");
+                            d.Add("Overwatch","Overwatch");
+                            d.Add("Supression","SupressingFire");
+                        }
+                    }
                 }
                 if(ActiveWeapon.isJammed() && halfActions > 1)
                 {
@@ -179,6 +191,23 @@ public class TurnActions : MonoBehaviour
         }
         d.Add("Cancel","Combat");
         ConstructActions(d);
+    }
+
+    public void Brace()
+    {
+        CombatLog.Log(ActivePlayerStats.GetName() + " braces their heavy weapon. They cannot move until they unbrace!");
+        ActivePlayerStats.SetCondition("Braced",0,true);
+        halfActions--;
+        Cancel();
+    }
+
+    public void BraceProne()
+    {
+        CombatLog.Log(ActivePlayerStats.GetName() + " braces their heavy weapon. They cannot move until they unbrace!");
+        ActivePlayerStats.SetCondition("Braced",0,true);
+        ActivePlayerStats.SetCondition("Prone",0,true);
+        halfActions--;
+        Cancel();
     }
 
     public void GuardedAttack()
@@ -369,6 +398,12 @@ public class TurnActions : MonoBehaviour
     public void Stand()
     {
         currentAction = "Stand";
+        if(CurrentAttack.target.hasCondition("Braced"))
+        {
+            CombatLog.Log("By standing, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
+            PopUpText.CreateText("Unbraced!", Color.red, CurrentAttack.target.gameObject);
+            CurrentAttack.target.RemoveCondition("Braced");
+        }
     }
 
     public void Misc()
@@ -943,6 +978,12 @@ public class TurnActions : MonoBehaviour
         {
             CombatLog.Log(target.GetName() + " fails to dodge the incoming attack");
         }
+        if(CurrentAttack.target.hasCondition("Braced"))
+        {
+            CombatLog.Log("By reacting, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
+            PopUpText.CreateText("Unbraced!", Color.red, CurrentAttack.target.gameObject);
+            CurrentAttack.target.RemoveCondition("Braced");
+        }
         RemoveRange(target);
         ClearActions();
         ResolveHit();
@@ -968,6 +1009,12 @@ public class TurnActions : MonoBehaviour
         else
         {
             CombatLog.Log(target.GetName() + " fails to parry the incoming attack!");
+        }
+        if(CurrentAttack.target.hasCondition("Braced"))
+        {
+            CombatLog.Log("By reacting, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
+            PopUpText.CreateText("Unbraced!", Color.red, CurrentAttack.target.gameObject);
+            CurrentAttack.target.RemoveCondition("Braced");
         }
         RemoveRange(target);
         ClearActions();

@@ -196,6 +196,7 @@ public class Weapon : Item
 
     public bool CanFire(string FireMode)
     {
+        
         if(HasWeaponAttribute("Recharge") && Recharging > 0)
         {
             return false;
