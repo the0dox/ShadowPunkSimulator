@@ -42,27 +42,7 @@ public class CharacterSelectorButton : MonoBehaviour
     // creates a map token and downloads savedata into that token
     public void Spawn()
     {
-        //implement spawn specific locations;
-        GameObject newPlayer;
-        if(myData.team == 0)
-        {
-            newPlayer = Instantiate(PlayerReference) as GameObject;
-        }
-        else
-        {
-            newPlayer = Instantiate(NPCReference) as GameObject;
-        }
-        newPlayer.GetComponent<PlayerStats>().DownloadSaveData(myData);
-        newPlayer.GetComponent<TacticsMovement>().Init();
-        if(GameObject.FindGameObjectWithTag("GameController").TryGetComponent<TurnManager>(out TurnManager tm))
-        {
-            tm.AddPlayer(newPlayer);
-        }
-        else
-        {
-            OverworldManager.AddPlayer(newPlayer);
-        }
-        newPlayer.transform.position = spawningPos;
+        PlayerSpawner.CreatePlayer(myData,spawningPos,true);
         OnButtonPressed();
         DmMenu.Toggle();
     }

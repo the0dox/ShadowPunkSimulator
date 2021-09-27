@@ -28,7 +28,7 @@ public class Skill
         }
         else
         {
-            visible = true;
+            visible = true; 
         }
     }
 

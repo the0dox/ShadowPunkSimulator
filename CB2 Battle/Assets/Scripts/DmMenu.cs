@@ -8,9 +8,11 @@ public class DmMenu : MonoBehaviour
     [SerializeField] private List<CharacterSaveData> SavedCharacters = new List<CharacterSaveData>();
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject SelectorButton;
+    [SerializeField] private GameObject SceneButton;
     private static GameObject DisplayInstance;
     private static GameObject PlayerScreenInstance;
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
+    private List<SceneSaveData> SavedScenes = new List<SceneSaveData>();
     private Vector3 CharacterSelectorPos;
 
     void Start()
@@ -18,6 +20,7 @@ public class DmMenu : MonoBehaviour
         DisplayInstance = Display;
         PlayerScreenInstance = PlayerScreen;
         SavedCharacters = SaveSystem.LoadPlayer();
+        SavedScenes = SaveSystem.LoadScenes();
     }
 
     public static void Toggle()
@@ -62,6 +65,31 @@ public class DmMenu : MonoBehaviour
             newButton.transform.SetParent(PlayerScreen.transform);
             newButton.transform.localPosition = CharacterSelectorPos;
             newButton.GetComponent<CharacterSelectorButton>().SetData(csd);
+            PrevSelectorButtons.Add(newButton);
+            CharacterSelectorPos -= new Vector3(125,0,0);
+            if(CharacterSelectorPos.x < -250)
+            {
+                CharacterSelectorPos.x = 250;
+                CharacterSelectorPos.y -= 75;
+            }
+        }
+    }
+
+    public void LoadScene()
+    {
+        foreach(GameObject prevButton in PrevSelectorButtons)
+        {
+            Destroy(prevButton);
+        }
+        CharacterSelectorPos = new Vector3(250,130,0);
+        PlayerScreen.SetActive(true);
+        SavedScenes = SaveSystem.LoadScenes();
+        foreach(SceneSaveData ssd in SavedScenes)
+        {
+            GameObject newButton = Instantiate(SceneButton) as GameObject;
+            newButton.transform.SetParent(PlayerScreen.transform);
+            newButton.transform.localPosition = CharacterSelectorPos;
+            newButton.GetComponent<SceneSelectorButton>().SetData(ssd);
             PrevSelectorButtons.Add(newButton);
             CharacterSelectorPos -= new Vector3(125,0,0);
             if(CharacterSelectorPos.x < -250)

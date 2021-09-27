@@ -33,6 +33,33 @@ public static class SaveSystem
         return output;
     }
 
+    public static void SaveScene(SceneSaveData data)
+    {
+        CreateSaveFile();
+        BinaryFormatter formatter = new BinaryFormatter();
+        
+        string path = Application.persistentDataPath +"/save_data/scenes/" + data.GetName() + ".data";
+        FileStream stream = new FileStream(path, FileMode.Create);
+        formatter.Serialize(stream,data);
+        stream.Close();
+    }
+
+    public static List<SceneSaveData> LoadScenes()
+    {
+        CreateSaveFile();
+        List<SceneSaveData> output = new List<SceneSaveData>();
+        string path = Application.persistentDataPath + "/save_data/scenes";
+        BinaryFormatter formatter = new BinaryFormatter();
+        foreach(string file in Directory.EnumerateFiles(path))
+        {
+            FileStream stream = new FileStream(file,FileMode.Open);
+            SceneSaveData data = formatter.Deserialize(stream) as SceneSaveData;
+            stream.Close();
+            output.Add(data);
+        }
+        return output;
+    }
+
     private static void CreateSaveFile()
     {
         if(!Directory.Exists(Application.persistentDataPath + "/save_data"))
@@ -43,6 +70,9 @@ public static class SaveSystem
         {
             Directory.CreateDirectory(Application.persistentDataPath + "/save_data/characters");
         }
-        
+        if(!Directory.Exists(Application.persistentDataPath + "/save_data/scenes"))
+        {
+            Directory.CreateDirectory(Application.persistentDataPath + "/save_data/scenes");
+        }
     }
 }

@@ -6,7 +6,6 @@ using UnityEngine.EventSystems;
 public class TurnManager : TurnActions
 {
     //static means easily accessable reference for all moveable characters
-    static Dictionary<TacticsMovement, float> units = new Dictionary<TacticsMovement, float>();
     static Queue<string> turnKey = new Queue<string>();
     private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
     [SerializeField] private GameObject DebugToolTipReference; 
@@ -492,8 +491,8 @@ public class TurnManager : TurnActions
                 incrementer += 0.01f;
                 initiative += incrementer;
             }
+            tm.initative = initiative;
             Sorter.Add(initiative,tm);
-            units.Add(tm, initiative);
         }
 
         //moved to a stack to reverse order 
@@ -505,6 +504,7 @@ public class TurnManager : TurnActions
         while(TempStack.Count != 0){
             InitativeOrder.Enqueue(TempStack.Pop());
         }
+        PrintInitiative();
     }
 
     public GameObject GetActivePlayer()
@@ -545,8 +545,9 @@ public class TurnManager : TurnActions
             TacticsMovement tm = InitativeOrder.Dequeue();
             InitativeOrder.Enqueue(tm);
             string name = tm.GetComponent<PlayerStats>().GetName();
-            string initiative = "" + units[tm];
-            entries.Add(name + ": " + initiative);
+            string value = "" + tm.initative;
+            entries.Add(name + ": " + value);
+            Debug.Log(tm.initative);
             iterations--;
         }
         It.UpdateList(entries);
@@ -786,7 +787,6 @@ public class TurnManager : TurnActions
             initiative += incrementer;
         }
         Sorter.Add(initiative,tm);
-        units.Add(tm, initiative);
         if(InitativeOrder.Count > 0)
         {
             TacticsMovement SavedPostion = InitativeOrder.Dequeue();
@@ -822,8 +822,7 @@ public class TurnManager : TurnActions
         {
             EndTurn();
         }
-        Sorter.Remove(units[tm]);
-        units.Remove(tm);
+        Sorter.Remove(tm.initative);
         if(InitativeOrder.Count > 1)
         {
             TacticsMovement SavedPostion = InitativeOrder.Dequeue();

@@ -18,6 +18,7 @@ TagManager:
   - Range
   - Canvas
   - Lead
+  - UITile
   layers:
   - Default
   - TransparentFX

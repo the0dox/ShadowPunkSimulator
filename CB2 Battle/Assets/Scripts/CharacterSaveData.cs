@@ -37,7 +37,10 @@ public class CharacterSaveData
     private int Income = 0;
     public int team = 0; 
     public string playername;
+    // Name of mesh model
+    public string Model;
     // Each entry is a unique skill name for the skillreference
+    
     private string[] SkillNames = new string[50];
     // Each entry is the levels the player has in the skill of the same index
     private int[] SkillLevels = new int[50]; 
@@ -53,11 +56,13 @@ public class CharacterSaveData
         if(playable)
         {
             playername = "New Player";
+            Model = "Guard";
             team = 0;
         }
         else
         {
             playername = "New NPC";
+            Model = "Renegade";
             team = 1;
         }
         BasicSkills();

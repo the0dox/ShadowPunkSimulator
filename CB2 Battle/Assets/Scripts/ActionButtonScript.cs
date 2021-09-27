@@ -33,7 +33,7 @@ public class ActionButtonScript : MonoBehaviour
             }
             else
             {
-                GameObject.FindGameObjectWithTag("GameController").GetComponent<OverworldManager>().OnButtonPressed(action);
+                GameObject.FindGameObjectWithTag("GameController").GetComponent<UIButtonManager>().OnButtonPressed(action);
             }
         }
     }

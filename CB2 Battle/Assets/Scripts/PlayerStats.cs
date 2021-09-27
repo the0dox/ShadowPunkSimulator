@@ -52,7 +52,7 @@ public class PlayerStats : MonoBehaviour
         UpdateMovement();
         UpdateAP();
         StartCoroutine(modelDisplayDelay());
-        DefaultColor = model.GetComponent<MeshRenderer>().material;
+        DefaultColor = model.GetComponentInChildren<MeshRenderer>().material;
         Weapon[] startingequipment = GetWeaponsForEquipment().ToArray();
         if (startingequipment.Length > 0)
         {
@@ -72,11 +72,11 @@ public class PlayerStats : MonoBehaviour
             if(painted)
             {
                 painted = false;
-                model.GetComponent<MeshRenderer>().material = SelectedColor;
+                model.GetComponentInChildren<MeshRenderer>().material = SelectedColor;
             }
             else
             {    
-                model.GetComponent<MeshRenderer>().material = DefaultColor;
+                model.GetComponentInChildren<MeshRenderer>().material = DefaultColor;
             }
         }
     }
