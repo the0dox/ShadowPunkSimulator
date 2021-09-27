@@ -70,4 +70,9 @@ public class PlayerSpawner : MonoBehaviour
             }
         }
     }
+
+    public static Dictionary<string,GameObject> GetPlayers()
+    {
+        return SModels;
+    }
 }

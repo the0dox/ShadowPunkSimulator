@@ -14,10 +14,16 @@ public class CharacterSelectorButton : MonoBehaviour
     [SerializeField] private GameObject PopUp;
     // Reference to the character sheet to spawn when edits need to be made
     [SerializeField] private GameObject CharacterSheet;
-    // Reference to a basic player token gameobject
-    [SerializeField] private GameObject PlayerReference;
-    // Reference to a basic npc token gameobject
-    [SerializeField] private GameObject NPCReference;
+    // Window to display model options
+    [SerializeField] private GameObject ModelDisplay;
+    // Button Reference to display model options
+    [SerializeField] private GameObject ActionButton;
+
+    private float ModelButtonStartingX = 100.5f;
+    private int ModelButtonStartingY = 40;
+    private int ModelButtonXDisplacement = -67;
+    private int ModelButtonYDisplacement = -20;
+
     // To implement: choose spawning location
     // Spawning location 
     private Vector3 spawningPos = new Vector3(-0.5f,0,0);
@@ -27,8 +33,25 @@ public class CharacterSelectorButton : MonoBehaviour
     public void SetData(CharacterSaveData input)
     {
         PopUp.SetActive(false);
+        ModelDisplay.SetActive(false);
         myData = input;
         displayText.text = input.playername;
+        Dictionary<string,GameObject> models = PlayerSpawner.GetPlayers();
+        float CurrentX = ModelButtonStartingX;
+        int CurrentY = ModelButtonStartingY;
+        foreach(string s in models.Keys)
+        {
+            GameObject newButton = Instantiate(ActionButton) as GameObject;
+            newButton.GetComponent<ModelButton>().SetData(s,myData,this);
+            newButton.transform.SetParent(ModelDisplay.transform);
+            if(CurrentX < -110)
+            {
+                CurrentX = ModelButtonStartingX;
+                CurrentY += ModelButtonYDisplacement;
+            }
+            newButton.transform.localPosition = new Vector3(CurrentX,CurrentY,0);
+            CurrentX += ModelButtonXDisplacement;
+        }
     }
 
     // creates a charactersheet from stored savedata for editing
@@ -51,5 +74,12 @@ public class CharacterSelectorButton : MonoBehaviour
     public void OnButtonPressed()
     {
         PopUp.SetActive(!PopUp.activeInHierarchy);
+        ModelDisplay.SetActive(false);
+    }
+
+    public void ModelToggle()
+    {
+        ModelDisplay.SetActive(!ModelDisplay.activeInHierarchy);
+        PopUp.SetActive(false);
     }
 }
