@@ -11,7 +11,7 @@ public class ConditionsReference : MonoBehaviour
     private static Dictionary<string, ConditionTemplate> Library = new Dictionary<string, ConditionTemplate>();
 
     // creates Library so that it can be referenced statically
-    void Start()
+    public void Init()
     {
         foreach(ConditionTemplate c in ConditionsInitializer)
         {

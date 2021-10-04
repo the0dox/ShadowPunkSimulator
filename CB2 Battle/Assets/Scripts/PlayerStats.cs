@@ -222,7 +222,7 @@ public class PlayerStats : MonoBehaviour
 
     public bool OffHandPenalty(Weapon w)
     {
-        return (w == SecondaryWeapon);
+        return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
     }
 
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
@@ -567,21 +567,31 @@ public class PlayerStats : MonoBehaviour
             //Conditional update on turn starts here
             else if(Key.isCondition("Pinned") && !startTurn)
             {
-                int modifiers = 0;
-                if(!hasCondition("Under Fire"))
-                {  
-                    modifiers += 30;
-                }
-                else
+                if(GetComponent<TacticsMovement>().GetAdjacentEnemies(GetTeam()) > 0)
                 {
-                    removedKeys.Add(ConditionsReference.Condition("Under Fire"));
-                }
-                if(AbilityCheck("WP",modifiers).Passed())
-                {
+                    CombatLog.Log(GetName() + " is in melee, and thus loses the pinned condition");
                     PopUpText.CreateText("Unpinned!",Color.green, gameObject);
                     //removes at the end
                     removedKeys.Add(Key);
                 }
+                else
+                {
+                    int modifiers = 0;
+                    if(!hasCondition("Under Fire"))
+                    {  
+                        modifiers += 30;
+                    }
+                    else
+                    {
+                        removedKeys.Add(ConditionsReference.Condition("Under Fire"));
+                    }
+                    if(AbilityCheck("WP",modifiers).Passed())
+                    {
+                        PopUpText.CreateText("Unpinned!",Color.green, gameObject);
+                        //removes at the end
+                        removedKeys.Add(Key);
+                    }
+                }   
             }
             //decay conditions at the end of turns, conditions with 0 as their length do not decay
             if(Conditions[Key] > 1 && !startTurn)

@@ -7,7 +7,11 @@ public class SceneSaveData
 {
     private Dictionary<string,string> TileLocations = new Dictionary<string, string>();
     private Dictionary<string,string> PlayerLocations = new Dictionary<string, string>();
+    public string[] LeadName = new string[5];
+    public float[] LeadProgress = new float[5];
+    public float[] LeadMax = new float[5];
     private string name;
+    private bool Overworld = false;
 
     public SceneSaveData (string name, Dictionary<Vector3,GameObject> input)
     {
@@ -26,6 +30,22 @@ public class SceneSaveData
                 PlayerLocations.Add(PosString,entity.GetComponent<PlayerStats>().playername);
                 Debug.Log(PosString + ": " + entity.GetComponent<PlayerStats>().playername);
             }
+        }
+    }
+
+    public void AddLeads(List<LeadScript> leads)
+    {
+        int index = 0;
+        Overworld = true;
+        foreach(LeadScript ls in leads)
+        {
+            if(index < LeadName.Length)
+            {
+                LeadName[index] = ls.getName();
+                LeadMax[index] = ls.GetMaxHours();
+                LeadProgress[index] = ls.GetCompletedHours();
+            }
+            index++;
         }
     }
 
@@ -65,5 +85,10 @@ public class SceneSaveData
     public string GetName()
     {
         return name;
+    }
+
+    public bool isOverworld()
+    {
+        return Overworld;
     }
 }

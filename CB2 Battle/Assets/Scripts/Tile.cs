@@ -19,56 +19,53 @@ public class Tile : MonoBehaviour
     public int distance = 0; 
 
     public int ArmorValue = 8;
+    public int TotalAV;
 
     public static Vector3 topright = new Vector3(1,0,1);
     
     public static Vector3 topleft = new Vector3(1,0,-1);
-
     public GameObject indicator;
+    private MeshFilter myFilter;
 
-
-    // Start is called before the first frame update
     void Start()
     {
-        
+        TotalAV = ArmorValue;
     }
-
     // Update is called once per frame
-    void Update()
+    public void  UpdateIndictator()
     {
         if(indicator != null)
         {
             indicator.GetComponent<Renderer>().material.color = Color.white;
             Color currentColor = indicator.GetComponent<Renderer>().material.color;
-            currentColor.a = 0.75f;
             indicator.GetComponent<Renderer>().material.color = currentColor;
             if (current)
             {
-                indicator.GetComponent<Renderer>().material.color = Color.green;
+                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);;
             }
             else if (target)
             {
-                indicator.GetComponent<Renderer>().material.color = Color.green;
+                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);;
             }
             else if (selectable)
             {
-                indicator.GetComponent<Renderer>().material.color = Color.cyan;
+                indicator.GetComponent<Renderer>().material.color = new Color(0,1,1,0.75f);;
             }
             else if (attack)
             {
-                indicator.GetComponent<Renderer>().material.color = Color.red;
+                indicator.GetComponent<Renderer>().material.color = new Color(1,0,0,0.75f);;
             }
             else if (selectableRunning)
             {
-                indicator.GetComponent<Renderer>().material.color = Color.yellow;
+                indicator.GetComponent<Renderer>().material.color = new Color(1,0.92f,0.016f,0.75f);
             }
             else
             {
                 currentColor = indicator.GetComponent<Renderer>().material.color;
-                currentColor.a = 0.5f;
+                currentColor.a = 0.25f;
                 indicator.GetComponent<Renderer>().material.color = currentColor;
             }
-            
+        
         }
     }
 
@@ -82,11 +79,10 @@ public class Tile : MonoBehaviour
         selectableRunning = false;
         adjacencyList = new List<Tile>();
         attack = false;
-
-        //
         visited = false;
         parent = null; 
         distance = 0; 
+        UpdateIndictator();
     }
 
     //adds neighbors to adjacency list
@@ -142,11 +138,21 @@ public class Tile : MonoBehaviour
         if(ArmorValue < (damage + AP))
         {
             ArmorValue--;
-            CombatLog.Log("Cover is reduced to " + ArmorValue + "AP");
+            float percentage = ((float)TotalAV)/ArmorValue;
+            
+            if(ArmorValue < 1)
+            {
+                CombatLog.Log("Cover is sufficiently damaged that it provides no AP");
+            }
+            else
+            {
+                CombatLog.Log("Cover is reduced to " + ArmorValue + "AP");
+            }
         return ArmorValue + 1;
         }
         return ArmorValue;
     }
+
 
     public void DestroyMe()
     {

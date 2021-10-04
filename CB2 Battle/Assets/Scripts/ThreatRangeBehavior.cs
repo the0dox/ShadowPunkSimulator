@@ -107,14 +107,15 @@ public class ThreatRangeBehavior : MonoBehaviour
         Vector3 dimensions;
         if(type.Equals("Blast"))
         {
+            Destroy(ConeToken);
             BlastToken.SetActive(true);
-            ConeToken.SetActive(false);
             myRange = BlastToken.GetComponent<ThreatCone>();
+            myRange.StrictLOS = true;
             dimensions = new Vector3(w.GetBlast() * 2,w.GetBlast() * 2,w.GetBlast() * 2);
         }
         else
         {
-            BlastToken.SetActive(false);
+            Destroy(BlastToken);
             ConeToken.SetActive(true);
             myRange = ConeToken.GetComponent<ThreatCone>();
             myRange.avoidOwner = attacker.transform;

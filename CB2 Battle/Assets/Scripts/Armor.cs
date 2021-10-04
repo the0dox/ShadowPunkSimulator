@@ -37,7 +37,6 @@ public class Armor : Item
         // If the armor doesn't cover this area, no damage is reduced
         if(!ArmorLocation.Contains(HitLocation))
         {
-            Debug.Log(GetName() + " doesn't cover " + HitLocation);
             return 0;
         }
         int output = AP;

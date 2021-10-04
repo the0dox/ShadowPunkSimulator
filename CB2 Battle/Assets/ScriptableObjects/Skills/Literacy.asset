@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Literacy
+  m_EditorClassIdentifier: 
+  basic: 0
+  characterisitc: INT
+  visible: 1
+  Descriptor: []
+  displayText: "The Literacy skill enables you to read any language you can speak.
+    You normally do not need to Test Literacy for everyday instances of reading or
+    writing, but the GM may call for a Literacy Test when you attempt to read a challenging
+    dialect, poor penmanship, decipher obscure phraseology, archaic usage or unusual
+    idioms. To read one page of text\u2014 approximately 750 words\u2014a Literacy 
+    Test takes about a minute."

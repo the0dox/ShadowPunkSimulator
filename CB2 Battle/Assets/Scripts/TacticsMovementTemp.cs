@@ -37,6 +37,7 @@ public class TacticsMovementTemp : MonoBehaviour
    {
       currentTile = GetTargetTile(gameObject);
       currentTile.current = true; 
+      currentTile.UpdateIndictator();
    }
 
    public Tile GetTargetTile(GameObject target)
@@ -76,6 +77,7 @@ public class TacticsMovementTemp : MonoBehaviour
 
          selectableTiles.Add(t);
          t.selectable = true; 
+         t.UpdateIndictator();
 
          if (t.distance < move) {     
 
@@ -102,6 +104,8 @@ public class TacticsMovementTemp : MonoBehaviour
       path.Clear();
 
       tile.target = true;
+      tile.UpdateIndictator();
+
       moving = true; 
       
       Tile next = tile;
@@ -163,6 +167,7 @@ public class TacticsMovementTemp : MonoBehaviour
          if (currentTile != null) 
          {
             currentTile.current = false;
+            currentTile.UpdateIndictator();
             currentTile = null;
          }
 

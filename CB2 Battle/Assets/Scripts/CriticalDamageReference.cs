@@ -28,15 +28,9 @@ public class CriticalDamageReference : MonoBehaviour
     [SerializeField] private GameObject PopupReference;
     private static GameObject Popup;
 
-
-    void Start()
-    {
-        Popup = PopupReference;
-        Init();
-    }
-
     public void Init()
     {
+        Popup = PopupReference;
         EnergyHead[0] = "A grazing blow to the head frazzles the target’s senses, imposing a –10 penalty to all Tests (except Toughness) for 1 Round.";
         EnergyHead[1] = "The blast of energy dazzles the target, leaving him blinded for 1 Round.";
         EnergyHead[2] = "The blast of energy dazzles the target, leaving him blinded for 1 Round.";

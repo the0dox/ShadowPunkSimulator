@@ -78,11 +78,13 @@ public class TacticsMovement : MonoBehaviour
          if(t.GetOccupant() == null || t.GetOccupant().GetTeam() == team){
             if (t.distance <= move)
             {
-               t.selectable = true; 
+               t.selectable = true;
+               t.UpdateIndictator(); 
             }
             else
             {
                t.selectableRunning = true; 
+               t.UpdateIndictator();
             }
             if (t.distance < doubleMove) {     
 
@@ -122,6 +124,7 @@ public class TacticsMovement : MonoBehaviour
          
          if(t.GetOccupant() == null){
             t.selectableRunning = true; 
+            t.UpdateIndictator();
          }
 
          if (t.distance < run && (t.GetOccupant() == null || t.GetOccupant().GetTeam() == team)) {     
@@ -165,6 +168,7 @@ public class TacticsMovement : MonoBehaviour
                if (adjacentTile.GetOccupant() != null && adjacentTile.GetOccupant().GetTeam() != team)
                {
                   t.selectableRunning = true;
+                  t.UpdateIndictator();
                }
             }
          }
@@ -197,6 +201,7 @@ public class TacticsMovement : MonoBehaviour
       path.Clear();
 
       tile.target = true;
+      tile.UpdateIndictator();
       moving = true; 
       
       Tile next = tile;
@@ -316,10 +321,12 @@ public class TacticsMovement : MonoBehaviour
          if(w == null && target.GetTeam() != myStats.GetTeam())
          {
             p.GetComponent<TacticsMovement>().GetTargetTile(p).attack = true;
+            p.GetComponent<TacticsMovement>().GetTargetTile(p).UpdateIndictator();
          }
          else if(TacticsAttack.HasValidTarget(target,myStats,w))
          {
             p.GetComponent<TacticsMovement>().GetTargetTile(p).attack = true;
+            p.GetComponent<TacticsMovement>().GetTargetTile(p).UpdateIndictator();
          }
       }
    }
@@ -330,11 +337,15 @@ public class TacticsMovement : MonoBehaviour
       GetCurrentTile();
       if(myStats.grappler != null)
       {
-         myStats.grappler.GetComponent<TacticsMovement>().GetTargetTile(myStats.grappler.gameObject).selectable = true;
+         Tile targetTile = myStats.grappler.GetComponent<TacticsMovement>().GetTargetTile(myStats.grappler.gameObject);
+         targetTile.attack = true;
+         targetTile.UpdateIndictator();
       }
       if(myStats.grappleTarget != null)
       {
-         myStats.grappleTarget.GetComponent<TacticsMovement>().GetTargetTile(myStats.grappleTarget.gameObject).selectable = true;
+         Tile targetTile = myStats.grappleTarget.GetComponent<TacticsMovement>().GetTargetTile(myStats.grappleTarget.gameObject);
+         targetTile.attack = true;
+         targetTile.UpdateIndictator();
       }
    }
 
@@ -379,6 +390,12 @@ public class TacticsMovement : MonoBehaviour
 
    public bool finishedMoving()
    {
-      return finishedMove;
+      bool output = finishedMove;
+      if(output)
+      {
+         finishedMove = false;
+         return true;
+      }
+      return false;
    }
 }

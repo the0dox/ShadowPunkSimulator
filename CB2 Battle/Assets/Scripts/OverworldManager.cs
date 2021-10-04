@@ -61,6 +61,27 @@ public class OverworldManager : UIButtonManager
         }
     }
 
+    public static void SaveOverworld()
+    {
+        Party.Clear();
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        GameObject[] leads = GameObject.FindGameObjectsWithTag("Lead");
+        Dictionary<Vector3, GameObject> OverworldTokens = new Dictionary<Vector3, GameObject>();
+        List<LeadScript> leadScripts = new List<LeadScript>();
+        foreach(GameObject p in players)
+        {
+            OverworldTokens.Add(p.transform.position, p);
+        }
+        foreach(GameObject g in leads)
+        {
+            leadScripts.Add(g.GetComponent<LeadScript>());
+        }
+        SceneSaveData overworldScene = new SceneSaveData("Overworld",OverworldTokens);
+        overworldScene.AddLeads(leadScripts);
+        SaveSystem.SaveScene(overworldScene);
+        Debug.Log("scene saved with " + players.Length + " tokens and " + leads.Length + " leads ");
+    }
+
     private bool ContinueIenumerator(List<LeadScript> leads)
     {
         if(!FF)

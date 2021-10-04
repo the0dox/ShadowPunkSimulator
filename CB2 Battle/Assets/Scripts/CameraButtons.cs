@@ -5,6 +5,8 @@ using UnityEngine;
 // controls camera movement, and enables for a full screen freeze 
 public class CameraButtons : MonoBehaviour
 {
+    // used if camera doesn't need to be controlled by the arrow keys/panned
+    public bool Controllable = true;
     // movement speed of camera
     public float panSpeed = 5f;
     // Range of the screen that will trigger panning
@@ -17,11 +19,18 @@ public class CameraButtons : MonoBehaviour
     // A short delay that prevents interaction after ui is set inactive again
     private static bool GracePeriod = false;
     // reference for regular camera position
-    private Vector3 StandardLocalCameraPos = new Vector3(0,15,-15);
+    private Vector3 StandardLocalCameraPos = new Vector3(0,30,-30);
     // reference for regular camera position
     private Vector3 StandardLocalRotation = new Vector3(45,0,0);
+    // indicates if birds eye view is in effect
     private bool BirdsEyeView = false;
+    // static reference so camera can be altered by another script
+    private static GameObject objectRef;
     // Camera that renders all normal game objects
+    void Start()
+    {
+        objectRef = gameObject;
+    }
     void Update()
     {
         // Prevents the mouse click that disabled ui from being interpreted as a different action
@@ -30,7 +39,7 @@ public class CameraButtons : MonoBehaviour
             StartCoroutine(FreezeDelay());
         }
         // If Ui is not active and mouse position passes the border range, move the camera
-        if(!UIactive)
+        if(!UIactive && Controllable)
         {
             Vector3 pos = transform.position;
             if(Input.mousePosition.y >= Screen.height - panBorderRange)
@@ -78,16 +87,16 @@ public class CameraButtons : MonoBehaviour
     public void BirdsEye()
     {
         GameObject cameraObject = GetComponentInChildren<Camera>().gameObject;
-        //returns to regular view
+        //returns to regular view from birds eye
         if(BirdsEyeView)
         {
             cameraObject.transform.localPosition = StandardLocalCameraPos;
             cameraObject.transform.localEulerAngles = StandardLocalRotation;
         }
-        //enables new view
+        //enables new view from regular angle
         else
         {
-            cameraObject.transform.localPosition = new Vector3(0,15,0);
+            cameraObject.transform.localPosition = new Vector3(0,30,0);
             cameraObject.transform.localEulerAngles = new Vector3(80,0,0);
         }
         BirdsEyeView = !BirdsEyeView;
@@ -108,6 +117,12 @@ public class CameraButtons : MonoBehaviour
             return GracePeriod;
         }
         return UIactive;
+    }
+
+    // Focuses the camera on the transfom of a given gameobject
+    public static void SetFocus(Vector3 newPos)
+    {
+        objectRef.transform.position = newPos;
     }
 
     // After a few frames, end the grace period and resume normal input

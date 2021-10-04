@@ -6,7 +6,7 @@ public class ItemReference : MonoBehaviour
 {
     [SerializeField] private List<ItemTemplate> ItemTemplateInitializer = new List<ItemTemplate>();
     private static Dictionary<string, ItemTemplate> Library = new Dictionary<string, ItemTemplate>();
-    void Start()
+    public void Init()
     {
         foreach(ItemTemplate c in ItemTemplateInitializer)
         {

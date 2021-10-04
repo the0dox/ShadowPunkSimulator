@@ -17,7 +17,7 @@ public class PlayerSpawner : MonoBehaviour
     private static Dictionary<string, GameObject> SModels = new Dictionary<string, GameObject>();
 
     // Start is called before the first frame update
-    void Start()
+    public void Init()
     {
         SPlayerReference = PlayerReference;
         SPlayerMaterial = PlayerMaterial;

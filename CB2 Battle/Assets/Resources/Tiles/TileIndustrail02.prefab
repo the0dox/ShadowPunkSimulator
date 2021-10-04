@@ -200,5 +200,5 @@ MonoBehaviour:
   visited: 0
   parent: {fileID: 0}
   distance: 0
-  ArmorValue: 8
+  ArmorValue: 12
   indicator: {fileID: 6411151272165617167}

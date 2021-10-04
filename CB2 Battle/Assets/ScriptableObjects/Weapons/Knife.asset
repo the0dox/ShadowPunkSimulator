@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Knife
+  m_EditorClassIdentifier: 
+  weight: 0.5
+  cost: 5
+  availablity: Abundant
+  description: The knife is the ubiquitous back-up weapon for warriors all across
+    the  Imperium, be they lowly hive scum or the elite soldiers of a planetary 
+    governor. Some, such as the psykana mercy blade, are designed for a  specific
+    purpose, whilst others are more generic in nature
+  unique: 0
+  Attributes:
+  - Primitive
+  Class: Melee
+  numDice: 1
+  sizeDice: 5
+  damageBonus: 0
+  range: 0
+  pen: 0
+  reloadMax: 0
+  single: 0
+  semi: 0
+  auto: 0
+  clipMax: 0
+  damageType: R
+  blast: 0
+  AmmoSource: {fileID: 0}

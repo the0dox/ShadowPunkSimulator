@@ -3,19 +3,24 @@ using System.Collections.Generic;
 using UnityEngine; 
 using UnityEngine.UI;
 
-public class TacticsAttack : MonoBehaviour
+// static class used to calculate attack rolls
+public static class TacticsAttack
 {
-    //public GameObject displayText;
-
-    // Returns the ammount of times hit
+    // target: stats of the defender
+    // mystats: stats of the attacker
+    // w: weapon used in the attack
+    // type: the fire rate of w
+    // creates an attacksequence objects that contains a single attack sequence between an attacker and a target
     public static AttackSequence Attack(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
         int modifiers = 0;
         AttackSequence output = new AttackSequence(target,myStats,w,type,0);
         string attackSkill;
         int shotsFired;
+        // Melee modifiers
         if (w.IsWeaponClass("Melee"))
         {
+            // Only melee weps can have the two handed attribute as there is only one class for melee weps unlike ranged weps
             if(w.HasWeaponAttribute("Two Handed") && myStats.IsDualWielding())
             {
                 Debug.Log("dualwielding");
@@ -46,9 +51,11 @@ public class TacticsAttack : MonoBehaviour
                 Debug.Log(w.GetName());
                 modifiers -= 20;
             }
+            // unless stated otherwise, melee doesn't use type, and always makes one attack
             attackSkill = "WS";
             shotsFired = 1;
         }
+        // Ranged Modifiers
         else
         {
             if(w.IsWeaponClass("Basic") && myStats.IsDualWielding())
@@ -69,6 +76,7 @@ public class TacticsAttack : MonoBehaviour
             attackSkill = "BS";
             shotsFired = w.ExpendAmmo(type);
         }
+        // universal modifiers that melee and ranged weapons can use
         if(w.HasWeaponAttribute("Accurate") && (myStats.hasCondition("Half Aiming") || myStats.hasCondition("Full Aiming")))
         {
             Debug.Log("Accurate");
@@ -104,7 +112,12 @@ public class TacticsAttack : MonoBehaviour
         }
         modifiers += adjacencyBonus(target,w);
         modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
-        int attackModifiers = w.RangeBonus(target.transform, myStats) + ROFBonus(type) + modifiers;
+        // ranged weps get a bonus depending on distance to target
+        int attackModifiers = w.RangeBonus(target.transform, myStats) + modifiers;
+        if(!myStats.hasCondition("Called"))
+        {
+            attackModifiers += ROFBonus(w, type);
+        }
         RollResult AttackResult = myStats.AbilityCheck(attackSkill, attackModifiers);
         if(TacticsAttack.Jammed(AttackResult.GetRoll(), w, type, myStats))
         {
@@ -263,15 +276,86 @@ public class TacticsAttack : MonoBehaviour
             }
 
             //ranged weapons require line of sight 
-            Vector3 myPOV = myStats.gameObject.transform.position + new Vector3(0, myStats.gameObject.GetComponent<Collider>().bounds.extents.y,0);
-            Vector3 TargetPOV = target.gameObject.transform.position + new Vector3(0, target.gameObject.GetComponent<Collider>().bounds.extents.y,0);
-            if(Physics.Linecast(myPOV, TargetPOV, LayerMask.GetMask("Obstacle")))
-            {
-                return false;
-            }
-            return true;
+            return HasLOS(target.gameObject, myStats.gameObject);
         }
     }
+
+    public static bool HasLOS(GameObject target, GameObject attacker)
+    {
+            Vector3 myPOV = attacker.transform.position + new Vector3(0, attacker.GetComponent<Collider>().bounds.extents.y/2,0);
+            Vector3 TargetPOV = target.transform.position + new Vector3(0, target.GetComponent<Collider>().bounds.extents.y/2,0);
+            RaycastHit interceptPoint;
+            // check to see if any tile are between target and defender
+            if(Physics.Linecast(myPOV, TargetPOV, out interceptPoint, LayerMask.GetMask("Obstacle")))
+            {
+                Tile BlockingTile = interceptPoint.collider.GetComponent<Tile>();
+                // If blocking tile can be ignored by attacker, ignore it and see if the rest of LOS is obscured
+                if(IgnoreTile(myPOV, BlockingTile))
+                {
+                    // temporaryly disable collision with "safe" tile to look through it
+                    BlockingTile.GetComponent<Collider>().enabled = false;
+                    if(Physics.Linecast(BlockingTile.transform.position, TargetPOV, out interceptPoint, LayerMask.GetMask("Obstacle")))
+                    {
+                        BlockingTile.GetComponent<Collider>().enabled = true;
+                        // if the second line hits, it can only be ignored if adjacacnet to the target itself
+                        if(IgnoreTile(TargetPOV, interceptPoint.collider.GetComponent<Tile>()))
+                        {
+                            return true;
+                        }
+                        return false;
+                    }
+                    // if the second line doesn't hit, then its a valid shot
+                    BlockingTile.GetComponent<Collider>().enabled = true;
+                    return true;
+                }
+                // If the only blocking tile can be ignored by the defender than we can target them
+                else if(IgnoreTile(TargetPOV, BlockingTile))
+                {
+                    return true;
+                }
+                // If blocks cannot be ignored attack is invalid
+                return false;
+            }
+            // if no tiles are present the attack is valid
+            return true;
+    }
+
+    // Tiles can be ignored if they are directly adjacent to origin. But ONLY if they are not adjacent to two other blocks on each side
+    private static bool IgnoreTile(Vector3 origin, Tile BlockingTile)
+    {
+        Debug.Log("evaluating tile at " + BlockingTile.transform.position + " to be ignored");
+        // if the blocking tile is too far to block 
+        if(Vector3.Distance(origin, BlockingTile.transform.position) > 1.5f)
+        {
+            Debug.Log("tile is too far to be cover");
+            return false;
+        }
+        Vector3 relative = BlockingTile.transform.InverseTransformPoint(origin); 
+        Quaternion rightRotation = Quaternion.Euler(0,90,0);
+        Quaternion leftRotation = Quaternion.Euler(0,-90,0);
+        Vector3 startingDirection = Vector3.forward;
+        Vector3 OriginDir = relative.normalized;
+        Vector3 LeftDir = leftRotation * OriginDir;
+        Vector3 RightDir = rightRotation * OriginDir;
+        Debug.DrawRay(BlockingTile.transform.position,relative,Color.blue, 3);
+        Debug.DrawRay(BlockingTile.transform.position,LeftDir,Color.green, 3);
+        Debug.DrawRay(BlockingTile.transform.position, RightDir, Color.red, 3);
+        RaycastHit debugHit;
+        if(Physics.Raycast(BlockingTile.transform.position, LeftDir, out debugHit, 1, LayerMask.GetMask("Obstacle")))
+        {
+
+            Debug.Log("cover is blocked to its left " + debugHit.collider.transform.position);
+            if(Physics.Raycast(BlockingTile.transform.position, RightDir, out debugHit, 1,LayerMask.GetMask("Obstacle")))
+            {
+                Debug.Log("cover is also blocked from its right, cannot be ignored " + debugHit.collider.transform.position);
+                {
+                    return false;
+                }
+            }
+        }
+        return true;
+    }
+
 
     public static Tile CalculateCover(GameObject attacker,  GameObject target, string HitLocation)
     {
@@ -394,14 +478,18 @@ public class TacticsAttack : MonoBehaviour
         return 0;
     }
 
-    public static int ROFBonus(string type)
+    public static int ROFBonus(Weapon w, string type)
     {
+        if(w.IsWeaponClass("Thrown") || w.IsWeaponClass("Melee"))
+        {
+            return 0;
+        }
         switch(type)
             {
-                case "Semi":
+                case "S":
                 return 10;
                 case "Auto":
-                return 20;
+                return -10;
             }
         return 0;
     }
@@ -589,7 +677,7 @@ public class TacticsAttack : MonoBehaviour
                     }
                     int rangemodifier = w.RangeBonus(target.transform, myStats);
                     chanceToHit += rangemodifier;
-                    if(rangemodifier > 0)
+                    if(rangemodifier != 0)
                     {
                         outputStack.Push(" +" + rangemodifier +"%: range");
                     }
@@ -597,10 +685,16 @@ public class TacticsAttack : MonoBehaviour
                     {
                         outputStack.Push(" " + rangemodifier +"%: range");
                     }
-                    chanceToHit += ROFBonus(type);
-                    if(ROFBonus(type) > 0)
+                    int firebonus = ROFBonus(w, type);
+                    if(firebonus != 0 && !myStats.hasCondition("Called"))
                     {
-                        outputStack.Push(" +" + ROFBonus(type) +": " + type);
+                        chanceToHit += firebonus;
+                        string addition = " ";
+                        if(firebonus > 0)
+                        {
+                            addition = " +";
+                        }
+                        outputStack.Push(addition + firebonus +": " + type);
                     }
                     int GangupBonus = TacticsAttack.adjacencyBonus(target,w);
                     if(GangupBonus != 0)

@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Inquiry
   m_EditorClassIdentifier: 
   basic: 1
-  characterisitc: INT
+  characterisitc: FEL
   visible: 1
   Descriptor:
   - Investigation

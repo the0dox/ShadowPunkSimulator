@@ -106,7 +106,6 @@ public class CharacterSheet : MonoBehaviour
         //weapons
         foreach(Item i in Equipment)
         {
-            Debug.Log(i.GetName() + " " + i.GetType());
             PlayerEquipment.Add(i);
         }
         output.CompleteDownload();

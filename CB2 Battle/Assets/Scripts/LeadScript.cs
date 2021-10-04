@@ -19,12 +19,15 @@ public class LeadScript : MonoBehaviour
 
     void Update()
     {
-        float difference = MaxHours - CompletedHours;
-        if(difference < 0)
+        int difference = (int)(MaxHours - CompletedHours);
+        if(difference / 24 > 0)
         {
-            CompletedHours = MaxHours;
-        } 
-        TextTime.text = (MaxHours - CompletedHours) + " hours remaining";
+            TextTime.text = (difference / 24) + " days remaining";
+        }
+        else
+        {
+            TextTime.text = (MaxHours - CompletedHours) + " hours remaining";
+        }
         pieChart.fillAmount = (CompletedHours/MaxHours);
     }
     public void UpdateLead(int modifier, int time, PlayerStats[] players, string skill, string name)
@@ -67,6 +70,16 @@ public class LeadScript : MonoBehaviour
             CompletedHours += extrahours;
         }
     }
+
+    public void SetLead( string name, float progress, float time)
+    {
+        Debug.Log(name);
+        Title.text = name;
+        this.MaxHours = time;
+        this.CompletedHours = progress;
+    }
+
+    //depreciated
     public void Init()
     {
         float angleIncrementer = -360f/(float)MaxHours;
@@ -87,6 +100,21 @@ public class LeadScript : MonoBehaviour
     public void IncrementTime(float hours)
     {
         CompletedHours += hours;
+    }
+
+    public float GetCompletedHours()
+    {
+        return CompletedHours;
+    }
+
+    public float GetMaxHours()
+    {
+        return MaxHours;
+    }
+
+    public string getName()
+    {
+        return Title.text;
     }
 
     public void Delete()

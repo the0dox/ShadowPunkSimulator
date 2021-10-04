@@ -251,8 +251,9 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moving: 0
+  initative: 0
   finishedMove: 0
-  jumpHeight: 2
+  jumpHeight: 1
   moveSpeed: 4
   halfMove: 0
 --- !u!1 &3973098909880958712

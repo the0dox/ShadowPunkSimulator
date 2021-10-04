@@ -33,6 +33,7 @@ public class FieldOFView : MonoBehaviour
             if(Hit.collider != null) 
             {
                 Hit.collider.gameObject.GetComponent<Tile>().selectable = true;
+                Hit.collider.gameObject.GetComponent<Tile>().UpdateIndictator();
                 vertex = Hit.point;
             }
             else

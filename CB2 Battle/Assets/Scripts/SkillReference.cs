@@ -7,7 +7,7 @@ public class SkillReference : MonoBehaviour
     [SerializeField] private List<SkillTemplate> SkillTemplateInitializer = new List<SkillTemplate>();
     private static Dictionary<string, SkillTemplate> Library = new Dictionary<string, SkillTemplate>();
 
-    void Start()
+    public void Init()
     {
         foreach(SkillTemplate c in SkillTemplateInitializer)
         {

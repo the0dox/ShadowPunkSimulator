@@ -10,6 +10,8 @@ public class ActivityGenerator : MonoBehaviour
     [SerializeField] private GameObject TypeField;
     // Selects difficulty of investigation
     [SerializeField] private GameObject InvestigateField;
+    // Selects duration of a clock
+    [SerializeField] private GameObject DurationField;
     // Selects item quality for investigation
     [SerializeField] private GameObject ItemField;
     // Selects skill used to investigate
@@ -90,6 +92,8 @@ public class ActivityGenerator : MonoBehaviour
         ResetDD(TypeField);
         InvestigateField.SetActive(false);
         ResetDD(InvestigateField);
+        DurationField.SetActive(false);
+        ResetDD(DurationField);
         ItemField.SetActive(false);
         ResetDD(ItemField);
         SkillField.SetActive(false);
@@ -133,6 +137,11 @@ public class ActivityGenerator : MonoBehaviour
             }
             ItemField.GetComponent<Dropdown>().AddOptions(results);
         }
+        if(GetChoice(TypeField).Equals("Clock"))
+        {
+            disableDD(TypeField);
+            DurationField.SetActive(true);
+        }
     }
     // On selecting investigation, players then select the complexity of the investigation
     public void InvestigationSelection()
@@ -147,6 +156,19 @@ public class ActivityGenerator : MonoBehaviour
             GetRemainingPlayers(P1Field);
         }
     }
+
+    // On selecting Duration, player is prompted to create clock
+    public void DurationSelection()
+    {
+        if(!GetChoice(DurationField).Equals("None"))
+        {
+            string Complexity = GetChoice(DurationField);
+            Time = int.Parse(Complexity);
+            disableDD(DurationField);
+            adderButton.SetActive(true);
+        }
+    }
+
     // On selecting item, players can select an item and applies modifiers depending on item availability 
     public void ItemSelection()
     {
@@ -239,15 +261,20 @@ public class ActivityGenerator : MonoBehaviour
     // Creates a new activity and sends it to the queue to be displayed
     public void MakeActivity()
     {
-        GameObject newActivity = Instantiate(ActivityObjectReference) as GameObject;
         string name = "New Lead";
         if(ItemChoice != null)
         {
             name = ItemChoice;
             SkillChoice = "Inquiry";
         }
-        newActivity.GetComponent<LeadScript>().UpdateLead(Modifier,Time,PlayerSelection,SkillChoice, name);
-        ActionQueueDisplay.AddActivity(newActivity);
+        if(GetChoice(TypeField) == "Clock")
+        {
+            ActionQueueDisplay.LoadActivity("Clock",0,Time);
+        }
+        else
+        {
+            ActionQueueDisplay.AddActivity(Modifier,Time,PlayerSelection,SkillChoice, name);
+        }
         gameObject.SetActive(false);
     }
 

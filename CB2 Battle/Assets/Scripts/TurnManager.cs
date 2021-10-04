@@ -35,126 +35,19 @@ public class TurnManager : TurnActions
             {
                 halfActions = 0;
             }
+            if(ActivePlayer.finishedMoving())
+            {
+                Cancel();
+            }
             CheckMouse();
             switch(currentAction)
             {
-                case "ThreatRange":
-                    ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-                break;
                 case "Move":
-                    if(!ActivePlayerStats.ValidAction("Charge"))
-                    {
-                        ActivePlayer.moving = true;
-                        currentAction = "Charge";
-                    }
                     if(ActivePlayerStats.grappling())
                     {
                         currentAction = "Grapple";
                     }
-                    if (!ActivePlayer.moving)
-                    {
-                        if(!ActivePlayerStats.hasCondition("Prone"))
-                        {  
-                            if(halfActions > 1)
-                            {
-                                ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetStat("MoveFull"),ActivePlayerStats.GetTeam());     
-                            }
-                            else if( halfActions > 0)
-                            {
-                                ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam());     
-                            } 
-                            else 
-                            {
-                                ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());     
-                            }
-                        }
-                        else
-                        {
-                            ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
-                        }
-                    }
-                    else 
-                    {
-                        ActivePlayer.RemoveSelectableTiles();
-                        ActivePlayer.Move();
-                    }
-                break;
-                case "Attack":
-                    ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-                break;
-                case "CM":
-                    ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-                break;
-                case "Grapple":
-                    ActivePlayer.GetGrapplePartner(ActivePlayerStats);
-                break;
-                case "Reacting":
-                    ActivePlayer.RemoveSelectableTiles();
-                    if(target != null)
-                    {
-                        target.GetComponent<TacticsMovement>().FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
-                    }
-                break;
-                case "Charge":
-                    if (!ActivePlayer.moving)
-                    {
-                        //reached destination 
-                        if(!ActivePlayerStats.ValidAction("Charge"))
-                        {
-                            ClearActions();
-                            ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
-                            Combat();
-                        }
-                        else
-                        {
-                            ActivePlayer.FindChargableTiles(ActivePlayerStats.GetStat("MoveCharge"),ActivePlayerStats.GetTeam());     
-                        }
-                    }
-                    else 
-                    {
-                        ActivePlayer.RemoveSelectableTiles();
-                        ActivePlayer.Move();
-                    }
-                break;
-                case "Run":
-                    if (!ActivePlayer.moving)
-                    {
-                        if(halfActions > 1)
-                        {
-                            ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveRun"), ActivePlayerStats.GetTeam());     
-                        }
-                        else
-                        {
-                            Cancel();
-                        }
-                    }
-                    else 
-                    {
-                        ActivePlayer.RemoveSelectableTiles();
-                        ActivePlayer.Move();
-                    }
-                break;
-                case "Disengage":
-                    if (!ActivePlayer.moving)
-                    {
-                        ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveHalf"), ActivePlayerStats.GetTeam());     
-                        if(halfActions < 1)
-                        {
-                            Cancel();
-                        }   
-                    }
-                    else 
-                    {
-                        ActivePlayer.Move();
-                    }
-                break;
-                case "Advance":
-                    if (!ActivePlayer.moving)
-                    {
-                        //to implmenent, enforced advance zones
-                            ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveFull"), ActivePlayerStats.GetTeam());         
-                    }
-                    else 
+                    if (ActivePlayer.moving)
                     {
                         ActivePlayer.Move();
                     }
@@ -270,13 +163,13 @@ public class TurnManager : TurnActions
                             halfActions--;
                             ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
                             AttackOfOppertunity();
+                            ActivePlayer.RemoveSelectableTiles();
 
-                            
                             if(ActivePlayerStats.hasCondition("Braced"))
                             {
-                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                                ActivePlayerStats.RemoveCondition("Braced");
+                            CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                            PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                            ActivePlayerStats.RemoveCondition("Braced");
                             }
                         } 
                         else if (t.selectableRunning)
@@ -284,17 +177,17 @@ public class TurnManager : TurnActions
                             //make tile green
                             ActivePlayer.moveToTile(t);
                             halfActions = 0;
+                            ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
                             AttackOfOppertunity();
+                            ActivePlayer.RemoveSelectableTiles();
 
-                            
                             if(ActivePlayerStats.hasCondition("Braced"))
                             {
-                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                                ActivePlayerStats.RemoveCondition("Braced");
+                            CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                            PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                            ActivePlayerStats.RemoveCondition("Braced");
                             }
                         }
-                        Cancel();
                     }
                     break;
                 case "Run":
@@ -309,6 +202,8 @@ public class TurnManager : TurnActions
                             ActivePlayer.moveToTile(t);
                             AttackOfOppertunity();
                             halfActions-=2;
+                            currentAction = "Move";
+                            ActivePlayer.RemoveSelectableTiles();
 
                             
                             if(ActivePlayerStats.hasCondition("Braced"))
@@ -337,7 +232,10 @@ public class TurnManager : TurnActions
                             else
                             {
                                 halfActions -= 2;
-                            }                    
+                            }                  
+                            currentAction = "Move";  
+                            ActivePlayer.RemoveSelectableTiles();
+
                             if(ActivePlayerStats.hasCondition("Braced"))
                             {
                                 CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
@@ -380,6 +278,8 @@ public class TurnManager : TurnActions
                             AttackOfOppertunity();
                             ActivePlayerStats.SetCondition("Charging",1,true);
                             ActivePlayerStats.SpendAction("Charge");
+                            currentAction = "Move";
+                            ActivePlayer.RemoveSelectableTiles();
                             
                             if(ActivePlayerStats.hasCondition("Braced"))
                             {
@@ -440,6 +340,7 @@ public class TurnManager : TurnActions
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
             ActivePlayerStats.UpdateConditions(true);
+            CameraButtons.SetFocus(ActivePlayer.transform.position);
             foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
             {
                 w.OnTurnStart();
@@ -504,6 +405,10 @@ public class TurnManager : TurnActions
         while(TempStack.Count != 0){
             InitativeOrder.Enqueue(TempStack.Pop());
         }
+        if(InitativeOrder.Count > 0)
+        {
+            StartTurn();
+        }
         PrintInitiative();
     }
 
@@ -547,7 +452,6 @@ public class TurnManager : TurnActions
             string name = tm.GetComponent<PlayerStats>().GetName();
             string value = "" + tm.initative;
             entries.Add(name + ": " + value);
-            Debug.Log(tm.initative);
             iterations--;
         }
         It.UpdateList(entries);
@@ -592,10 +496,10 @@ public class TurnManager : TurnActions
         FireRate = ROF;
         this.target = target; 
         ActiveWeapon = w;
-        target.SetCondition("Under Fire", 1,false);
         //only a valid target if on diferent teams
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
+            target.SetCondition("Under Fire", 1,false);
             AttackSequence newAttack = TacticsAttack.Attack(target, attacker, ActiveWeapon, ROF);
             if(HitLocation != null)
             {
@@ -811,7 +715,6 @@ public class TurnManager : TurnActions
             InitativeOrder.Enqueue(tm);
             StartTurn(tm);
         }
-        PrintInitiative();
     }
 
     public void RemovePlayer(GameObject Player)

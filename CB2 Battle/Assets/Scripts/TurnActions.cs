@@ -35,20 +35,15 @@ public class TurnActions : MonoBehaviour
             //if charging only melee weapons are usable
             if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.PrimaryWeapon.IsWeaponClass("Melee"))
             {    
-                d.Add(ActivePlayerStats.PrimaryWeapon.GetName(), "PrimaryWeapon");
+                d.Add(ActivePlayerStats.PrimaryWeapon.GetName() + " (Primary)", "PrimaryWeapon");
             }
         }
-        if (ActivePlayerStats.SecondaryWeapon != null && ActivePlayerStats.SecondaryWeapon != ActivePlayerStats.PrimaryWeapon)
+        if (ActivePlayerStats.SecondaryWeapon != null)
         {
             //if charging only melee weapons are usable
             if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.SecondaryWeapon.IsWeaponClass("Melee"))
-            { 
-                string addition = "";
-                if(d.ContainsKey(ActivePlayerStats.SecondaryWeapon.GetName()))
-                {
-                    addition = " (Left Handed)";
-                }
-                d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + addition,"SecondaryWeapon");
+            {
+                d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
             }
         }
         d.Add("Unarmed","Unarmed");
@@ -92,7 +87,6 @@ public class TurnActions : MonoBehaviour
     public void PrimaryWeapon()
     {
         ActiveWeapon = ActivePlayerStats.PrimaryWeapon;
-        Debug.Log(ActiveWeapon.GetName());
         GetWeaponActions();
     }
 
@@ -214,6 +208,7 @@ public class TurnActions : MonoBehaviour
     { 
         currentAction = "Attack";
         FireRate = "Full";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         ActivePlayerStats.SetCondition("GuardedAttack", 0, false);
         Dictionary<string,string> d = new Dictionary<string,string>();
         d.Add("Cancel","GuardedCancel");
@@ -224,6 +219,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "Attack";
         FireRate = "Full";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         ActivePlayerStats.SetCondition("AllOut", 0, false);
         Dictionary<string,string> d = new Dictionary<string,string>();
         d.Add("Cancel","AllOutCancel");
@@ -261,6 +257,7 @@ public class TurnActions : MonoBehaviour
     {
         FireRate = "Full";
         currentAction = "Charge";
+        ActivePlayer.FindChargableTiles(ActivePlayerStats.GetStat("MoveCharge"),ActivePlayerStats.GetTeam());     
         ConstructActions(new List<string>{"Cancel"});
     } 
     public void ChargeGrapple()
@@ -375,30 +372,52 @@ public class TurnActions : MonoBehaviour
     public void Run()
     {
         currentAction = "Run";
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveRun"),ActivePlayerStats.GetTeam());     
         ConstructActions(new List<string>{"Cancel"});
     }
 
     public void Advance()
     {
         currentAction = "Advance";
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam());  
         ConstructActions(new List<string>{"Cancel"});
     }
 
     public void Move()
     {
         currentAction = "Move";
+        if(!ActivePlayerStats.hasCondition("Prone"))
+        {  
+            if(halfActions > 1)
+            {
+                ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetStat("MoveFull"),ActivePlayerStats.GetTeam());     
+            }
+            else if( halfActions > 0)
+            {
+                ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam());     
+            } 
+            else 
+            {
+                ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());     
+            }
+        }
+        else
+        {
+            ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
+        }
     }
 
     public void Disengage()
     {
         currentAction = "Disengage";
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam()); 
         ConstructActions(new List<string>{"Cancel"});
     }
 
     public void Stand()
     {
         currentAction = "Stand";
-        if(CurrentAttack.target.hasCondition("Braced"))
+        if(ActivePlayerStats.hasCondition("Braced"))
         {
             CombatLog.Log("By standing, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
             PopUpText.CreateText("Unbraced!", Color.red, CurrentAttack.target.gameObject);
@@ -541,26 +560,12 @@ public class TurnActions : MonoBehaviour
     //is passed the action value of a button as an input
     public void OnButtonPressed(string input)
     {
-        //if the input is the name of an equiped weapon
-        if(isWeaponInput(input))
+        int index;
+        if(int.TryParse(input,out index))
         {
-            ActiveWeapon = StringToWeapon(input);
-            if (currentAction.Equals("Ready"))
-            {
-                if(ActivePlayerStats.PrimaryWeapon == null && ActivePlayerStats.SecondaryWeapon == null)
-                {   
-                    ActivePlayerStats.EquipPrimary(ActiveWeapon);
-                    halfActions--;
-                    ActivePlayerStats.SpendAction("Ready");
-                    Cancel();
-                }
-                else
-                {
-                    Invoke("Ready2",0);
-                }
-            }
+            ActiveWeapon = ActivePlayerStats.GetWeaponsForEquipment().ToArray()[index];
+            Ready2();
         }
-        //if not then just invoke the corresponding function
         else if(!ActivePlayer.moving || currentAction != "Move")
         {    
             Invoke(input,0);
@@ -598,6 +603,7 @@ public class TurnActions : MonoBehaviour
     public void StandardAttack()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         List<string> l = new List<string>{"Cancel"};
         ConstructActions(l);
@@ -605,6 +611,7 @@ public class TurnActions : MonoBehaviour
     public void ChargeAttack()
     {
         currentAction ="Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "Full";
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Cancel","Combat");
@@ -627,6 +634,7 @@ public class TurnActions : MonoBehaviour
     public void Head()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "Head";
         ActivePlayerStats.SetCondition("Called",1,false);
@@ -638,6 +646,7 @@ public class TurnActions : MonoBehaviour
     public void RightArm()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "RightArm";
         ActivePlayerStats.SetCondition("Called",1,false);
@@ -649,6 +658,7 @@ public class TurnActions : MonoBehaviour
     public void LeftArm()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "LeftArm";
         ActivePlayerStats.SetCondition("Called",1,false);
@@ -660,6 +670,7 @@ public class TurnActions : MonoBehaviour
     public void Body()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "Body";
         ActivePlayerStats.SetCondition("Called",1,false);
@@ -671,6 +682,7 @@ public class TurnActions : MonoBehaviour
     public void RightLeg()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "RightLeg";
         ActivePlayerStats.SetCondition("Called",1,false);
@@ -682,6 +694,7 @@ public class TurnActions : MonoBehaviour
     public void LeftLeg()
     {
         currentAction = "Attack";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "LeftLeg";
         ActivePlayerStats.SetCondition("Called",1,false);
@@ -702,6 +715,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "Attack";
         FireRate = "Semi";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         List<string> l = new List<string>{"Cancel"};
         ConstructActions(l);
     }
@@ -709,6 +723,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "Attack";
         FireRate = "Auto";
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         List<string> l = new List<string>{"Cancel"};
         ConstructActions(l);
     }
@@ -716,6 +731,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "ThreatRange";
         CreateThreatRange("Blast");
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         Dictionary<string, string> d = new Dictionary<string, string>();
         d.Add("Cancel", "RemoveRange");
         ConstructActions(d);
@@ -742,6 +758,7 @@ public class TurnActions : MonoBehaviour
     {
         currentAction = "ThreatRange";
         CreateThreatRange("Flame");
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         Dictionary<string, string> d = new Dictionary<string, string>();
         d.Add("Cancel", "RemoveRange");
         ConstructActions(d);
@@ -795,11 +812,13 @@ public class TurnActions : MonoBehaviour
         
         if(halfActions > 0)
         {
-            foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
+            Weapon[] equipment = ActivePlayerStats.GetWeaponsForEquipment().ToArray();
+            for(int i = 0; i < equipment.Length; i++)
             {
+                Weapon w = equipment[i];
                 if (w != ActivePlayerStats.SecondaryWeapon && w != ActivePlayerStats.PrimaryWeapon && !d.ContainsKey(w.GetName()))
                 {
-                    d.Add(w.GetName(),w.GetName());
+                    d.Add(w.GetName(),"" + i);
                 }
             }
             if(ActivePlayerStats.PrimaryWeapon != null)
@@ -945,10 +964,11 @@ public class TurnActions : MonoBehaviour
 
     public void TryReaction()
     {
-        currentAction = "Reacting";
-        CurrentAttack.target.GetComponent<TacticsMovement>().FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
+        CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
+        CurrentAttack.target.GetComponent<TacticsMovement>().GetTargetTile(CurrentAttack.target.gameObject).UpdateIndictator();
         if(CurrentAttack.attacks > 0 && CurrentAttack.target.ValidAction("reaction") && !CurrentAttack.target.hasCondition("AllOut") && !CurrentAttack.attacker.hasCondition("Feinted"))
         {
+            CombatLog.Log(CurrentAttack.target.GetName() + " has an oppertunity to react to " + CurrentAttack.attacks + " incoming attack(s)");
             List<string> l = new List<string>();
             l.Add("Dodge");
             if(CurrentAttack.ActiveWeapon.IsWeaponClass("Melee") && CurrentAttack.target.CanParry() && !CurrentAttack.ActiveWeapon.HasWeaponAttribute("Flexible"))
@@ -960,6 +980,7 @@ public class TurnActions : MonoBehaviour
         }
         else
         {
+            CombatLog.Log(CurrentAttack.target.GetName() + " cannot react and takes " + CurrentAttack.attacks + " incoming attack(s)");
             ResolveHit();
         }
     }
@@ -992,7 +1013,7 @@ public class TurnActions : MonoBehaviour
     public void Parry()
     { 
         CurrentAttack.target.SpendAction("reaction");
-        int modifier = target.ParryBonus();
+        int modifier = CurrentAttack.target.ParryBonus();
         Debug.Log(modifier);
         RollResult ParryResult = CurrentAttack.target.AbilityCheck("WS",modifier);
         if(ParryResult.Passed())
@@ -1225,7 +1246,7 @@ public class TurnActions : MonoBehaviour
         }
         else
         {
-            currentAction = "Move";
+            Move();
         }
         FireRate = null;
         target = null;

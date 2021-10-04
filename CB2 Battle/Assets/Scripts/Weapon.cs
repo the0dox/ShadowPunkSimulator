@@ -8,8 +8,7 @@ public class Weapon : Item
     //attributes are keywords a weapon would possess, should really be called "Special"
     [SerializeField] private List<string> Attributes = new List<string>();
     //stats concern all weapon stats for easy modification in the player sheet 
-    private Dictionary<string, int> Stats;
-
+    private Dictionary<string, int> Stats; 
     //number of dice rolled to determine damage Xd10 
     [SerializeField] private int numDice; 
     //random range of damage per die roll 1dX
@@ -34,10 +33,15 @@ public class Weapon : Item
     [SerializeField] private int clip;
     //damage type for determining critical table
     [SerializeField] private string damageType;
+    // Ranged weapons can become jammed, preventing them from being fired until repaired
     [SerializeField] private bool jammed = false;
+    // Some weapons consume items in order to be reloaded
     [SerializeField] private ItemTemplate AmmoSource;
+    // Class determines how the weapon functions, wether it is ranged, or melee
     private string Class;
+    // Special weapons with the recharge abilitiy use this to determine if they can fire this turn or not
     private int Recharging;
+    private int ID;
 
     public Weapon(WeaponTemplate template)
     {
@@ -67,6 +71,7 @@ public class Weapon : Item
         this.damageType = template.damageType;
         this.Class = template.Class;
         Recharging = 0;
+        ID = Random.Range(0,100000);
     }
 
     public int GetStat(string key)

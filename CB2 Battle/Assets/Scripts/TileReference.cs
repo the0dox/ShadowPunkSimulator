@@ -10,7 +10,7 @@ public class TileReference : MonoBehaviour
     // static reference of conditionsinitializer for other scripts
     private static Dictionary<string, GameObject> Library = new Dictionary<string, GameObject>();
     // creates Library so that it can be referenced statically
-    void Start()
+    public void Init()
     {
         foreach(GameObject tile in TileInitializer)
         {
