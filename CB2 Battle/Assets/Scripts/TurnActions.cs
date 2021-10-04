@@ -24,6 +24,7 @@ public class TurnActions : MonoBehaviour
     public List<PlayerStats> ValidTargets;
     protected Queue<AttackSequence> AttackQueue = new Queue<AttackSequence>();
     protected AttackSequence CurrentAttack;
+    public static bool ManualRoles = true;
 
     public void Combat()
     {
@@ -165,13 +166,16 @@ public class TurnActions : MonoBehaviour
                     }
                     else
                     {
-                        if (ActiveWeapon.CanFire("Semi") && halfActions > 1)
+                        if (ActiveWeapon.CanFire("Semi"))
                         {
                             d.Add("Semi Auto","SemiAuto");
                         }
-                        if (ActiveWeapon.CanFire("Auto") && halfActions > 1 )
+                        if(ActiveWeapon.CanFire("Auto"))
                         {
                             d.Add("Full Auto","FullAuto");
+                        }
+                        if (( ActiveWeapon.CanFire("Semi") || ActiveWeapon.CanFire("Auto")) && halfActions > 1 )
+                        {
                             d.Add("Overwatch","Overwatch");
                             d.Add("Supression","SupressingFire");
                         }
@@ -1122,7 +1126,7 @@ public class TurnActions : MonoBehaviour
             {
                 ValidTargets.Add(CurrentStats);
             }
-            if(CurrentStats.GetTeam() != ActivePlayerStats.GetTeam())
+            if(CurrentStats.GetTeam() != ActivePlayerStats.GetTeam() && !CurrentStats.hasCondition("Pinned"))
             {
                 if(!CurrentStats.AbilityCheck("WP",-20).Passed())
                 {
@@ -1132,7 +1136,15 @@ public class TurnActions : MonoBehaviour
             }
         } 
         RollResult SprayResult = ActivePlayerStats.AbilityCheck("BS",-20);
-        int maxShots = ActiveWeapon.ExpendAmmo("Auto");
+        int maxShots;
+        if(ActiveWeapon.CanFire("Auto"))
+        {
+            maxShots = ActiveWeapon.ExpendAmmo("Auto");
+        }
+        else
+        {
+            maxShots = ActiveWeapon.ExpendAmmo("Semi");
+        }
         //allocate random attacks
         if(SprayResult.Passed() && targets.Count > 0)
         {
@@ -1166,20 +1178,6 @@ public class TurnActions : MonoBehaviour
             yield return new WaitForSeconds(2);
             TacticsAttack.DealDamage(CurrentAttack.target, CurrentAttack.attacker, Random.Range(1,100), CurrentAttack.ActiveWeapon);
         }
-        /*so that overwatch doesn't eat up your actions
-        if(ActivePlayerStats != target)
-        {
-            if(FireRate != "Free")
-            {
-                ActivePlayerStats.SpendAction("Attack");
-                halfActions--;
-                if(FireRate != "S")
-                {
-                    halfActions--;
-                }
-            }
-        }
-        */
         
         while (!PopUpText.FinishedPrinting())
         {

@@ -1,19 +1,33 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.EventSystems;
 
+// The main behavior of threat range objects, note that this is seperate from the threat cone script.
+// Where that script managed basic functions, this script knows what kind of threat range it is
 public class ThreatRangeBehavior : MonoBehaviour
 {
+    // The threat cone this script uses to find targets
     [SerializeField]
     public ThreatCone myRange;
+    // A string key used to determine type of behavior
     public string threatType;
+    // Reference to the gamemaster to send infromation back to 
     public TurnManager TurnManager;
+    // Used to get hit information 
     private RaycastHit hit;
+    // Refernce to the owner of this threat range, used to determine range in some cases
     private PlayerStats attacker;
+    // Refernce to the weapon creating this threat range, also used to determine range and other properties
     private Weapon w;
+    // toggles movement, by default threat ranges try to follow/look at the mouse so long as controllable = true
     bool controllable = true;
+    // Reference to a cone shaped threat range object, used for overwatch, supressing fire, and flame attacks
     public GameObject ConeToken;
+    // Reference to a sphere shaped threat range object, used exclusively for blast weapons
     public GameObject BlastToken;
+
+    // Called on frame update, token movement and overwatch triggering happens here
     void Update()
     {
         if(myRange.draw)
@@ -48,55 +62,81 @@ public class ThreatRangeBehavior : MonoBehaviour
                 //if target is moving and an enemy!
                 if(t.GetComponent<TacticsMovement>().moving && target.GetTeam() != attacker.GetTeam())
                 {
-                    TurnManager.RollToHit(t.GetComponent<PlayerStats>(),"Auto",w,attacker);
-                    if(!target.AbilityCheck("WP",-20).Passed())
+                    if(w.CanFire("Auto"))
                     {
-                        target.SetCondition("Pinned",0,true);
+                        TurnManager.RollToHit(t.GetComponent<PlayerStats>(),"Auto",w,attacker);
                     }
+                    else if(w.CanFire("Semi"))
+                    {
+                        TurnManager.RollToHit(t.GetComponent<PlayerStats>(),"Semi",w,attacker);
+                    }
+                    if(!target.hasCondition("Pinned"))
+                    {
+                        if(!target.AbilityCheck("WP",-20).Passed())
+                        {
+                            target.SetCondition("Pinned",0,true);
+                        }
+                    }
+                    
                     RemoveRange(attacker);
                 }
             }
         }
     }
 
+    // Frame check for user left clicking 
     private void CheckMouse()
     {
         if(Input.GetMouseButtonUp(0))
         {
-            List<Transform> selectedTargets = myRange.GetTargets();
-            if(threatType.Equals("Supress"))
+            // standard check to make sure a left click on ui isn't interpreted as a left click for threat range
+            bool hitUi = false;
+            GameObject[] ui = GameObject.FindGameObjectsWithTag("Input");
+            foreach(GameObject g in ui)
             {
-                TurnManager.SupressingFire(selectedTargets);
-                Destroy(gameObject);
-            }
-            else if(threatType.Equals("Overwatch"))
-            {
-                myRange.draw = false;
-                TurnManager.OverwatchFinished();
-            }
-            else if(threatType.Equals("Flame"))
-            { 
-                TurnManager.FlameAttack(selectedTargets);
-                Destroy(gameObject);
-            }
-            else if(threatType.Equals("Blast"))
-            {
-                controllable = false; 
-                if (!attacker.AbilityCheck("BS",w.RangeBonus(gameObject.transform, attacker)).Passed())
+                if(EventSystem.current.IsPointerOverGameObject())
                 {
-                    Debug.Log("Scatter!");
-                    StartCoroutine(Scatter(Random.Range(1,10)));
+                    hitUi = true;
+                }
+            }
+            if(!hitUi)
+            {
+                List<Transform> selectedTargets = myRange.GetTargets();
+                if(threatType.Equals("Supress"))
+                {
+                    TurnManager.SupressingFire(selectedTargets);
+                    Destroy(gameObject);
+                }
+                else if(threatType.Equals("Overwatch"))
+                {
+                    myRange.draw = false;
+                    TurnManager.OverwatchFinished();
+                }
+                else if(threatType.Equals("Flame"))
+                { 
+                    TurnManager.FlameAttack(selectedTargets);
+                    Destroy(gameObject);
+                }
+                else if(threatType.Equals("Blast"))
+                {
+                    controllable = false; 
+                    if (!attacker.AbilityCheck("BS",w.RangeBonus(gameObject.transform, attacker)).Passed())
+                    {
+                        Debug.Log("Scatter!");
+                        StartCoroutine(Scatter(Random.Range(1,10)));
+                    }
+                    else
+                    {
+                        TurnManager.BlastAttack(selectedTargets);
+                    }
                 }
                 else
                 {
-                    TurnManager.BlastAttack(selectedTargets);
+                    Debug.Log("Error! invalid threat type!");
+                    Destroy(gameObject);
                 }
             }
-            else
-            {
-                Debug.Log("Error! invalid threat type!");
-                Destroy(gameObject);
-            }
+            
         }
     }
 
@@ -119,7 +159,8 @@ public class ThreatRangeBehavior : MonoBehaviour
             ConeToken.SetActive(true);
             myRange = ConeToken.GetComponent<ThreatCone>();
             myRange.avoidOwner = attacker.transform;
-            if(type.Equals("Flame"))
+            // flame attacks and semi auto spray use narrower ranges
+            if(type.Equals("Flame") || !w.CanFire("Auto"))
             {
                 dimensions = new Vector3((float) w.getRange(attacker) * 0.66f,w.getRange(attacker),w.getRange(attacker));
             }
@@ -129,26 +170,6 @@ public class ThreatRangeBehavior : MonoBehaviour
             }
         }
         myRange.transform.localScale = dimensions;
-        /*
-        if(type.Equals("Flame"))
-        {
-            myRange.viewAngle = 30f;
-            int range = w.getRange(attacker);
-            myRange.viewRadius = range;
-        }
-        else if(type.Equals("Blast"))
-        {
-            myRange.viewAngle = 360f;
-            int blastRange = w.GetBlast();
-            myRange.viewRadius = blastRange;
-            BlastToken.transform.localScale = new Vector3(blastRange*2,blastRange*2,blastRange*2);
-            myRange.ShowDisk = false;
-        }
-        else
-        {
-            myRange.viewRadius = w.getRange(attacker)/2;
-        }
-        */
         this.attacker = attacker;
         this.w = w;
     }

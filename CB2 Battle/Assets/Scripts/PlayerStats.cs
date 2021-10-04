@@ -225,8 +225,16 @@ public class PlayerStats : MonoBehaviour
         return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
     }
 
+    public RollResult AbilityCheck(string input,int modifiers)
+    {
+        if(TurnManager.ManualRoles)
+        {
+            Debug.Log("asking for input");
+        }
+        return AbilityCheck(input,modifiers, Random.Range(0,100));
+    }
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
-    public RollResult AbilityCheck(string input, int modifiers)
+    public RollResult AbilityCheck(string input, int modifiers, int Roll)
     {
         int SkillTarget;
         string type;
@@ -259,7 +267,7 @@ public class PlayerStats : MonoBehaviour
         }
         //modifier that always applies 
         ConditionalModifiers += CalculateStatModifiers(type);
-        int Roll = Random.Range(0,100);
+        
         //untrained makes the skill half as likely to work
 
         SkillTarget += modifiers += ConditionalModifiers;   
