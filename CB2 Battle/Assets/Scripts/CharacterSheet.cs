@@ -38,7 +38,7 @@ public class CharacterSheet : MonoBehaviour
     private Vector3 weaponDisplacementRight = new Vector3(0,98.5f,0);
     private Vector3 weaponDisplacementLeft = new Vector3(0,82.5f,0);
     private Vector3 SkillDisplacement = new Vector3(0,14.5f,0);
-    private Vector3 startingPos = new Vector3(-227.6f,73.3f,0);
+    private Vector3 startingPos = new Vector3(-300,120,0);
     private Vector3 ItemDisplacement = new Vector3(0,-16,0);
     Vector3 PlacementPosAdvanced;
     Vector3 PlacementPosBasic;
@@ -58,6 +58,7 @@ public class CharacterSheet : MonoBehaviour
         CameraButtons.UIFreeze(true);
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
         transform.localPosition = startingPos;
+        transform.localScale = new Vector3(1,1,1);
         LastSkills = new Stack<GameObject>();
         Equipment = new List<Item>();
         ItemAdder.GetComponent<WeaponAdder>().Init();
@@ -309,11 +310,16 @@ public class CharacterSheet : MonoBehaviour
                 }
             }
             GameObject newText = Instantiate(ItemDisplay) as GameObject;
-            newText.GetComponent<ItemInputField>().UpdateIn(input);
+            newText.GetComponent<ItemInputField>().UpdateIn(input,this);
             newText.transform.SetParent(gameObject.transform);
             newText.transform.localPosition = PlacementItems;
             PlacementItems += ItemDisplacement;
         }
+    }
+
+    public void Remove(Item removedItem)
+    {
+        Equipment.Remove(removedItem);
     }
 
     // Deletes the last skill in the queue and updates the position of the ui elements accordingly 

@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1f0852cd1f52964cb2d51f6f0398d13, type: 3}
   m_Name: KnockDownBonus
   m_EditorClassIdentifier: 
-  Stats: []
-  Modifiers: 
-  duration: 0
+  Stats:
+  - KnockDown
+  Modifiers: 0a000000
+  duration: 1
   clearOnStart: 0

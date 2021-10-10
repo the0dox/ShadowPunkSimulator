@@ -111,7 +111,7 @@ public class DebugTooltip : MonoBehaviour
             logOutput += "Rolling " + num + "d" + size +"\n";
             for(int i = 0; i < num; i++)
             {
-                int roll = Random.Range(1,size);
+                int roll = Random.Range(1,size + 1);
                 logOutput += "[" + roll + "]";
                 if(i < (num - 1))
                 {
@@ -156,7 +156,7 @@ public class DebugTooltip : MonoBehaviour
             logOutput += "Rolling " + num + "d" + size +"\n";
             for(int i = 0; i < num; i++)
             {
-                int roll = Random.Range(1,size);
+                int roll = Random.Range(1,size + 1);
                 logOutput += "[" + roll + "]";
                 if(i < (num - 1))
                 {

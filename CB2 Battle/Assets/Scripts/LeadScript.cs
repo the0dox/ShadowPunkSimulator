@@ -58,15 +58,25 @@ public class LeadScript : MonoBehaviour
                 }
             }
         }
-        RollResult LeadResult = mainPlayer.AbilityCheck(skill,modifier);
-        if(LeadResult.Passed())
+        RollResult LeadResult = mainPlayer.AbilityCheck(skill,modifier,"Lead");
+        StartCoroutine(waitForResult(LeadResult));
+    }
+
+    IEnumerator waitForResult(RollResult input)
+    {
+        while(!input.Completed())
         {
-            int extrahours = Random.Range(1,10);
-            string usedStat = SkillReference.GetSkill(skill).characterisitc;
-            extrahours += mainPlayer.GetStatScore(usedStat);
-            CombatLog.Log(mainPlayer.GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score (" + extrahours + ") hours of progress!");
-            extrahours += LeadResult.GetDOF();
-            CombatLog.Log("Each degree of success (" + LeadResult.GetDOF() + ") counts for one more hour of progress!");
+            yield return new WaitForSeconds(0.5f);
+        }
+        if(input.Passed())
+        {
+            int dieroll = Random.Range(1,11);
+            string usedStat = SkillReference.GetSkill(input.GetSkillType()).characterisitc;
+            int statScoreBonus = input.getOwner().GetStatScore(usedStat);
+            int extrahours = dieroll + statScoreBonus;
+            CombatLog.Log(input.getOwner().GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
+            extrahours += input.GetDOF();
+            CombatLog.Log("Each degree of success (" + input.GetDOF() + ") counts for one more hour of progress!");
             CompletedHours += extrahours;
         }
     }

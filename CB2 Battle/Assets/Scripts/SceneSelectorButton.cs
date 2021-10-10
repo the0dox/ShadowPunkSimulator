@@ -38,7 +38,6 @@ public class SceneSelectorButton : MonoBehaviour
     // Called by the play popup button, changes the scene to the battle board
     public void PlayScene()
     {
-        Debug.Log(myData.GetName());
         GlobalManager.PlayLevel(myData, "Board");
     }
 

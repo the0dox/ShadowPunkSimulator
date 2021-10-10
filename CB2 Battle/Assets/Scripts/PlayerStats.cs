@@ -2,38 +2,54 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
+// This is the class that defines a character, any data that a darkhersey charactersheet can hold is in this class
 public class PlayerStats : MonoBehaviour
 {
-    //for determine who can or cannot be targeted in combat
+    // for determine who can or cannot be targeted in combat, Players are team 0, NPCS are team 1
     public int team; 
-    //display name
+    // display name, the only name the player should see from this character
     public string playername; 
+    // a key used by turnmanager to lock a character into a continous action until its complete, 
     private string repeatingAction;
+    // For strict action enforcement, a player can only attempt on action per sub-type per turn
     private List<string> CompletedActions = new List<string>(); 
+    // A reference to who is currently grappling this player
     public PlayerStats grappler;
+    // A reference to who this player is currently grappling
     public PlayerStats grappleTarget;
+    // A reference to this players character model
     public GameObject model;
+    // A reference to the highlighted color that flashes when highlighted
     public Material SelectedColor;
+    // A reference to the regular material the player spawns in with
     private Material DefaultColor;
+    // Returns true if selectedcolor is applied to model
     private bool painted;
+    // Reference to the savedata associated with this character
     public CharacterSaveData myData;
+    // Characters can store the cover bonus of cover while advancing
     private int AdvanceBonus;
+    // A character sheet that can be used to alter the stats of this character
     public GameObject MyCharacterSheet;
-    //Reference for all player stats
+    // Reference for all player stats
     public Dictionary<string, int> Stats = new Dictionary<string, int>();
+    // Keys are every condition this player has, values are the duration of the conditions
     public Dictionary<ConditionTemplate, int> Conditions = new Dictionary<ConditionTemplate, int>();
+    // Used for overworld only, true if a player is occupied with a job
     private bool Occupied = false;
-
-
-    //level of skill training a character has, is called first
+    // level of skill training a character has, is called first
     public List<Skill> Skills = new List<Skill>();
+    // Every item, weapon and piece of armor this character holds
     public List<Item> equipment = new List<Item>();
+    // Reference to the weapon in the player secondary hand
     public Weapon SecondaryWeapon;
+    // Reference to the weapon in the player primary hand
     public Weapon PrimaryWeapon; 
-
     //quick reference for what die rolls correspond to a hit location
     private Dictionary<int, string> HitLocations;
+    private RollResult currentRoll;
 
+    // given a charactersavedata copies all the values onto the playerstats
     public void DownloadSaveData(CharacterSaveData myData)
     {
         this.myData = myData;
@@ -46,11 +62,10 @@ public class PlayerStats : MonoBehaviour
         Init();
 
     }
-    // Start is called before the first frame update
+    // Calculates bonuses from armor and stats
     public void Init()
     {
-        UpdateMovement();
-        UpdateAP();
+        CompleteDownload();
         StartCoroutine(modelDisplayDelay());
         DefaultColor = model.GetComponentInChildren<MeshRenderer>().material;
         Weapon[] startingequipment = GetWeaponsForEquipment().ToArray();
@@ -64,6 +79,7 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    // temporarly paints the target
     IEnumerator modelDisplayDelay()
     {
         while(true)
@@ -80,7 +96,6 @@ public class PlayerStats : MonoBehaviour
             }
         }
     }
-
     public int getWounds()
     {
         return Stats["Wounds"];
@@ -118,10 +133,16 @@ public class PlayerStats : MonoBehaviour
         }
         if(Stats["Wounds"] < 0)
         {    
-            Stats["Critical"] -= Stats["Wounds"];
+            TakeCritical(-Stats["Wounds"],location,damageType);
             Stats["Wounds"] = 0;
-            CriticalDamageReference.DealCritical(this, damageType, Stats["Critical"],location);
         }
+    }
+
+    public void TakeCritical(int critDamage, string location,string damageType)
+    {
+        Stats["Critical"] += critDamage;
+        Stats["Wounds"] = 0;
+        CriticalDamageReference.DealCritical(this, damageType, Stats["Critical"],location);
     }
 
     public void takeFatigue(int levels)
@@ -156,6 +177,21 @@ public class PlayerStats : MonoBehaviour
         }
         return Stats[key]; 
     }
+
+    public int GetMovement(string Key)
+    {
+        string stat = "Move" + Key;
+        if(IsHelpless() || Grappling() || hasCondition("Stunned"))
+        {
+            return 0;
+        }
+        if(hasCondition("Prone"))
+        {
+            return GetStat(stat)/2;
+        }
+        return GetStat(stat);
+    }
+
     public int GetStatScore(string key)
     {
         if(!Stats.ContainsKey(key))
@@ -163,7 +199,9 @@ public class PlayerStats : MonoBehaviour
             Debug.Log("Error: " + key + " does not exist!");
             return 0; 
         }
-        return Stats[key]/10; 
+        int StatTotal = Stats[key];
+        StatTotal += CalculateStatModifiers(key);
+        return StatTotal/10; 
     }
 
     public void SetStat(string key, int value)
@@ -175,6 +213,7 @@ public class PlayerStats : MonoBehaviour
     {
         UpdateMovement();
         UpdateAP();
+        UpdateCarryWeight();
     }
 
     public void SetSkill(Skill input)
@@ -224,21 +263,20 @@ public class PlayerStats : MonoBehaviour
     {
         return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
     }
-
     public RollResult AbilityCheck(string input,int modifiers)
     {
-        if(TurnManager.ManualRoles)
-        {
-            Debug.Log("asking for input");
-        }
-        return AbilityCheck(input,modifiers, Random.Range(0,100));
+        return AbilityCheck(input,modifiers, null);
+    }
+    public RollResult AbilityCheck(string input, int modifiers,string command)
+    {
+        return AbilityCheck(input,modifiers,command,null);
     }
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
-    public RollResult AbilityCheck(string input, int modifiers, int Roll)
+    public RollResult AbilityCheck(string input, int modifiers,string command, PlayerStats other)
     {
         int SkillTarget;
         string type;
-        int ConditionalModifiers = 0;
+        int ConditionalModifiers = modifiers;
         //Debug.Log("attempting " + input);
         Skill convertedSkill = GetSkillReference(input);
         //for skills not characteristics
@@ -270,75 +308,20 @@ public class PlayerStats : MonoBehaviour
         
         //untrained makes the skill half as likely to work
 
-        SkillTarget += modifiers += ConditionalModifiers;   
-        int DOF = (SkillTarget - Roll)/10;
+        SkillTarget += ConditionalModifiers;  
         
-        string clstring = GetName() + ": "  + input + " check \n    Target:" + SkillTarget +"\n     Roll: " + Roll +"\n     Result: ";
-        
-        if(Roll <= SkillTarget)
-        {   
-            clstring += "passed by " + DOF + " degree(s)";
-        }
-        else
+        RollResult output;
+        output = new RollResult(this,SkillTarget,input,command);
+        if(other != null)
         {
-            clstring += "failed by " + DOF + " degree(s)";
+            output.OpposedRoll(other.AbilityCheck(input,modifiers,command));
         }
-        CombatLog.Log(clstring);
-        RollResult output = new RollResult(DOF, Roll, SkillTarget, type);
-        PopUpText.CreateText(output.Print(),output.GetColor(),gameObject);
         return output;
-    }
-
-    //returns DOF, positive if I win, negative if I lose, 0 if stalemate
-    public int OpposedAbilityCheck(string input, PlayerStats target, int myModifier, int targetModifier)
-    {
-        RollResult myResult = AbilityCheck(input,myModifier);
-        RollResult targetResult = target.AbilityCheck(input,targetModifier);
-        if(!myResult.Passed() && !targetResult.Passed())
-        {
-            Debug.Log("No one wins");
-            return 0;
-        }
-        if(myResult.Passed() && !targetResult.Passed())
-        {
-            Debug.Log("I win");
-            return 1;
-        }
-        else if(!myResult.Passed() && targetResult.Passed())
-        {
-            Debug.Log("They win");
-            return -targetResult.GetDOF();
-        }
-        else{
-            int OpposedDOF = myResult.GetDOF() - targetResult.GetDOF();
-            if(OpposedDOF != 0)
-            {
-                Debug.Log("ODOF Result:" + OpposedDOF);
-                return OpposedDOF;
-            }
-            else{
-                if(myResult.GetRoll() < targetResult.GetRoll())
-                {
-                    Debug.Log("Tie breaker goes to me");
-                    return 1;
-                }
-                else if(myResult.GetRoll() > targetResult.GetRoll())
-                {
-                    Debug.Log("Tie breaker goes to target");
-                    return -1;
-                }
-                else
-                {
-                    Debug.Log("No one wins");
-                    return 0;
-                }
-            }
-        }
     }
     
     public float RollInitaitve()
     {
-        return GetStat("A")/10f + Random.Range(1,10);
+        return GetStat("A")/10f + Random.Range(1,11);
     }
 
     public string HealthToString()
@@ -439,7 +422,7 @@ public class PlayerStats : MonoBehaviour
         }
         else
         {
-            if (Random.Range(1,100) >= 25)
+            if (Random.Range(1,101) >= 25)
             {
                 CombatLog.Log(GetName() + " 's power field shatters the attackers weapon!");
                 return true;
@@ -457,6 +440,110 @@ public class PlayerStats : MonoBehaviour
         Stats["MoveCharge"] = agilityScore * 3;
         Stats["MoveRun"] = agilityScore * 6;
     }
+
+    public void UpdateCarryWeight()
+    {
+        if(!Stats.ContainsKey("Weight"))
+        {
+            Stats.Add("Weight",0);
+        }
+        if(!Stats.ContainsKey("MaxWeight"))
+        {
+            Stats.Add("MaxWeight",0);
+        }
+        float total = 0;
+        foreach(Item i in equipment)
+        {
+            total += i.getWeight();
+        }
+        Stats["Weight"] = (int) total;
+        int CarryBonus = GetStatScore("S") + GetStatScore("T");
+        if (CarryBonus > 19)
+        {
+            Stats["MaxWeight"] = 2250;
+        }
+        else if (CarryBonus > 18)
+        {
+            Stats["MaxWeight"] = 1800;
+        }
+        else if (CarryBonus > 17)
+        {
+            Stats["MaxWeight"] = 1350;    
+        }
+        else if (CarryBonus > 16)
+        {
+            Stats["MaxWeight"] = 900;  
+        }
+        else if (CarryBonus > 15)
+        {
+            Stats["MaxWeight"] = 675;  
+        }
+        else if (CarryBonus > 14)
+        {
+            Stats["MaxWeight"] = 450;  
+        }
+        else if (CarryBonus > 13)
+        {
+            Stats["MaxWeight"] = 337;  
+        }
+        else if (CarryBonus > 12)
+        {
+            Stats["MaxWeight"] = 225;  
+        }
+        else if (CarryBonus > 11)
+        {
+            Stats["MaxWeight"] = 112;  
+        }
+        else if (CarryBonus > 10)
+        {
+            Stats["MaxWeight"] = 90;  
+        }
+        else if (CarryBonus > 9)
+        {
+            Stats["MaxWeight"] = 78;   
+        }
+        else if (CarryBonus > 8)
+        {
+            Stats["MaxWeight"] = 67;  
+        }
+        else if (CarryBonus > 7)
+        {
+            Stats["MaxWeight"] = 56;  
+        }
+        else if (CarryBonus > 6)
+        {
+            Stats["MaxWeight"] = 45;  
+        }
+        else if (CarryBonus > 5)
+        {
+            Stats["MaxWeight"] = 36;  
+        }
+        else if (CarryBonus > 4)
+        {
+            Stats["MaxWeight"] = 27;  
+        }
+        else if (CarryBonus > 3)
+        {
+            Stats["MaxWeight"] = 18;  
+        }
+        else if (CarryBonus > 2)
+        {
+            Stats["MaxWeight"] = 9;  
+        }
+        else if (CarryBonus > 1)
+        {
+            Stats["MaxWeight"] = 5;  
+        }
+        else if (CarryBonus > 0)
+        {
+            Stats["MaxWeight"] = 2;  
+        }
+        else
+        {
+            Stats["MaxWeight"] = 1;  
+        }
+    }
+
     //sets string as a reference for tactics action to repeat untill ClearRepeatingAction() is called
     public void SetRepeatingAction(string input)
     {
@@ -568,7 +655,16 @@ public class PlayerStats : MonoBehaviour
         List<ConditionTemplate> IncrementKeys = new List<ConditionTemplate>();
         foreach (ConditionTemplate Key in Conditions.Keys)
         {
-            if(startTurn && Key.clearOnStart)
+            //decay conditions at the end of turns, conditions with 0 as their length do not decay
+            if(Conditions[Key] > 1 && !startTurn)
+            {
+                IncrementKeys.Add(Key); 
+            }
+            else if(Conditions[Key] == 1 && !startTurn)
+            {
+                removedKeys.Add(Key);
+            }
+            else if(startTurn && Key.clearOnStart)
             {
                 removedKeys.Add(Key);
             }
@@ -593,23 +689,10 @@ public class PlayerStats : MonoBehaviour
                     {
                         removedKeys.Add(ConditionsReference.Condition("Under Fire"));
                     }
-                    if(AbilityCheck("WP",modifiers).Passed())
-                    {
-                        PopUpText.CreateText("Unpinned!",Color.green, gameObject);
-                        //removes at the end
-                        removedKeys.Add(Key);
-                    }
+                    AbilityCheck("WP",modifiers,"Suppression");
                 }   
             }
-            //decay conditions at the end of turns, conditions with 0 as their length do not decay
-            if(Conditions[Key] > 1 && !startTurn)
-            {
-                IncrementKeys.Add(Key); 
-            }
-            if(Conditions[Key] == 1 && !startTurn)
-            {
-                removedKeys.Add(Key);
-            }
+            
         }
         foreach(ConditionTemplate Key in IncrementKeys)
         {
@@ -633,7 +716,7 @@ public class PlayerStats : MonoBehaviour
         grappler = attacker;
         attacker.grappleTarget = this;
         SetCondition("Grappled",0,true);
-        CombatLog.Log(GetName() + ": is grappled by" + grappler.GetName());
+        CombatLog.Log(GetName() + " is grappled by " + grappler.GetName());
         SpendAction("reaction");
         attacker.SpendAction("reaction");
     }
@@ -654,7 +737,7 @@ public class PlayerStats : MonoBehaviour
         grappleTarget = null;
     }
 
-    public bool grappling()
+    public bool Grappling()
     {
         return (grappleTarget != null || grappler != null);
     }
@@ -721,7 +804,6 @@ public class PlayerStats : MonoBehaviour
     {
         if(hasCondition("Immobilised") || hasCondition("Unconscious"))
         {
-            CombatLog.Log(GetName() + " is helpless! attacks automatically succeded and take the highest of two results for damage!");
             return true;
         }
         else
@@ -746,5 +828,164 @@ public class PlayerStats : MonoBehaviour
     {
         string output = GetName();
         return output;
+    }
+
+    public void RollComplete(RollResult myRoll)
+    {
+        string methodName = myRoll.GetCommand();
+        if(methodName != null)
+        {
+            currentRoll = myRoll;
+            Invoke(methodName,0);
+        }
+    }
+
+    public void ApplySpecialEffects(string hitBodyPart, Weapon w, int result)
+    {
+        if(result > 0 && w.HasWeaponAttribute("Shocking"))
+        {
+            int shockModifier = GetStat(hitBodyPart) * 10;
+            StartCoroutine(ShockEffect(shockModifier,result));            
+        }
+        if(result > 0 && w.HasWeaponAttribute("Toxic"))
+        {
+            int toxicModifier = result * -5;
+            StartCoroutine(ToxicEffect(toxicModifier, result));
+        }
+        if(w.HasWeaponAttribute("Snare"))
+        {
+            AbilityCheck("A",0,"Snare");
+        }
+        if(w.HasWeaponAttribute("Smoke"))
+        {
+            CombatLog.Log("Target is covered by smoke!");
+            SetCondition("Obscured",3,true);
+        }
+    }
+
+    IEnumerator ShockEffect(int modifier, int damage)
+    {
+        RollResult ShockResistRoll = AbilityCheck("T",modifier);
+        while(!ShockResistRoll.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        if(!ShockResistRoll.Passed())
+        {
+            int rounds = damage;
+            if(rounds / 2 > 0)
+            {
+                rounds = rounds/2;
+            }
+            CombatLog.Log("The shocking attribute of the weapon" + GetName() + " for " + rounds + " rounds");
+            SetCondition("Stunned",rounds,true);
+        }
+        else
+        {
+            CombatLog.Log(GetName() + " resists the shocking attribute of the weapon");
+            PopUpText.CreateText("Resisted!", Color.yellow, gameObject);
+        }
+    }
+
+    IEnumerator ToxicEffect(int modifier, int damage)
+    {
+        RollResult ToxicResistRoll = AbilityCheck("T",modifier);
+        while(!ToxicResistRoll.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        if(!ToxicResistRoll.Passed())
+        {
+            int toxicdamage = Random.Range(1,11);
+            takeDamage(toxicdamage,"Body");
+            CombatLog.Log("The toxic attribute of the weapon deals an additional 1d10 = <" + damage + "> ignoring soak");
+            PopUpText.CreateText("Posioned!", Color.red, gameObject);
+        }
+        else
+        {
+            CombatLog.Log(GetName() + " resists the toxic attribute of the weapon");
+            PopUpText.CreateText("Resisted!", Color.yellow, gameObject);
+        }
+    }
+
+    public void Snare()
+    {
+        if(!currentRoll.Passed())
+        {
+            CombatLog.Log("The snare attribute of the weapon immobilises " + GetName());
+            SetCondition("Immobilised",0,true);
+            SetCondition("Prone",0,true);
+            SpendAction("Reaction");
+        }
+        else
+        {
+            CombatLog.Log(GetName() + " avoids the snare attribute of the weapon");
+        }
+        currentRoll = null;
+    }
+
+    public void Suppression()
+    {
+        bool suppressed = hasCondition("Pinned");
+        if(currentRoll.Passed())
+        {
+            if(suppressed)
+            {
+                CombatLog.Log(GetName() + " passes their check and is no longer pinned!");
+                RemoveCondition("Pinned");
+            }
+            else
+            {
+                CombatLog.Log(GetName() + " passes their check and can act freely!");
+            }
+        }
+        else if(!suppressed)
+        {
+            SetCondition("Pinned",0,true);
+            CombatLog.Log(GetName() + " fails their check and is pinned!");
+        }
+        else
+        {
+            CombatLog.Log(GetName() + " is unable to steel their nerves!");
+        }
+        currentRoll = null;
+    }
+
+    public void Fire()
+    {
+        bool ablaze = hasCondition("On Fire");
+        if(currentRoll.Passed())
+        {
+            if(ablaze)
+            {
+                PopUpText.CreateText("Extinguished!",Color.green,gameObject);
+                CombatLog.Log(GetName() + " passes their check puts out the fire!");
+                RemoveCondition("On Fire");
+            }
+        }
+        else if(!ablaze)
+        {
+            SetCondition("On Fire",0,true);
+            CombatLog.Log(GetName() + " fails their check and is set ablaze!");
+        }
+        else
+        {
+            CombatLog.Log(GetName() + " is unable to put the fire out!");
+        }
+        currentRoll = null;
+    }
+
+    public void EscapeBonds()
+    {
+        if(currentRoll.Passed())
+        {
+            CombatLog.Log(GetName() + " escapes the grapple!");
+            grappler.ReleaseGrapple();
+        }
+        else
+        {
+            CombatLog.Log(GetName() + " is unable to escape the grapple.");
+        }
+        currentRoll = null;
     }
 }

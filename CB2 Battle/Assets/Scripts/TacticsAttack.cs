@@ -14,67 +14,63 @@ public static class TacticsAttack
     public static AttackSequence Attack(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
         int modifiers = 0;
-        AttackSequence output = new AttackSequence(target,myStats,w,type,0);
+        AttackSequence output = new AttackSequence(target,myStats,w,type,0,false);
         string attackSkill;
-        int shotsFired;
         // Melee modifiers
         if (w.IsWeaponClass("Melee"))
         {
             // Only melee weps can have the two handed attribute as there is only one class for melee weps unlike ranged weps
             if(w.HasWeaponAttribute("Two Handed") && myStats.IsDualWielding())
             {
-                Debug.Log("dualwielding");
                 modifiers -= 20;
             }
             if(w.HasWeaponAttribute("Defensive"))
             {
-                Debug.Log("defensive");
                 modifiers -= 10;
             }
             if(target.hasCondition("Defensive Stance"))
             {
-                Debug.Log("defensive stance");
                 modifiers -= 20;
             }
             if(target.hasCondition("Grappled"))
             {
-                Debug.Log("Grappled");
                 modifiers += 20;
             }
             if(target.hasCondition("Running"))
             {
-                Debug.Log("Running");
                 modifiers += 20;
             }
-            if(w.HasWeaponAttribute("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.SecondaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee")))) 
+            if(w.GetName().Equals("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.PrimaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee"))))
             {
-                Debug.Log(w.GetName());
                 modifiers -= 20;
+            }
+            if(target.hasCondition("Prone"))
+            {
+                modifiers += 10;
             }
             // unless stated otherwise, melee doesn't use type, and always makes one attack
             attackSkill = "WS";
-            shotsFired = 1;
         }
         // Ranged Modifiers
         else
         {
             if(w.IsWeaponClass("Basic") && myStats.IsDualWielding())
             {
-                Debug.Log("dualwielding");
                 modifiers -= 20;
             }
             if(w.IsWeaponClass("Heavy") && !myStats.hasCondition("Braced"))
             {
-                Debug.Log("Not bracing");
                 modifiers -= 30;
             }
             if(target.hasCondition("Running"))
             {
-                Debug.Log("Running");
                 modifiers -= 20;
             }
+            if(target.hasCondition("Prone"))
+            {
+                modifiers -= 10;
+            }
             attackSkill = "BS";
-            shotsFired = w.ExpendAmmo(type);
         }
         // universal modifiers that melee and ranged weapons can use
         if(w.HasWeaponAttribute("Accurate") && (myStats.hasCondition("Half Aiming") || myStats.hasCondition("Full Aiming")))
@@ -92,25 +88,17 @@ public static class TacticsAttack
         }
         if(myStats.OffHandPenalty(w))
         {
-            Debug.Log("offhand");
             modifiers -= 20;
         }
         if(target.hasCondition("Stunned"))
         {
-            Debug.Log("Stunned");
             modifiers += 20;
         }
         if(target.hasCondition("Obscured"))
         {
             modifiers -= 20;
         }
-        if(target.hasCondition("Prone"))
-        {
-            
-            Debug.Log("Prone");
-            modifiers += 10;
-        }
-        modifiers += adjacencyBonus(target,w);
+        modifiers += adjacencyBonus(target,myStats, w);
         modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
         // ranged weps get a bonus depending on distance to target
         int attackModifiers = w.RangeBonus(target.transform, myStats) + modifiers;
@@ -118,7 +106,8 @@ public static class TacticsAttack
         {
             attackModifiers += ROFBonus(w, type);
         }
-        RollResult AttackResult = myStats.AbilityCheck(attackSkill, attackModifiers);
+        output.attackRoll = myStats.AbilityCheck(attackSkill, attackModifiers);
+        /*
         if(TacticsAttack.Jammed(AttackResult.GetRoll(), w, type, myStats))
         {
             return output;
@@ -133,6 +122,8 @@ public static class TacticsAttack
         {
             return output;
         }
+        */
+        return output;
     }
     public static string HitLocation(int attackRoll, PlayerStats target)
     {
@@ -158,7 +149,7 @@ public static class TacticsAttack
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
     {
         Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
-        int damageRoll = w.rollDamage(myStats,target);
+        int damageRoll = w.rollDamage(myStats,target, hitBodyPart);
         int AP = target.GetAP(hitBodyPart, w);
         if(w.HasWeaponAttribute("Scatter") && w.RangeBonus(target.transform, myStats) < 0)
         {
@@ -189,65 +180,7 @@ public static class TacticsAttack
         PopUpText.CreateText("Hit " + hitBodyPart + "!: (-" + result + ")", Color.red, target.gameObject); 
         target.takeDamage(result, hitBodyPart,w.GetDamageType());
         
-        TacticsAttack.ApplySpecialEffects(target,myStats,hitBodyPart,w,result);
-    }
-
-    public static void ApplySpecialEffects(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w, int result)
-    {
-        if(result > 0 && w.HasWeaponAttribute("Shocking"))
-        {
-            int shockModifier = target.GetStat(hitBodyPart) * 10;
-            if(!target.AbilityCheck("T",shockModifier).Passed())
-            {
-                int rounds = result;
-                if(rounds / 2 > 0)
-                {
-                    rounds = rounds/2;
-                }
-                CombatLog.Log("The shocking attribute of " +myStats.GetName() +"'s " + w.GetName() + " stuns " +target.GetName() + " for " + rounds + " rounds");
-                target.SetCondition("Stunned",rounds,true);
-            }
-            else
-            {
-                CombatLog.Log(target.GetName() + " resists the shocking attribute of " +myStats.GetName() +"'s " + w.GetName());
-                PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
-            }
-        }
-        if(result > 0 && w.HasWeaponAttribute("Toxic"))
-        {
-            int toxicModifier = result * -5;
-            if(!target.AbilityCheck("T",toxicModifier).Passed())
-            {
-                int damage = Random.Range(1,10);
-                target.takeDamage(damage,"Body");
-                CombatLog.Log("The toxic attribute of " +myStats.GetName() +"'s " + w.GetName() + " deals an additional 1d10 = " + damage + " ignoring soak");
-                PopUpText.CreateText("Posioned!", Color.red, target.gameObject);
-            }
-            else
-            {
-                CombatLog.Log(target.GetName() + " resists the toxic attribute of " +myStats.GetName() +"'s " + w.GetName());
-                PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
-            }
-        }
-        if(w.HasWeaponAttribute("Snare"))
-        {
-            if(!target.AbilityCheck("A",0).Passed())
-            {
-                CombatLog.Log("The snare attribute of " +myStats.GetName() +"'s " + w.GetName() + " immobilises " + target.GetName());
-                target.SetCondition("Immobilised",0,true);
-                target.SetCondition("Prone",0,true);
-                target.SpendAction("Reaction");
-            }
-            else
-            {
-                CombatLog.Log(target.GetName() + " avoids the snare attribute of " +myStats.GetName() +"'s " + w.GetName());
-            }
-        }
-        if(w.HasWeaponAttribute("Smoke"))
-        {
-            CombatLog.Log("Target is covered by smoke!");
-            target.SetCondition("Obscured",3,true);
-        }
+        target.ApplySpecialEffects(hitBodyPart,w,result);
     }
 
     public static bool HasValidTarget(PlayerStats target, PlayerStats myStats, Weapon w)
@@ -262,14 +195,14 @@ public static class TacticsAttack
         List<PlayerStats> meleeCombatants = myStats.gameObject.GetComponent<TacticsMovement>().AdjacentPlayers();
         bool inCombat = (myStats.gameObject.GetComponent<TacticsMovement>().GetAdjacentEnemies(myStats.GetTeam()) > 0);
 
-        if(w.IsWeaponClass("Melee"))
+        if(w.IsWeaponClass("Melee") || (inCombat && w.IsWeaponClass("Pistol")))
         {    
             return meleeCombatants.Contains(target);
         }
         else
         {
             //ranged weapons other than pistols can't be fired into melee 
-            if (inCombat && !w.IsWeaponClass("Pistol"))
+            if (inCombat)
             {
                 //CombatLog.Log(target.GetName() + " is too close to shoot!");
                 return false;
@@ -323,11 +256,11 @@ public static class TacticsAttack
     // Tiles can be ignored if they are directly adjacent to origin. But ONLY if they are not adjacent to two other blocks on each side
     private static bool IgnoreTile(Vector3 origin, Tile BlockingTile)
     {
-        Debug.Log("evaluating tile at " + BlockingTile.transform.position + " to be ignored");
+        //Debug.Log("evaluating tile at " + BlockingTile.transform.position + " to be ignored");
         // if the blocking tile is too far to block 
         if(Vector3.Distance(origin, BlockingTile.transform.position) > 1.5f)
         {
-            Debug.Log("tile is too far to be cover");
+            //Debug.Log("tile is too far to be cover");
             return false;
         }
         Vector3 relative = BlockingTile.transform.InverseTransformPoint(origin); 
@@ -344,10 +277,10 @@ public static class TacticsAttack
         if(Physics.Raycast(BlockingTile.transform.position, LeftDir, out debugHit, 1, LayerMask.GetMask("Obstacle")))
         {
 
-            Debug.Log("cover is blocked to its left " + debugHit.collider.transform.position);
+            //Debug.Log("cover is blocked to its left " + debugHit.collider.transform.position);
             if(Physics.Raycast(BlockingTile.transform.position, RightDir, out debugHit, 1,LayerMask.GetMask("Obstacle")))
             {
-                Debug.Log("cover is also blocked from its right, cannot be ignored " + debugHit.collider.transform.position);
+                //Debug.Log("cover is also blocked from its right, cannot be ignored " + debugHit.collider.transform.position);
                 {
                     return false;
                 }
@@ -546,7 +479,7 @@ public static class TacticsAttack
            if(w.HasWeaponAttribute("Reliable"))
            {
 
-               int reliableRoll = Random.Range(1,10);
+               int reliableRoll = Random.Range(1,11);
                if(reliableRoll == 10)
                {
                     PopUpText.CreateText("Jammed!",Color.red,owner.gameObject);
@@ -565,7 +498,7 @@ public static class TacticsAttack
            {
                if(w.HasWeaponAttribute("Overheats"))
                {
-                    int overheatResult = Random.Range(1,10);
+                    int overheatResult = Random.Range(1,11);
                     if(overheatResult > 8)
                     {
                         foreach(PlayerStats p in owner.GetComponent<TacticsMovement>().AdjacentPlayers())
@@ -579,15 +512,15 @@ public static class TacticsAttack
                     }
                     else if(overheatResult > 5)
                     {
-                        int energyDamage = Random.Range(1,10) + 2;
-                        int rounds = Random.Range(1,10);
+                        int energyDamage = Random.Range(1,11) + 2;
+                        int rounds = Random.Range(1,11);
                         owner.Unequip(w);
                         owner.takeDamage(energyDamage - owner.GetStat("RightArm") - owner.GetStat("T"), "RightArm");
                         CombatLog.Log("The " + w.GetName() + " burns the hands of " + owner.GetName() + " dealing 1d10 + 2 = " + energyDamage + "Energy Damage" + "and cannot be used for " + rounds + " rounds");
                     }
                     else
                     {
-                        int rounds = Random.Range(1,10);
+                        int rounds = Random.Range(1,11);
                         owner.Unequip(w);
                         CombatLog.Log("The " + w.GetName() + " overheats and cannot be used for " + rounds + " rounds");
                     }
@@ -644,12 +577,17 @@ public static class TacticsAttack
                         outputStack.Push(" +20%: Target Running");
                         chanceToHit += 20;
                     }
-                    if(w.HasWeaponAttribute("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.PrimaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee"))))
+                    if(target.hasCondition("Prone"))
+                    {
+                        outputStack.Push(" +10%: Target Prone");
+                        chanceToHit += 10;
+                    }
+                    if(w.GetName().Equals("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.PrimaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee"))))
                     {
                         outputStack.Push(" -20%: Unarmed");
                         chanceToHit -= 20;
                     }
-                    int GangupBonus = TacticsAttack.adjacencyBonus(target,w);
+                    int GangupBonus = TacticsAttack.adjacencyBonus(target,myStats, w);
                     if(GangupBonus != 0)
                     {
                         chanceToHit += GangupBonus;
@@ -675,6 +613,11 @@ public static class TacticsAttack
                         outputStack.Push(" -20%: Target Running");
                         chanceToHit -= 20;
                     }
+                    if(target.hasCondition("Prone"))
+                    {
+                        outputStack.Push(" -10%: Target Prone");
+                        chanceToHit -= 10;
+                    }
                     int rangemodifier = w.RangeBonus(target.transform, myStats);
                     chanceToHit += rangemodifier;
                     if(rangemodifier != 0)
@@ -696,7 +639,7 @@ public static class TacticsAttack
                         }
                         outputStack.Push(addition + firebonus +": " + type);
                     }
-                    int GangupBonus = TacticsAttack.adjacencyBonus(target,w);
+                    int GangupBonus = TacticsAttack.adjacencyBonus(target, myStats,w);
                     if(GangupBonus != 0)
                     {
                         chanceToHit += GangupBonus;
@@ -739,11 +682,6 @@ public static class TacticsAttack
                     outputStack.Push(" -20%: Target Obscured");
                     chanceToHit -= 20;
                 }
-                if(target.hasCondition("Prone"))
-                {
-                    outputStack.Push(" +10%: Target Prone");
-                    chanceToHit += 10;
-                }
 
                 output.Add("Attacking: " + target.GetName());
                 output.Add("To Hit: " + chanceToHit + "%");
@@ -769,9 +707,17 @@ public static class TacticsAttack
         return output;
     }
 
-    public static int adjacencyBonus( PlayerStats target, Weapon w)
+    public static int adjacencyBonus(PlayerStats target, PlayerStats attacker, Weapon w)
     {
-        int adjacentEnemies = target.GetComponent<TacticsMovement>().GetAdjacentEnemies(target.GetTeam());
+        List<PlayerStats> adjacentPlayers = target.GetComponent<TacticsMovement>().AdjacentPlayers();
+        int adjacentEnemies = 0;
+        foreach(PlayerStats ps in adjacentPlayers)
+        {
+            if (ps.GetTeam() == attacker.GetTeam())
+            {
+                adjacentEnemies++;
+            }
+        }
         if(w.IsWeaponClass("Melee"))
         {
             if(adjacentEnemies > 2)
@@ -783,13 +729,21 @@ public static class TacticsAttack
                 return 10;
             }
         }   
-        else if(adjacentEnemies > 0 && !w.IsWeaponClass("Pistol"))
+        else if(adjacentEnemies > 0)
         {
-            return -20;
+            if(adjacentPlayers.Contains(attacker) && w.IsWeaponClass("Pistol"))
+            {
+                return 0;
+            }
+            else
+            {
+                return -20;
+            }
         }
         return 0;
     }
 
+    /* Depreciated 
     public static int Critical(PlayerStats attacker, Weapon w, bool confirmed)
     {
         //only players can get fury
@@ -823,4 +777,5 @@ public static class TacticsAttack
             return 0;
         }
     }
+    */
 }

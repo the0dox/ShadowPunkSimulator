@@ -15,7 +15,7 @@ GameObject:
   - component: {fileID: 3973098908510336673}
   - component: {fileID: 3973098908510336672}
   - component: {fileID: 3973098908510336675}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Health
   m_TagString: Untagged
   m_Icon: {fileID: 0}
@@ -271,7 +271,7 @@ GameObject:
   - component: {fileID: 3973098909880958716}
   - component: {fileID: 3973098909880958717}
   - component: {fileID: 3973098909880958714}
-  m_Layer: 6
+  m_Layer: 5
   m_Name: Fatigue
   m_TagString: Untagged
   m_Icon: {fileID: 0}

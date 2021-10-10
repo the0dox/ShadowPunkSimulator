@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 
 public class DmMenu : MonoBehaviour
 {
@@ -9,6 +10,7 @@ public class DmMenu : MonoBehaviour
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject SelectorButton;
     [SerializeField] private GameObject SceneButton;
+    [SerializeField] private Text MDRtoggleStatus;
     private static GameObject DisplayInstance;
     private static GameObject PlayerScreenInstance;
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
@@ -20,7 +22,35 @@ public class DmMenu : MonoBehaviour
         DisplayInstance = Display;
         PlayerScreenInstance = PlayerScreen;
         SavedCharacters = SaveSystem.LoadPlayer();
+        //AddMissingSkill("KnockDown",1);
         SavedScenes = SaveSystem.LoadScenes();
+        SkillPromptBehavior.ManualRolls = false;
+        MDRToggle();
+    }
+
+    private void AddMissingSkill(string newSkill,int level)
+    {
+        Skill missingSkill = new Skill(SkillReference.GetSkill(newSkill),level);
+        foreach(CharacterSaveData csd in SavedCharacters)
+        {
+            csd.addSkill(missingSkill);
+            Debug.Log(newSkill + " added to " + csd.playername);
+        }
+    }
+
+    public void MDRToggle()
+    {
+        SkillPromptBehavior.ManualRolls = !SkillPromptBehavior.ManualRolls;
+        string addition = "";
+        if(SkillPromptBehavior.ManualRolls)
+        {
+            addition = "Manual";
+        }
+        else
+        {
+            addition = "Automatic";
+        }
+        MDRtoggleStatus.text = "Die Entries: " + addition;
     }
 
     public static void Toggle()

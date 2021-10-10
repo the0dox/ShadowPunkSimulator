@@ -15,6 +15,6 @@ MonoBehaviour:
   Stats:
   - WS
   - Parry
-  Modifiers: 0a000000f6ffffff
+  Modifiers: 14000000ecffffff
   duration: 0
   clearOnStart: 0

@@ -24,7 +24,6 @@ public class TurnActions : MonoBehaviour
     public List<PlayerStats> ValidTargets;
     protected Queue<AttackSequence> AttackQueue = new Queue<AttackSequence>();
     protected AttackSequence CurrentAttack;
-    public static bool ManualRoles = true;
 
     public void Combat()
     {
@@ -119,6 +118,8 @@ public class TurnActions : MonoBehaviour
         {
             if(ActiveWeapon.HasWeaponAttribute("Unarmed"))
             {
+                ActivePlayer.RemoveSelectableTiles();
+                ActivePlayer.GetValidAttackTargets(ActiveWeapon);
                 d.Add("Standard","StandardAttack");
                 d.Add("Knock-Down","KnockDown");
                 if(halfActions > 1)
@@ -280,7 +281,16 @@ public class TurnActions : MonoBehaviour
 
     public void Unjam()
     {
+        StartCoroutine(UnjamDelay());
+    }
+
+    IEnumerator UnjamDelay()
+    {
         RollResult unjamResult = ActivePlayerStats.AbilityCheck("BS",0);
+        while(!unjamResult.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
         if(unjamResult.Passed())
         {
             CombatLog.Log(ActivePlayerStats.GetName() + " successfully unjams their weapon!");
@@ -299,36 +309,67 @@ public class TurnActions : MonoBehaviour
     //restricted actions: actions that are only available when the player is restricted somehow
     public void GrappleControl()
     {
-        int result = ActivePlayerStats.OpposedAbilityCheck("S",ActivePlayerStats.grappler,0,0);
+        StartCoroutine(GrappleControlDelay());
+    }
+
+    IEnumerator GrappleControlDelay()
+    {
+        RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck("S",0,null,ActivePlayerStats.grappler);
+        while(!opposedStrengthcheck.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        int result = opposedStrengthcheck.GetDOF();
         if(result > 0)
         {
             CombatLog.Log(ActivePlayerStats.GetName() + " gains control of the grapple!");
             ActivePlayerStats.ControlGrapple();
         }
-        CombatLog.Log(ActivePlayerStats.GetName() + " fails to control the grapple!");
+        else
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " fails to control the grapple!");
+        }
         halfActions -= 2;
         Cancel();
     }
 
     public void GrappleContortionist()
     {
-        if(ActivePlayerStats.AbilityCheck("Contortionist",0).Passed())
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " escapes the grapple!");
-            ActivePlayerStats.grappler.ReleaseGrapple();
-        }
-        CombatLog.Log(ActivePlayerStats.GetName() + " is unable to escape the grapple.");
+        ActivePlayerStats.AbilityCheck("Contortionist",0,"EscapeBonds");
         halfActions -=2;
         Cancel();
     }
 
     public void GrappleScuffle()
     {
-        int result = ActivePlayerStats.OpposedAbilityCheck("S",ActivePlayerStats.grappleTarget,0,0);
+        StartCoroutine(GrappleScuffleDelay());
+    }
+    IEnumerator GrappleScuffleDelay()
+    {
+        RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck("S",0,null,ActivePlayerStats.grappleTarget);
+        while(!opposedStrengthcheck.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        int result = opposedStrengthcheck.GetDOF();
         if(result > 0)
         {
             CombatLog.Log(ActivePlayerStats.GetName() + " strikes their grapple target!");
-            TacticsAttack.DealDamage(ActivePlayerStats.grappleTarget,ActivePlayerStats,"Body",new Weapon(unarmed));
+            // if the grapple target has an unarmed weapon, attack with that weapon instead
+            Weapon unarmedWeapon;
+            if(ActivePlayerStats.PrimaryWeapon.HasWeaponAttribute("Unarmed"))
+            {
+                unarmedWeapon = ActivePlayerStats.PrimaryWeapon;
+            }
+            else if(ActivePlayerStats.SecondaryWeapon.HasWeaponAttribute("Unarmed"))
+            {
+                unarmedWeapon = ActivePlayerStats.SecondaryWeapon;
+            }
+            else
+            {
+                unarmedWeapon = new Weapon(unarmed);
+            }
+            TacticsAttack.DealDamage(ActivePlayerStats.grappleTarget,ActivePlayerStats,"Body",unarmedWeapon);
         }
         CombatLog.Log(ActivePlayerStats.GetName() + " is unable to strike their grapple target.");
         halfActions -= 2;
@@ -376,14 +417,14 @@ public class TurnActions : MonoBehaviour
     public void Run()
     {
         currentAction = "Run";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveRun"),ActivePlayerStats.GetTeam());     
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Run"),ActivePlayerStats.GetTeam());     
         ConstructActions(new List<string>{"Cancel"});
     }
 
     public void Advance()
     {
         currentAction = "Advance";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam());  
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetTeam());  
         ConstructActions(new List<string>{"Cancel"});
     }
 
@@ -394,11 +435,11 @@ public class TurnActions : MonoBehaviour
         {  
             if(halfActions > 1)
             {
-                ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetStat("MoveFull"),ActivePlayerStats.GetTeam());     
+                ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetMovement("Full"),ActivePlayerStats.GetTeam());     
             }
             else if( halfActions > 0)
             {
-                ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam());     
+                ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetTeam());     
             } 
             else 
             {
@@ -414,7 +455,7 @@ public class TurnActions : MonoBehaviour
     public void Disengage()
     {
         currentAction = "Disengage";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetStat("MoveHalf"),ActivePlayerStats.GetTeam()); 
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetTeam()); 
         ConstructActions(new List<string>{"Cancel"});
     }
 
@@ -510,7 +551,7 @@ public class TurnActions : MonoBehaviour
             d.Add("Break Bonds", "BreakSnare");
             d.Add("Escape Bonds", "EscapeBonds");
         }
-        else if(ActivePlayerStats.grappling())
+        else if(ActivePlayerStats.Grappling())
         {
             if(halfActions > 1)
             {
@@ -574,18 +615,6 @@ public class TurnActions : MonoBehaviour
         {    
             Invoke(input,0);
         }
-    }
-    
-    public bool inMelee()
-    {
-        foreach ( PlayerStats p in ActivePlayer.AdjacentPlayers())
-        {
-            if (p != null && p.GetTeam() != ActivePlayerStats.GetTeam())
-            {
-                return true;
-            }
-        }
-        return false;
     }
     
     public void PrimaryWeaponUnequip()
@@ -747,14 +776,10 @@ public class TurnActions : MonoBehaviour
         ActiveWeapon.ExpendAmmo(FireRate);
         foreach(Transform t in targets)
         {
-            AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(),ActivePlayerStats,ActiveWeapon,FireRate,1));
+            AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(),ActivePlayerStats,ActiveWeapon,FireRate,1,true));
         }
-        if(ActiveWeapon.IsWeaponClass("Thrown") && AttackQueue.Count == 0)
-        {
-            ActiveWeapon.ThrowWeapon(ActivePlayerStats);
-        }
-        RemoveRange(ActivePlayerStats);
         halfActions--;
+        RemoveRange(ActivePlayerStats);
         Cancel();
     }
 
@@ -773,38 +798,41 @@ public class TurnActions : MonoBehaviour
         if(targets.Count > 0)
         {
             ActiveWeapon.ExpendAmmo(FireRate);
-            int roll = Random.Range(1,10);
+            int roll = Random.Range(1,11);
             if(!TacticsAttack.Jammed(roll, ActiveWeapon,FireRate,ActivePlayerStats))
             {
                 foreach(Transform t in targets)
                 {
                     PlayerStats CurrentStats = t.GetComponent<PlayerStats>();
                     //only attacker is out of range of the spray. ALLIES CAN GET HIT TOO
-                    if(CurrentStats != ActivePlayerStats)
-                    {
-                        CurrentStats.SetCondition("Under Fire", 1,false);
-                        RollResult AvoidResult = CurrentStats.AbilityCheck("A",0);
-                        if(!AvoidResult.Passed())
-                        {
-                            CombatLog.Log(CurrentStats.GetName() + " is caught in the fire!");
-                            RollResult FireResult = CurrentStats.AbilityCheck("A",0);
-                            if(!FireResult.Passed())
-                            {
-                                CombatLog.Log(CurrentStats.GetName() + " is set ablaze!");
-                                CurrentStats.SetCondition("On Fire", 0, true);
-                            }
-                            TacticsAttack.DealDamage(CurrentStats, ActivePlayerStats, "Body", ActiveWeapon);
-                        }
-                        else
-                        {
-                            CombatLog.Log(CurrentStats.GetName() + " avoids the fire!");
-                        }
-                    }
+                    StartCoroutine(WaitForFireResult(CurrentStats, ActiveWeapon));
                 }
             }
         halfActions--;
         }
         Cancel();
+    }
+
+    IEnumerator WaitForFireResult(PlayerStats target, Weapon w)
+    {
+        RollResult AvoidResult = target.AbilityCheck("A",0);
+        while(!AvoidResult.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        if(!AvoidResult.Passed())
+        {
+            CombatLog.Log(target.GetName() + " is hit by the " + w.GetName() + "'s spray!");
+            if(!target.hasCondition("On Fire"))
+            {
+                target.AbilityCheck("A",0,"Fire");
+            }
+            TacticsAttack.DealDamage(target, ActivePlayerStats, "Body", w);
+        }
+        else
+        {
+            CombatLog.Log(target.GetName() + " avoids the " + w.GetName() + "'s spray!");
+        }
     }
 
 
@@ -888,16 +916,7 @@ public class TurnActions : MonoBehaviour
 
     public void Extinguish()
     {
-        if(ActivePlayerStats.AbilityCheck("A",20).Passed())
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " extinguishes the flames!");
-            PopUpText.CreateText("Extinguished!",Color.green,ActivePlayerStats.gameObject);
-            ActivePlayerStats.RemoveCondition("On Fire");
-        }
-        else
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " fails to extinguish the flames!");
-        }
+        ActivePlayerStats.AbilityCheck("A",0,"Fire");
         halfActions -= 2;
         Cancel();
     }
@@ -968,9 +987,9 @@ public class TurnActions : MonoBehaviour
 
     public void TryReaction()
     {
-        CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
-        CurrentAttack.target.GetComponent<TacticsMovement>().GetTargetTile(CurrentAttack.target.gameObject).UpdateIndictator();
-        if(CurrentAttack.attacks > 0 && CurrentAttack.target.ValidAction("reaction") && !CurrentAttack.target.hasCondition("AllOut") && !CurrentAttack.attacker.hasCondition("Feinted"))
+        //CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
+        CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile(true);
+        if(CurrentAttack.attacks > 0 && CurrentAttack.target.ValidAction("reaction") && !CurrentAttack.target.hasCondition("AllOut") && !CurrentAttack.attacker.hasCondition("Feinted") && CurrentAttack.target != ActivePlayerStats)
         {
             CombatLog.Log(CurrentAttack.target.GetName() + " has an oppertunity to react to " + CurrentAttack.attacks + " incoming attack(s)");
             List<string> l = new List<string>();
@@ -992,17 +1011,7 @@ public class TurnActions : MonoBehaviour
     public void Dodge()
     {
         CurrentAttack.target.SpendAction("reaction");
-        RollResult DodgeResult = CurrentAttack.target.AbilityCheck("Dodge",0);
-        if(DodgeResult.Passed())
-        {
-            int dodgedAttacks = DodgeResult.GetDOF() + 1;
-            CombatLog.Log(CurrentAttack.target.GetName() + " dodges " + dodgedAttacks + " attack(s)");
-            CurrentAttack.attacks -= (DodgeResult.GetDOF() + 1); 
-        }
-        else
-        {
-            CombatLog.Log(target.GetName() + " fails to dodge the incoming attack");
-        }
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Dodge",0);
         if(CurrentAttack.target.hasCondition("Braced"))
         {
             CombatLog.Log("By reacting, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
@@ -1011,30 +1020,13 @@ public class TurnActions : MonoBehaviour
         }
         RemoveRange(target);
         ClearActions();
-        ResolveHit();
     }
 
     public void Parry()
     { 
         CurrentAttack.target.SpendAction("reaction");
         int modifier = CurrentAttack.target.ParryBonus();
-        Debug.Log(modifier);
-        RollResult ParryResult = CurrentAttack.target.AbilityCheck("WS",modifier);
-        if(ParryResult.Passed())
-        {
-            CombatLog.Log(target.GetName() + " parries the incoming attack!");
-            CurrentAttack.attacks--; 
-            if(target.PowerFieldAbility())
-            {
-                PopUpText.CreateText(CurrentAttack.ActiveWeapon.GetName() + " Shattered!", Color.red, CurrentAttack.attacker.gameObject);
-                CurrentAttack.attacker.Unequip(CurrentAttack.ActiveWeapon);
-                CurrentAttack.attacker.equipment.Remove(CurrentAttack.ActiveWeapon);
-            }
-        }
-        else
-        {
-            CombatLog.Log(target.GetName() + " fails to parry the incoming attack!");
-        }
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("WS",modifier);
         if(CurrentAttack.target.hasCondition("Braced"))
         {
             CombatLog.Log("By reacting, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
@@ -1043,7 +1035,6 @@ public class TurnActions : MonoBehaviour
         }
         RemoveRange(target);
         ClearActions();
-        ResolveHit();
     }
     public void NoReaction()
     {
@@ -1057,8 +1048,8 @@ public class TurnActions : MonoBehaviour
         {
             if(CurrentAttack.attacks > 0)
             {
-                int StunDamage = Random.Range(1,10) + CurrentAttack.attacker.GetStatScore("S");
-                int StunResist = Random.Range(1,10) + CurrentAttack.target.GetStatScore("T") + CurrentAttack.target.GetStat("Head");
+                int StunDamage = Random.Range(1,11) + CurrentAttack.attacker.GetStatScore("S");
+                int StunResist = Random.Range(1,11) + CurrentAttack.target.GetStatScore("T") + CurrentAttack.target.GetStat("Head");
                 CombatLog.Log(CurrentAttack.attacker.GetName() + " Rolls 1d10 + SB = " + StunDamage);
                 CombatLog.Log(CurrentAttack.target.name + " Rolls 1d10 + T + HeadAP = " + StunResist);
                 int diff = StunDamage - StunResist;
@@ -1070,7 +1061,7 @@ public class TurnActions : MonoBehaviour
                 {
                     CurrentAttack.target.takeFatigue(1);
                     CombatLog.Log(CurrentAttack.target.GetName() + " is stunned for " + diff + " rounds");
-                    target.SetCondition("Stunned", (diff), true);
+                    CurrentAttack.target.SetCondition("Stunned", (diff), true);
                 }
                 else
                 {
@@ -1117,25 +1108,26 @@ public class TurnActions : MonoBehaviour
     public void SupressingFire(List<Transform> targets)
     {
         FireRate = "Auto";
-        ValidTargets = new List<PlayerStats>();
         foreach(Transform t in targets)
         {
             PlayerStats CurrentStats = t.GetComponent<PlayerStats>();
             //only attacker is out of range of the spray. ALLIES CAN GET HIT TOO
-            if(CurrentStats != ActivePlayerStats)
-            {
-                ValidTargets.Add(CurrentStats);
-            }
             if(CurrentStats.GetTeam() != ActivePlayerStats.GetTeam() && !CurrentStats.hasCondition("Pinned"))
             {
-                if(!CurrentStats.AbilityCheck("WP",-20).Passed())
-                {
-                    CurrentStats.SetCondition("Pinned",0,true);
-                }
-                CurrentStats.SetCondition("Under Fire", 1,false);
+                CurrentStats.AbilityCheck("WP",-20,"Suppression");
             }
+            CurrentStats.SetCondition("Under Fire", 1,false);
         } 
+        StartCoroutine(SuppressionDelay(targets));
+    }
+
+    IEnumerator SuppressionDelay(List<Transform> targets)
+    {
         RollResult SprayResult = ActivePlayerStats.AbilityCheck("BS",-20);
+        while(!SprayResult.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
         int maxShots;
         if(ActiveWeapon.CanFire("Auto"))
         {
@@ -1145,10 +1137,10 @@ public class TurnActions : MonoBehaviour
         {
             maxShots = ActiveWeapon.ExpendAmmo("Semi");
         }
-        //allocate random attacks
         if(SprayResult.Passed() && targets.Count > 0)
         {
             RepeatedAttacks = 1 + (SprayResult.GetDOF()/2);
+            Debug.Log("attacks " + RepeatedAttacks);
             if(RepeatedAttacks > maxShots)
             {
                 RepeatedAttacks = maxShots;
@@ -1157,11 +1149,10 @@ public class TurnActions : MonoBehaviour
             {
                 int randomIndex = Random.Range(0,targets.Count - 1);
                 PlayerStats currentStats = targets[randomIndex].GetComponent<PlayerStats>();
-                AttackQueue.Enqueue(new AttackSequence (currentStats, ActivePlayerStats, ActiveWeapon,FireRate,1));
+                AttackQueue.Enqueue(new AttackSequence (currentStats, ActivePlayerStats, ActiveWeapon,FireRate,1,true));
             }
         }
         halfActions -= 2;
-        RemoveRange(ActivePlayerStats);
         Cancel();
     }
 
@@ -1176,7 +1167,16 @@ public class TurnActions : MonoBehaviour
         for (int i = 0 ; i < CurrentAttack.attacks; i++)
         {
             yield return new WaitForSeconds(2);
-            TacticsAttack.DealDamage(CurrentAttack.target, CurrentAttack.attacker, Random.Range(1,100), CurrentAttack.ActiveWeapon);
+            int hitroll;
+            if(i == 0 && CurrentAttack.attackRoll.GetRoll() != -1)
+            {
+                hitroll = CurrentAttack.attackRoll.GetRoll();
+            }
+            else
+            {
+                hitroll = Random.Range(1,101);
+            }
+            TacticsAttack.DealDamage(CurrentAttack.target, CurrentAttack.attacker, hitroll, CurrentAttack.ActiveWeapon);
         }
         
         while (!PopUpText.FinishedPrinting())
@@ -1236,6 +1236,10 @@ public class TurnActions : MonoBehaviour
 
     public void Cancel()
     {
+        if(halfActions < 0)
+        {
+            halfActions = 0;
+        }
         ActiveWeapon = null;
         ConstructActions();
         if(ActivePlayerStats.GetRepeatingAction() != null)

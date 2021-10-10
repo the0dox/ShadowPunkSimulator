@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+// This is the big one, the game master for active play. This script manages all the logic required for playing CB2 combat
 public class TurnManager : TurnActions
 {
     //static means easily accessable reference for all moveable characters
@@ -23,30 +24,45 @@ public class TurnManager : TurnActions
 
     void Update ()
     {
-        if(CurrentAttack == null && AttackQueue.Count > 0)
+        if(CurrentAttack == null)
         {
-            CurrentAttack = AttackQueue.Dequeue();
-            TryReaction();
+            if(AttackQueue.Count > 0)
+            {
+                CurrentAttack = AttackQueue.Dequeue();
+            }
+        }
+        else
+        {
+            if(CurrentAttack.attackRoll != null && CurrentAttack.attackRoll.Completed() && !CurrentAttack.attackRolled)
+            {
+                CurrentAttack.AttackRollComplete();
+                TryReaction();
+            }
+            if(CurrentAttack.reactionRoll != null && CurrentAttack.reactionRoll.Completed()&& !CurrentAttack.reactionRolled)
+            {
+                CurrentAttack.ReactionRollComplete();
+                ResolveHit();
+            }
         }
         //Where all possible actions take place
-        else if (ActivePlayer != null && CurrentAttack == null && !CameraButtons.UIActive()) 
+        if (ActivePlayer != null && CurrentAttack == null && !CameraButtons.UIActive()) 
         {
-            if (halfActions < 0)
-            {
-                halfActions = 0;
-            }
             if(ActivePlayer.finishedMoving())
             {
+                if(!ActivePlayerStats.hasCondition("KnockDownBonus"))
+                {
+                    ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
+                }
                 Cancel();
+                if(!ActivePlayerStats.ValidAction("Charge"))
+                {
+                    Combat();
+                }
             }
             CheckMouse();
             switch(currentAction)
             {
                 case "Move":
-                    if(ActivePlayerStats.grappling())
-                    {
-                        currentAction = "Grapple";
-                    }
                     if (ActivePlayer.moving)
                     {
                         ActivePlayer.Move();
@@ -161,7 +177,6 @@ public class TurnManager : TurnActions
                             //make tile green
                             ActivePlayer.moveToTile(t);
                             halfActions--;
-                            ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
                             AttackOfOppertunity();
                             ActivePlayer.RemoveSelectableTiles();
 
@@ -177,7 +192,6 @@ public class TurnManager : TurnActions
                             //make tile green
                             ActivePlayer.moveToTile(t);
                             halfActions = 0;
-                            ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
                             AttackOfOppertunity();
                             ActivePlayer.RemoveSelectableTiles();
 
@@ -280,7 +294,8 @@ public class TurnManager : TurnActions
                             ActivePlayerStats.SpendAction("Charge");
                             currentAction = "Move";
                             ActivePlayer.RemoveSelectableTiles();
-                            
+                            halfActions -= 2;
+
                             if(ActivePlayerStats.hasCondition("Braced"))
                             {
                                 CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
@@ -330,13 +345,12 @@ public class TurnManager : TurnActions
         {
             ActivePlayer = InitativeOrder.Peek();
             ActivePlayerStats = ActivePlayer.GetComponent<PlayerStats>();
-            CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
+            //CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
             halfActions = 2;
             ActivePlayerStats.ResetActions();
             ActivePlayer.ResetMove();
             ApplyConditions();
             Cancel();
-            GrappleStart();
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
             ActivePlayerStats.UpdateConditions(true);
@@ -357,13 +371,12 @@ public class TurnManager : TurnActions
             }
             ActivePlayer = newPlayer;
             ActivePlayerStats = ActivePlayer.GetComponent<PlayerStats>();
-            CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
+            //CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
             halfActions = 2;
             ActivePlayerStats.ResetActions();
             ActivePlayer.ResetMove();
             ApplyConditions();
             Cancel();
-            GrappleStart();
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
             ActivePlayerStats.UpdateConditions(true);
@@ -467,30 +480,51 @@ public class TurnManager : TurnActions
         if(ActivePlayerStats.hasCondition("Stunned"))
         {
             PopUpText.CreateText("Stunned!", Color.yellow, ActivePlayerStats.gameObject);
-            halfActions -= 2;
+            halfActions = 0;
             ActivePlayerStats.SpendAction("reaction");
         }
-        if(ActivePlayerStats.hasCondition("Unconscious"))
+        if(ActivePlayerStats.IsHelpless())
         {
-            PopUpText.CreateText("Unconscious!", Color.yellow, ActivePlayerStats.gameObject);
-            halfActions -= 2;
+            PopUpText.CreateText("Helpess!", Color.yellow, ActivePlayerStats.gameObject);
+            halfActions = 0;
             ActivePlayerStats.SpendAction("reaction");
         }
         if(ActivePlayerStats.hasCondition("On Fire"))
         {
-            if(!ActivePlayerStats.AbilityCheck("WP",0).Passed())
-            {
-                CombatLog.Log(ActivePlayerStats.GetName() + " is too distracted by the fire to act!");
-                halfActions -= 2;
-            }
-            int damage = Random.Range(1,10);
+            StartCoroutine(FireDistractionDelay());
+            int damage = Random.Range(1,11);
             ActivePlayerStats.takeDamage(damage,"Body","E");
             ActivePlayerStats.takeFatigue(1);
             CombatLog.Log(ActivePlayerStats.GetName() + " takes 1d10 = " + damage + " damage from the fire!");
             PopUpText.CreateText("Burning! (-" + damage +")",Color.red,ActivePlayerStats.gameObject);
         }
+        if(ActivePlayerStats.Grappling())
+        {
+            PopUpText.CreateText("Grappling!", Color.red, ActivePlayerStats.gameObject);
+            ActivePlayerStats.SpendAction("reaction");
+            currentAction = "Grapple";
+        }
     }
     
+    IEnumerator FireDistractionDelay()
+    {
+        RollResult fireroll = ActivePlayerStats.AbilityCheck("WP",0);
+        while(!fireroll.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        if(!fireroll.Passed())
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " is too distracted by the fire to act!");
+            halfActions = 0;
+        }
+        else
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " is able to act while on fire!");
+        }
+        Cancel();
+    }
+
     public void RollToHit(PlayerStats target, string ROF, Weapon w, PlayerStats attacker)
     {
         FireRate = ROF;
@@ -507,33 +541,42 @@ public class TurnManager : TurnActions
             }
             AttackQueue.Enqueue(newAttack);
             currentAction = null;
-            if(!ROF.Equals("Free"))
+            // if its not the attackers turn (overwatch) then don't subtract half actions
+            if(ActivePlayerStats == attacker)
             {
                 halfActions--;
-            
-                if(!ROF.Equals("S"))
-                {
-                    halfActions--;
-                }
             }
         }
     }
 
     public void RollToStun(PlayerStats target, PlayerStats attacker)
     {
-        this.target = target; 
         //only a valid target if on diferent teams
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
+            StartCoroutine(StunDelay(target,attacker));
+        }
+    }
+
+    IEnumerator StunDelay(PlayerStats target, PlayerStats attacker)
+    {
             //to implement check talents to avoid penalty
-            int modifiers = -20;
+            int modifiers = 0;
+            if(!attacker.hasCondition("TakeDown"))
+            {
+                modifiers -= 20;
+            }
             RollResult StunResult = attacker.AbilityCheck("WS",modifiers);
+            while(!StunResult.Completed())
+            {
+                yield return new WaitForSeconds(0.5f);
+            }
             if (StunResult.Passed())
             {
-                AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Stun",1));
+                AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Stun",1,true));
             }
             halfActions -= 2;
-        }
+            Cancel();
     }
 
     public void RollToKnock(PlayerStats target, PlayerStats attacker)
@@ -542,32 +585,37 @@ public class TurnManager : TurnActions
         //only a valid target if on diferent teams
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
-            int modifier = 0;
-            if(attacker.hasCondition("KnockDownBonus"))
-            {
-                modifier += 10;
-            }
             //to implement check to see if you moved
-            int result = attacker.OpposedAbilityCheck("S",target,modifier,0);
-            if (result > 1)
-            {
-                CombatLog.Log(attacker.GetName() + " wins by 2 DOF and takes the wind out of " + target.GetName());
-                target.takeDamage(attacker.GetStatScore("S")-4,"Body");
-                target.takeFatigue(1);
-            }
-            if (result > 0)
-            {
-                CombatLog.Log(attacker.GetName() + "Knocks " + target.GetName() + "Prone");
-                target.SetCondition("Prone",0,true);
-            }
-            else if (result < -1)
-            {
-                CombatLog.Log(attacker.GetName() + " loses by 2 DOF and gets knocked down himself!");
-                attacker.SetCondition("Prone",0,true);
-            }
-            halfActions--;
-            Cancel();
+            StartCoroutine(KnockDelay(target,attacker));
         }
+    }
+
+    IEnumerator KnockDelay(PlayerStats target, PlayerStats attacker)
+    {
+        RollResult OpposedStrengthTest = attacker.AbilityCheck("KnockDown",0,null,target);
+        while(!OpposedStrengthTest.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        int result = OpposedStrengthTest.GetDOF();
+        if (result > 1)
+        {
+            CombatLog.Log(attacker.GetName() + " knock down attempt wins by 2 DOF and takes the wind out of " + target.GetName());
+            target.takeDamage(attacker.GetStatScore("S")-4,"Body");
+            target.takeFatigue(1);
+        }
+        if (result > 0)
+        {
+            CombatLog.Log(attacker.GetName() + "Knocks " + target.GetName() + " Prone");
+            target.SetCondition("Prone",0,true);
+        }
+        else if (result < -1)
+        {
+            CombatLog.Log(attacker.GetName() + " loses by 2 DOF and gets knocked down himself!");
+            attacker.SetCondition("Prone",0,true);
+        }
+        halfActions--;
+        Cancel();
     }
 
     public void RollToGrapple(PlayerStats target, PlayerStats attacker)
@@ -576,13 +624,8 @@ public class TurnManager : TurnActions
         //only a valid target if on diferent teams
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
-            if(!target.grappling()){
-                RollResult GrappleResult = attacker.AbilityCheck("WS",0);
-                if (GrappleResult.Passed())
-                {
-                    AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Grapple",1));
-                }
-                halfActions -= 2;
+            if(!target.Grappling()){
+                StartCoroutine(grappleDelay(target,attacker));
             }
             else
             {
@@ -591,15 +634,40 @@ public class TurnManager : TurnActions
         }
     }
 
+    IEnumerator grappleDelay(PlayerStats target, PlayerStats attacker)
+    {
+            RollResult GrappleResult = attacker.AbilityCheck("WS",0);
+            while(!GrappleResult.Completed())
+            {
+                yield return new WaitForSeconds(0.5f);
+            }
+            if (GrappleResult.Passed())
+            {
+                AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Grapple",1,true));
+            }
+            halfActions -= 2;
+            Cancel();
+    }
+
     public void RollToFeint(PlayerStats target, PlayerStats attacker)
     {
         this.target = target; 
         //only a valid target if on diferent teams
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
-            //to implement check to see if you moved
-            int result = attacker.OpposedAbilityCheck("WS",target,0,0);
-            if (result > 0)
+            FeintDelay(target,attacker);
+        }
+    }
+
+    IEnumerator FeintDelay(PlayerStats target, PlayerStats attacker)
+    {
+        RollResult OpposedWSCheck = attacker.AbilityCheck("S",0,null,target);
+        while(!OpposedWSCheck.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        int result = OpposedWSCheck.GetDOF();
+        if (result > 0)
             {
                 CombatLog.Log(attacker.GetName() + " next attack can't be avoided!");
                 attacker.SetCondition("Feinted", 1, true);
@@ -610,17 +678,6 @@ public class TurnManager : TurnActions
             }
             halfActions--;
             Cancel();
-        }
-    }
-
-    public void GrappleStart()
-    {
-        if(ActivePlayerStats.grappling())
-        {
-            PopUpText.CreateText("Grappling!", Color.red, ActivePlayerStats.gameObject);
-            ActivePlayerStats.SpendAction("reaction");
-            currentAction = "Grapple";
-        }
     }
 
     public void AttackOfOppertunity()
@@ -669,10 +726,7 @@ public class TurnManager : TurnActions
     }
     public void AbilityCheck(string skill)
     {
-        GameObject prompt = Instantiate(SkillModifierScript) as GameObject;
-        prompt.GetComponent<SkillPromptBehavior>().SetValue(skill);
-        prompt.transform.SetParent(Canvas.transform, false);
-        currentAction = null;
+        ActivePlayerStats.AbilityCheck(skill,0);
     }
     public void AbilityCheck(string skill, int value)
     {

@@ -72,10 +72,7 @@ public class ThreatRangeBehavior : MonoBehaviour
                     }
                     if(!target.hasCondition("Pinned"))
                     {
-                        if(!target.AbilityCheck("WP",-20).Passed())
-                        {
-                            target.SetCondition("Pinned",0,true);
-                        }
+                        target.AbilityCheck("WP",-20,"Suppression");
                     }
                     
                     RemoveRange(attacker);
@@ -117,23 +114,10 @@ public class ThreatRangeBehavior : MonoBehaviour
                     TurnManager.FlameAttack(selectedTargets);
                     Destroy(gameObject);
                 }
-                else if(threatType.Equals("Blast"))
+                else if(threatType.Equals("Blast") && controllable)
                 {
                     controllable = false; 
-                    if (!attacker.AbilityCheck("BS",w.RangeBonus(gameObject.transform, attacker)).Passed())
-                    {
-                        Debug.Log("Scatter!");
-                        StartCoroutine(Scatter(Random.Range(1,10)));
-                    }
-                    else
-                    {
-                        TurnManager.BlastAttack(selectedTargets);
-                    }
-                }
-                else
-                {
-                    Debug.Log("Error! invalid threat type!");
-                    Destroy(gameObject);
+                    StartCoroutine(Scatter());
                 }
             }
             
@@ -182,14 +166,22 @@ public class ThreatRangeBehavior : MonoBehaviour
         }
     }
 
-    IEnumerator Scatter(int distance)
+    IEnumerator Scatter()
     {
-        Debug.Log("scattering " + distance );
-        Debug.Log("moving");
-        transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
-        gameObject.transform.Translate(transform.forward.normalized * distance);
-        distance--; 
-        yield return new WaitForSeconds (1f);
+        Debug.Log("scattering");
+        RollResult ScatterRoll = attacker.AbilityCheck("BS",0);
+        while(!ScatterRoll.Completed())
+        {
+            yield return new WaitForSeconds (0.5f);
+        }
+        if(!ScatterRoll.Passed())
+        {
+            int distance = Random.Range(1,6);
+            transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
+            gameObject.transform.Translate(transform.forward.normalized * distance);
+            CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");
+            yield return new WaitForSeconds (0.2f);
+        }
         TurnManager.BlastAttack(myRange.GetTargets());
     }
 }

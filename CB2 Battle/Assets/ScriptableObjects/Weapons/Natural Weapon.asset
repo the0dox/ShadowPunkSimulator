@@ -10,27 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Stub Revolver
+  m_Name: Natural Weapon
   m_EditorClassIdentifier: 
-  weight: 1
-  cost: 40
-  availablity: Plentiful
-  description: "Based on an ancient and well\x02tested design, the stub revolver
-    is an ideal backup weapon."
+  weight: 0
+  cost: 0
+  availablity: 
+  description: 
   unique: 1
   Attributes:
-  - Reliable
-  Class: Pistol
+  - Unarmed
+  - Primitive
+  Class: Melee
   numDice: 1
-  sizeDice: 10
-  damageBonus: 3
-  range: 30
+  sizeDice: 5
+  damageBonus: 0
+  range: 0
   pen: 0
-  reloadMax: 4
-  single: 1
+  reloadMax: 0
+  single: 0
   semi: 0
   auto: 0
-  clipMax: 6
-  damageType: I
+  clipMax: 0
+  damageType: 
   blast: 0
-  AmmoSource: {fileID: 11400000, guid: a215cba5c4221634a8934640ef7dbfd2, type: 2}
+  AmmoSource: {fileID: 0}

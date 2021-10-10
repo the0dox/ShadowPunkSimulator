@@ -77,5 +77,10 @@ public class Item
     {
         return name;
     }
+
+    public float getWeight()
+    {
+        return weight;
+    }
 }
 

@@ -9,11 +9,20 @@ MonoBehaviour:
   m_GameObject: {fileID: 0}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: f1f0852cd1f52964cb2d51f6f0398d13, type: 3}
-  m_Name: AllOut
+  m_Script: {fileID: 11500000, guid: 54780e4fb1caf4841826c81aac4f2c67, type: 3}
+  m_Name: Flak Jacket
   m_EditorClassIdentifier: 
-  Stats:
-  - WS
-  Modifiers: 1e000000
-  duration: 0
-  clearOnStart: 1
+  weight: 4
+  cost: 80
+  availablity: Average
+  description: 
+  unique: 0
+  Parts:
+  - Body
+  - LeftArm
+  - RightArm
+  - LeftLeg
+  - RightLeg
+  AP: 3
+  Attributes:
+  - Flak

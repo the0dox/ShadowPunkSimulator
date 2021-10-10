@@ -10,27 +10,27 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Stub Revolver
+  m_Name: Pneumatic Gauntlet
   m_EditorClassIdentifier: 
-  weight: 1
-  cost: 40
-  availablity: Plentiful
-  description: "Based on an ancient and well\x02tested design, the stub revolver
-    is an ideal backup weapon."
-  unique: 1
+  weight: 2
+  cost: 500
+  availablity: Rare
+  description: 
+  unique: 0
   Attributes:
-  - Reliable
+  - Scatter
+  - Toxic
   Class: Pistol
   numDice: 1
   sizeDice: 10
-  damageBonus: 3
-  range: 30
+  damageBonus: 0
+  range: 15
   pen: 0
-  reloadMax: 4
+  reloadMax: 2
   single: 1
-  semi: 0
+  semi: 2
   auto: 0
-  clipMax: 6
-  damageType: I
+  clipMax: 3
+  damageType: R
   blast: 0
-  AmmoSource: {fileID: 11400000, guid: a215cba5c4221634a8934640ef7dbfd2, type: 2}
+  AmmoSource: {fileID: 11400000, guid: 539a8ac10c221e34e858e7b7041dd59f, type: 2}

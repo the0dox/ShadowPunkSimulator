@@ -72,16 +72,15 @@ public class Tile : MonoBehaviour
     //reset all the variables back
     public void reset()
     {
-        walkable = true; 
         current = false;
         target = false;
         selectable = false; 
         selectableRunning = false;
-        adjacencyList = new List<Tile>();
         attack = false;
         visited = false;
         parent = null; 
         distance = 0; 
+        adjacencyList = new List<Tile>();
         UpdateIndictator();
     }
 

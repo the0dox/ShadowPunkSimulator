@@ -21,6 +21,7 @@ MonoBehaviour:
   unique: 1
   Attributes:
   - Primitive
+  - Unarmed
   Class: Melee
   numDice: 1
   sizeDice: 5

@@ -32,6 +32,17 @@ public class TacticsMovement : MonoBehaviour
       halfHeight = GetComponent<Collider>().bounds.extents.y; 
    }
 
+   public void PaintCurrentTile(bool paint)
+   {
+      Tile targetTile = GetTargetTile(gameObject);
+      targetTile.current = paint;
+      targetTile.target = false;
+      targetTile.selectable = false; 
+      targetTile.selectableRunning = false;
+      targetTile.attack = false;
+      targetTile.UpdateIndictator();
+   }
+
    public void GetCurrentTile()
    {
       currentTile = GetTargetTile(gameObject);

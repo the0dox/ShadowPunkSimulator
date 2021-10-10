@@ -56,13 +56,11 @@ public class ThreatCone : MonoBehaviour
                 {
                     if(!visibleTargets.Contains(contact.otherCollider.transform) )
                     {
-                        Debug.Log("adding");
                         visibleTargets.Add(contact.otherCollider.transform);
-                        contact.otherCollider.GetComponent<PlayerStats>().PaintTarget();
-                    }
-                    else
-                    {
-                        Debug.Log("already added");
+                        if(draw)
+                        {
+                            contact.otherCollider.GetComponent<PlayerStats>().PaintTarget();
+                        }
                     }
                 }
             }
@@ -78,7 +76,7 @@ public class ThreatCone : MonoBehaviour
         }
         else
         {
-            return TacticsAttack.HasLOS(contact.otherCollider.gameObject, gameObject);
+            return TacticsAttack.HasLOS(contact.otherCollider.gameObject, avoidOwner.gameObject);
         }
     }
 

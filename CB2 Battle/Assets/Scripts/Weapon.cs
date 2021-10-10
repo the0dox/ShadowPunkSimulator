@@ -92,40 +92,48 @@ public class Weapon : Item
         return reloadMax;
     }
 
-     public int rollDamage(PlayerStats player, PlayerStats target)
+     public int rollDamage(PlayerStats player, PlayerStats target, string hitBodyPart)
     {
         int value = 0;
         int i = 0;
         if(HasWeaponAttribute("Tearing"))
         {
-            CombatLog.Log(GetName() + " rolls two dice and takes the highest result because of its tearing quality");
         }
         string output = "";
-
+        bool crit = false;
         while(i < numDice){
             int roll;
-            if(HasWeaponAttribute("Tearing") || target.IsHelpless())
+            int roll1 = Random.Range(1,sizeDice + 1);
+            int roll2 = Random.Range(1,sizeDice + 1);
+            if(target.IsHelpless())
             {
-                int roll1 = Random.Range(1,sizeDice);
-                int roll2 = Random.Range(1,sizeDice);
+                CombatLog.Log(target.GetName() + " is helpless! attacks roll 2 two dice for damage" );
+                roll = roll1 + roll2;
+                output += "[" + roll1 + " + " + roll2 + "] +";
+            }
+            else if(HasWeaponAttribute("Tearing"))
+            {
+                CombatLog.Log(GetName() + " rolls two dice and takes the highest result because of its tearing quality");
                 if(roll1 >= roll2)
                 {
                     roll = roll1;
+                    output += "[" + roll1 + " > " + roll2 + "] +";
                 }
                 else
                 {
                     roll = roll2;
+                    output += "[" + roll1 + " < " + roll2 + "] +";
                 }
             }
             else
             {
-                roll = Random.Range(1,sizeDice);
-            } 
+                roll = roll1;
+                output += "[" + roll + "] +";
+            }
             if(roll == sizeDice)
             {
-                roll += TacticsAttack.Critical(player, this, false);
+                crit = true;
             }
-            output += "[" + roll + "] +";
             value += roll; 
             i++;
         }
@@ -140,7 +148,7 @@ public class Weapon : Item
         value += DB;
         if(HasWeaponAttribute("Unstable"))
         {
-            int unstableResult = Random.Range(1,10);
+            int unstableResult = Random.Range(1,11);
             if(unstableResult == 10)
             {
                 CombatLog.Log(GetName() + "'s unstable attribute doubles its damage!");
@@ -155,6 +163,12 @@ public class Weapon : Item
             }
         }
         CombatLog.Log(name + ": " + output + " = " + value);
+        // only players can crit
+        if(crit)
+        {
+            CombatLog.Log(player.GetName() + " rolls a natural max damage and strikes with Righteous Fury!");
+            target.TakeCritical(Random.Range(1,6), hitBodyPart, damageType);
+        }
         return value;
     }
 
@@ -168,7 +182,7 @@ public class Weapon : Item
         value += DB;
         if(HasWeaponAttribute("Unstable"))
         {
-            int unstableResult = Random.Range(1,10);
+            int unstableResult = Random.Range(1,11);
             if(unstableResult == 10)
             {
                 CombatLog.Log(GetName() + "'s unstable attribute doubles its damage!");
@@ -222,7 +236,7 @@ public class Weapon : Item
 
     public int ExpendAmmo(string FireMode)
     {
-        if(FireMode.Equals("Jam"))
+        if(FireMode.Equals("Jam") || IsWeaponClass("Melee"))
         {
             clip = 0;
             return 0;
