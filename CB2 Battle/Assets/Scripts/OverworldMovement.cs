@@ -1,8 +1,8 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
-public class OverworldMovement : MonoBehaviour
+using Photon.Pun;
+public class OverworldMovement : MonoBehaviourPunCallbacks
 {
 
     private Vector3 mOffset;
@@ -10,7 +10,18 @@ public class OverworldMovement : MonoBehaviour
 
     private float mZCoord;
 
+    private PhotonView pv;
 
+    void Start()
+    {
+        pv = GetComponent<PhotonView>();
+    }
+
+    [PunRPC]
+    void RPC_Drop(Vector3 pos)
+    {
+        transform.position = pos;
+    }
 
     void OnMouseDown()
 
@@ -30,9 +41,24 @@ public class OverworldMovement : MonoBehaviour
     
     void Update()
     {
-        transform.position = new Vector3(transform.position.x,0,transform.position.z);
+        
+        if(Input.GetMouseButtonUp(0))
+        {
+            mZCoord = gameObject.transform.position.z;
+            mOffset = new Vector3(0,0,0);
+            StartCoroutine(UpdateDelay());
+        }
+        else
+        {
+            transform.position = new Vector3(transform.position.x,0,transform.position.z);
+        }
     }
 
+    IEnumerator UpdateDelay()
+    {
+        yield return new WaitForSeconds(0.5f);
+        pv.RPC("RPC_Drop",RpcTarget.Others,transform.position);
+    }
 
 
     private Vector3 GetMouseAsWorldPoint()

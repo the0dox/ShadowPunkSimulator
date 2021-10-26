@@ -49,6 +49,12 @@ public class SceneSaveData
         }
     }
 
+    public Dictionary<string,string> GetTileLocations()
+    {
+        return TileLocations;
+    }
+
+    /*
     public Dictionary<Vector3,GameObject> GetTileLocations()
     {
         Dictionary<Vector3,GameObject> output = new Dictionary<Vector3, GameObject>();
@@ -61,23 +67,16 @@ public class SceneSaveData
         }
         return output;
     }
+    */
 
-    public Dictionary<Vector3,CharacterSaveData> GetPlayerLocations()
+    public Dictionary<Vector3,string> GetPlayerLocations()
     {
-        Dictionary<Vector3,CharacterSaveData> output = new Dictionary<Vector3, CharacterSaveData>();
-        List<CharacterSaveData> CharacterDatabase = SaveSystem.LoadPlayer();
+        Dictionary<Vector3,string> output = new Dictionary<Vector3, string>();
         foreach(string posKey in PlayerLocations.Keys)
         {
             string[] posSplit = posKey.Split(',');
             Vector3 pos = new Vector3(float.Parse(posSplit[0]),float.Parse(posSplit[1]),float.Parse(posSplit[2]));
-            string entityName = PlayerLocations[posKey];
-            foreach(CharacterSaveData csd in CharacterDatabase)
-            {
-                if(csd.playername.Equals(entityName))
-                {
-                    output.Add(pos,csd);
-                }
-            }
+            output.Add(pos,PlayerLocations[posKey]);
         }
         return output;
     }

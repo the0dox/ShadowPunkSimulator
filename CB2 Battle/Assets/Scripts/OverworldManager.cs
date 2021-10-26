@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 public class OverworldManager : UIButtonManager
 {
@@ -19,8 +20,7 @@ public class OverworldManager : UIButtonManager
         PlayerStats myStats = newPlayer.GetComponent<PlayerStats>();
         Party.Add(myStats.GetName(), myStats);
         //transform player object into a draggable overworld piece with no health bar
-        newPlayer.AddComponent<OverworldMovement>();
-        newPlayer.GetComponentInChildren<HealthBar>().ToggleBar();
+        newPlayer.GetComponent<PlayerStats>().OverworldInit();
     }
 
     public void ConstructActions()
@@ -30,6 +30,7 @@ public class OverworldManager : UIButtonManager
         {
             d.Add(playerName,playerName);
         }
+        d.Add("test","Test");
         d.Add("Fast Forward","FastForward");
         ConstructActions(d);
     }
@@ -91,7 +92,7 @@ public class OverworldManager : UIButtonManager
         bool ouput = true;
         foreach(LeadScript ls in leads)
         {
-            ls.IncrementTime(1);
+            ls.IncrementTime();
             if(ls.Completed())
             {
                 ouput = false;

@@ -1,8 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
-public class TurnActions : MonoBehaviour
+public class TurnActions : UIButtonManager
 {
     public TacticsMovement ActivePlayer; 
     public List<string> DefaultActions;
@@ -212,6 +213,7 @@ public class TurnActions : MonoBehaviour
     public void GuardedAttack()
     { 
         currentAction = "Attack";
+        PushToolTips();
         FireRate = "Full";
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         ActivePlayerStats.SetCondition("GuardedAttack", 0, false);
@@ -223,6 +225,7 @@ public class TurnActions : MonoBehaviour
     public void AllOut()
     {
         currentAction = "Attack";
+        PushToolTips();
         FireRate = "Full";
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         ActivePlayerStats.SetCondition("AllOut", 0, false);
@@ -579,31 +582,9 @@ public class TurnActions : MonoBehaviour
         d.Add("End Turn","EndTurn");
         ConstructActions(d);
     }
-    //creates a set of interactable buttons can key = text value = method called
-    public void ConstructActions(Dictionary<string, string> d)
-    {
-        GameObject[] oldButtons = GameObject.FindGameObjectsWithTag("ActionInput");
-        foreach(GameObject g in oldButtons)
-        {
-            g.GetComponent<ActionButtonScript>().DestroyMe();
-        }
-        if(d != null)
-        {
-            int displacement = 0;
-            foreach (KeyValuePair<string, string> kvp in d)
-            {
-                GameObject newButton = Instantiate(ActionUIButton) as GameObject;
-                newButton.transform.SetParent(Canvas.transform, false);
-                newButton.transform.position += new Vector3(displacement,0,0);
-                newButton.GetComponent<ActionButtonScript>().SetAction(kvp.Value);
-                newButton.GetComponent<ActionButtonScript>().SetText(kvp.Key);
-                displacement += 150;
-            }
-        }
-    }
 
     //is passed the action value of a button as an input
-    public void OnButtonPressed(string input)
+    override public void OnButtonPressed(string input)
     {
         int index;
         if(int.TryParse(input,out index))
@@ -614,6 +595,7 @@ public class TurnActions : MonoBehaviour
         else if(!ActivePlayer.moving || currentAction != "Move")
         {    
             Invoke(input,0);
+            //pv.RPC("RPC_OnButtonPressed",RpcTarget.MasterClient,input);
         }
     }
     
@@ -636,6 +618,7 @@ public class TurnActions : MonoBehaviour
     public void StandardAttack()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         List<string> l = new List<string>{"Cancel"};
@@ -667,6 +650,7 @@ public class TurnActions : MonoBehaviour
     public void Head()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "Head";
@@ -679,6 +663,7 @@ public class TurnActions : MonoBehaviour
     public void RightArm()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "RightArm";
@@ -691,6 +676,7 @@ public class TurnActions : MonoBehaviour
     public void LeftArm()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "LeftArm";
@@ -703,6 +689,7 @@ public class TurnActions : MonoBehaviour
     public void Body()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "Body";
@@ -715,6 +702,7 @@ public class TurnActions : MonoBehaviour
     public void RightLeg()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "RightLeg";
@@ -727,6 +715,7 @@ public class TurnActions : MonoBehaviour
     public void LeftLeg()
     {
         currentAction = "Attack";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "LeftLeg";
@@ -747,6 +736,7 @@ public class TurnActions : MonoBehaviour
     public void SemiAuto()
     {
         currentAction = "Attack";
+        PushToolTips();
         FireRate = "Semi";
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         List<string> l = new List<string>{"Cancel"};
@@ -755,6 +745,7 @@ public class TurnActions : MonoBehaviour
     public void FullAuto()
     {
         currentAction = "Attack";
+        PushToolTips();
         FireRate = "Auto";
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         List<string> l = new List<string>{"Cancel"};
@@ -776,7 +767,7 @@ public class TurnActions : MonoBehaviour
         ActiveWeapon.ExpendAmmo(FireRate);
         foreach(Transform t in targets)
         {
-            AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(),ActivePlayerStats,ActiveWeapon,FireRate,1,true));
+            AttackQueue.Enqueue(new AttackSequence (t.GetComponent<PlayerStats>(), ActivePlayerStats, ActiveWeapon,FireRate,1,true));
         }
         halfActions--;
         RemoveRange(ActivePlayerStats);
@@ -988,7 +979,7 @@ public class TurnActions : MonoBehaviour
     public void TryReaction()
     {
         //CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
-        CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile(true);
+        CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("current");
         if(CurrentAttack.attacks > 0 && CurrentAttack.target.ValidAction("reaction") && !CurrentAttack.target.hasCondition("AllOut") && !CurrentAttack.attacker.hasCondition("Feinted") && CurrentAttack.target != ActivePlayerStats)
         {
             CombatLog.Log(CurrentAttack.target.GetName() + " has an oppertunity to react to " + CurrentAttack.attacks + " incoming attack(s)");
@@ -1158,7 +1149,7 @@ public class TurnActions : MonoBehaviour
 
     public void CreateThreatRange(string type)
     {
-        GameObject newThreatRange = Instantiate(ThreatRangePrefab, ActivePlayer.transform.position + new Vector3(0,0.05f,0), Quaternion.identity);
+        GameObject newThreatRange = PhotonNetwork.Instantiate("ThreatRange", ActivePlayer.transform.position + new Vector3(0,0.05f,0), Quaternion.identity);
         newThreatRange.GetComponent<ThreatRangeBehavior>().SetParameters(type, ActiveWeapon, ActivePlayerStats);
     }
     IEnumerator AttackCoroutine()
@@ -1234,6 +1225,27 @@ public class TurnActions : MonoBehaviour
         Cancel();
     }
 
+    public void PushToolTips()
+    {
+        GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+        Dictionary<Vector3, List<string>> output = new Dictionary<Vector3, List<string>>();
+        foreach(GameObject g in players)
+        {
+            PlayerStats selectedPlayer = g.GetComponent<PlayerStats>();
+            if(currentAction.Equals("Attack"))
+            {
+                output.Add(g.transform.position, TacticsAttack.GenerateTooltip(selectedPlayer,ActivePlayerStats,ActiveWeapon,FireRate));
+            }
+            else
+            {
+                List<string> currentTooltip = new List<string>();
+                currentTooltip.Add(selectedPlayer.ToString());
+                output.Add(g.transform.position, currentTooltip);   
+            }
+        }
+        TooltipBehavior.UpdateToolTips(output);
+    }
+
     public void Cancel()
     {
         if(halfActions < 0)
@@ -1257,5 +1269,6 @@ public class TurnActions : MonoBehaviour
         RepeatedAttacks = 0;
         attacks = 0;
         PlayerUIDisplay.GetComponent<UIPlayerInfo>().UpdateDisplay(ActivePlayerStats, halfActions);
+        PushToolTips();
     }
 }

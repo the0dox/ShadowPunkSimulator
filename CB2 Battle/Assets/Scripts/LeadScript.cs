@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
-public class LeadScript : MonoBehaviour
+public class LeadScript : MonoBehaviourPunCallbacks
 {
     [SerializeField] private float MaxHours;
     [SerializeField] private float CompletedHours = 0;
@@ -13,9 +14,11 @@ public class LeadScript : MonoBehaviour
     [SerializeField] private Text TextTime;
     [SerializeField] private Image pieChart;
     private PlayerStats[] players;
+    private static Vector3 activityDisplacement = new Vector3(0, 200, 0);
     [SerializeField] private GameObject player1;
     [SerializeField] private GameObject player2;
     [SerializeField] private GameObject player3;
+    private PhotonView pv;
 
     void Update()
     {
@@ -36,57 +39,27 @@ public class LeadScript : MonoBehaviour
         this.players = players;
         MaxHours = time;
         PlayerStats mainPlayer = players[0];
-        player1.SetActive(true);
-        player1.GetComponentInChildren<Text>().text = mainPlayer.GetName();
-        mainPlayer.StartJob();
-        for(int i = 1; i < players.Length; i++)
-        {
-            if (players[i] != null)
-            {
-                CombatLog.Log(players[i].GetName() + " assists and gives a + 10 Bonus!");
-                modifier += 10;
-                players[i].StartJob();
-                if(!player2.activeInHierarchy)
-                {
-                    player2.SetActive(true);
-                    player2.GetComponentInChildren<Text>().text = players[i].GetName();
-                }
-                else
-                {
-                    player3.SetActive(true);
-                    player3.GetComponentInChildren<Text>().text = players[i].GetName();
-                }
-            }
-        }
-        RollResult LeadResult = mainPlayer.AbilityCheck(skill,modifier,"Lead");
-        StartCoroutine(waitForResult(LeadResult));
+        
     }
 
-    IEnumerator waitForResult(RollResult input)
+
+
+    public void SetLead( string name, float progress, float time, int count)
     {
-        while(!input.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        if(input.Passed())
-        {
-            int dieroll = Random.Range(1,11);
-            string usedStat = SkillReference.GetSkill(input.GetSkillType()).characterisitc;
-            int statScoreBonus = input.getOwner().GetStatScore(usedStat);
-            int extrahours = dieroll + statScoreBonus;
-            CombatLog.Log(input.getOwner().GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
-            extrahours += input.GetDOF();
-            CombatLog.Log("Each degree of success (" + input.GetDOF() + ") counts for one more hour of progress!");
-            CompletedHours += extrahours;
-        }
+        pv = GetComponent<PhotonView>();
+        pv.RPC("RPC_SetLead", RpcTarget.All, name,progress,time,count);
     }
 
-    public void SetLead( string name, float progress, float time)
+    [PunRPC]
+    void RPC_SetLead(string name, float progress, float time, int count)
     {
         Debug.Log(name);
         Title.text = name;
         this.MaxHours = time;
         this.CompletedHours = progress;
+        transform.SetParent(GameObject.FindGameObjectWithTag("LeadParent").transform);
+        transform.localPosition = new Vector3();
+        transform.localPosition -= new Vector3(0, 200 * (count + 1),0);
     }
 
     //depreciated
@@ -107,9 +80,15 @@ public class LeadScript : MonoBehaviour
         return CompletedHours >= MaxHours;
     }
 
-    public void IncrementTime(float hours)
+
+    public void IncrementTime()
     {
-        CompletedHours += hours;
+        pv.RPC("RPC_Increment",RpcTarget.All);
+    }
+    [PunRPC]
+    void RPC_Increment()
+    {
+        CompletedHours ++;
     }
 
     public float GetCompletedHours()
@@ -129,13 +108,6 @@ public class LeadScript : MonoBehaviour
 
     public void Delete()
     {
-        for(int i = 0;i<players.Length;i++)
-        {
-            if(players[i] != null)
-            {
-                players[i].EndJob();
-            }
-        }
         ActionQueueDisplay.RemoveActivity(this.gameObject);
     }
 }

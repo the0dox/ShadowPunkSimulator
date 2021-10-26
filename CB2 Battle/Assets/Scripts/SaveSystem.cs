@@ -1,11 +1,34 @@
 using UnityEngine;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Runtime.Serialization.Formatters.Binary;
+using Photon.Pun;
 
-public static class SaveSystem
+public class SaveSystem : MonoBehaviourPunCallbacks
 {
+    private static List<CharacterSaveData> PlayerFiles = new List<CharacterSaveData>();
+    private static List<string> PlayerNames;
+    [SerializeField] private PhotonView pv;
+    private static PhotonView spv;
+
+    void Start()
+    {
+        if(pv.IsMine)
+        {
+            //int index = 0;
+            string path = Application.persistentDataPath + "/save_data/characters";
+            BinaryFormatter formatter = new BinaryFormatter();
+            foreach(string file in  Directory.EnumerateFiles(path))
+            {
+                FileStream stream = new FileStream(file,FileMode.Open);
+                CharacterSaveData data = formatter.Deserialize(stream) as CharacterSaveData;
+                stream.Close();
+                PlayerFiles.Add(data);
+            }
+            //pv.RPC("RPC_Recieve_Players",RpcTarget.AllBuffered,convertedFiles.ToArray());
+        }
+    }
+
     public static void SavePlayer(CharacterSaveData data)
     {
         CreateSaveFile();
@@ -19,19 +42,21 @@ public static class SaveSystem
 
     public static List<CharacterSaveData> LoadPlayer()
     {
-        CreateSaveFile();
-        List<CharacterSaveData> output = new List<CharacterSaveData>();
-        string path = Application.persistentDataPath + "/save_data/characters";
-        BinaryFormatter formatter = new BinaryFormatter();
-        foreach(string file in Directory.EnumerateFiles(path))
-        {
-            FileStream stream = new FileStream(file,FileMode.Open);
-            CharacterSaveData data = formatter.Deserialize(stream) as CharacterSaveData;
-            stream.Close();
-            output.Add(data);
-        }
-        return output;
+        
+        return PlayerFiles;
     }
+
+    /*
+    [PunRPC]
+    void RPC_Recieve_Players(string[] players)
+    {
+        PlayerFiles = new List<string>();
+        for(int i = 0; i < players.Length; i++)
+        {
+            PlayerFiles.Add(players[i]);
+        }
+    }
+    */
 
     public static void SaveScene(SceneSaveData data)
     {
@@ -59,6 +84,7 @@ public static class SaveSystem
         }
         return output;
     }
+    
 
     private static void CreateSaveFile()
     {

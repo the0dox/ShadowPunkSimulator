@@ -36,6 +36,7 @@ public class CharacterSaveData
     private int Gelt = 0;
     private int Income = 0;
     public int team = 0; 
+    public int ID;
     public string playername;
     // Name of mesh model
     public string Model;
@@ -225,14 +226,14 @@ public class CharacterSaveData
     }
 
     // Converts SkillNames and Skill Levels into a list of skill objects that playerstats can read
-    public List<Skill> GetSkills()
+    public Dictionary<string,int> GetSkills()
     {
-        List<Skill> output = new List<Skill>();
+        Dictionary<string, int> output = new Dictionary<string, int>();
         for(int i = 0; i < 50; i++)
         {
             if(SkillNames[i] != null)
             {
-                output.Add( new Skill(SkillReference.GetSkill(SkillNames[i]),SkillLevels[i]));
+                output.Add( SkillNames[i],SkillLevels[i]);
             }
         }
         return output;
@@ -263,29 +264,21 @@ public class CharacterSaveData
     }
 
     // Converts Equipment and EquipmentSize into a readable list of Item objects
-    public List<Item> GetEquipment()
+    public Dictionary<string,int> GetEquipment()
     {
-        List<Item> output = new List<Item>();
+        Dictionary<string,int> output = new Dictionary<string, int>();
         for(int i = 0; i < 8; i++)
         {
             if(equipment[i] != null)
             {
-                // specific types of items have to be created seperately
-                Item current = null;
-                if(ItemReference.ItemTemplates()[equipment[i]].GetType() == typeof(WeaponTemplate))
+                if(!output.ContainsKey(equipment[i]))
                 {
-                    current = new Weapon((WeaponTemplate)ItemReference.ItemTemplates()[equipment[i]]);
-                }
-                else if(ItemReference.ItemTemplates()[equipment[i]].GetType() == typeof(ArmorTemplate))
-                {
-                    current = new Armor((ArmorTemplate)ItemReference.ItemTemplates()[equipment[i]]);
+                    output.Add(equipment[i],equipmentSize[i]);
                 }
                 else
                 {
-                    current = new Item(ItemReference.GetItem(equipment[i]));
+                    output[equipment[i]] += equipmentSize[i];
                 }
-                current.SetStack(equipmentSize[i]);
-                output.Add(current);
             }
         }
         return output;
@@ -299,6 +292,17 @@ public class CharacterSaveData
     }
 
     // Takes a series of Gameobjects and converts them back into basic datastructures
+    public void AddEquipment(Dictionary<string,int> input)
+    {
+        ClearEquipment();
+        int newIndex = 0;
+        foreach(KeyValuePair<string,int> kvp in input)
+        {
+            equipment[newIndex] = kvp.Key;
+            equipmentSize[newIndex] = kvp.Value;
+            newIndex++;
+        }
+    }
     public void AddEquipment(List<Item> input)
     {
         ClearEquipment();

@@ -5,9 +5,6 @@ using UnityEngine.UI;
 public class HealthBar : MonoBehaviour
 {
     [SerializeField] private Image Bar;
-    public float currentHealth;
-    private float maxHealth = 10;  
-    public PlayerStats player;
     private bool visible = true; 
 
     // Update is called once per frame
@@ -16,10 +13,12 @@ public class HealthBar : MonoBehaviour
         if(visible)
         {
             transform.LookAt(transform.position + Camera.main.transform.rotation *- Vector3.back, Camera.main.transform.rotation *- Vector3.down);
-            currentHealth = player.getWounds();
-            maxHealth = player.Stats["MaxWounds"];
-            Bar.fillAmount = currentHealth / maxHealth;  
         }
+    }
+
+    public void UpdateHealth(int currentHealth, int maxHealth)
+    {
+        Bar.fillAmount = (float)currentHealth / maxHealth;  
     }
 
     public void ToggleBar()

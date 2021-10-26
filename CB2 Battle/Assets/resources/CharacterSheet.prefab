@@ -11263,7 +11263,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 9042909675615074341}
         m_TargetAssemblyTypeName: CharacterSheet, Assembly-CSharp
-        m_MethodName: UpdateStatsOut
+        m_MethodName: OnButtonPressed
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -13819,6 +13819,7 @@ GameObject:
   m_Component:
   - component: {fileID: 9042909675615074338}
   - component: {fileID: 9042909675615074341}
+  - component: {fileID: 1403750564540266951}
   m_Layer: 5
   m_Name: CharacterSheet
   m_TagString: Sheet
@@ -13886,6 +13887,36 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 27e0b5874333a80418e93895ea4b9fb4, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  EntryList:
+  - {fileID: 1106117486117698898}
+  - {fileID: 1106117485097174116}
+  - {fileID: 9042909676203554891}
+  - {fileID: 1106117486425237964}
+  - {fileID: 1106117485895069473}
+  - {fileID: 1106117486558248933}
+  - {fileID: 1106117485072107531}
+  - {fileID: 1106117486895197938}
+  - {fileID: 3752510873349144156}
+  - {fileID: 1106117486557998039}
+  - {fileID: 3838591895818633572}
+  - {fileID: 1106117485976721390}
+  - {fileID: 1106117486801272106}
+  - {fileID: 1106117486585685337}
+  - {fileID: 1106117485788968493}
+  - {fileID: 1106117485900572581}
+  - {fileID: 1106117486334465325}
+  - {fileID: 1106117486199718869}
+  - {fileID: 1106117486070507217}
+  - {fileID: 1106117486852221210}
+  - {fileID: 1106117485987904482}
+  - {fileID: 1106117486752470421}
+  - {fileID: 1106117486581223127}
+  - {fileID: 1106117486755837098}
+  - {fileID: 3059093686827489278}
+  - {fileID: 8175960002986314478}
+  - {fileID: 1106117486086212973}
+  - {fileID: 1106117486894475846}
+  - {fileID: 1106117486297825510}
   WeaponDisplay: {fileID: 1690045050593706976, guid: 8434f12bab298534e9067ad28428cf61, type: 3}
   NameField: {fileID: 1106117486656677923}
   SkillInputButton: {fileID: 8238126605918207066, guid: 294ab3d0436c10a4c945e993fa736395, type: 3}
@@ -13893,6 +13924,29 @@ MonoBehaviour:
   SkillAdderName: {fileID: 6731085028511625098}
   ItemAdder: {fileID: 9042909675998656502}
   ItemDisplay: {fileID: 1237486907997359068, guid: 054b229fdc25c7440b516824a30a991f, type: 3}
+  pv: {fileID: 1403750564540266951}
+--- !u!114 &1403750564540266951
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 9042909675615074339}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &9042909675680672496
 GameObject:
   m_ObjectHideFlags: 0

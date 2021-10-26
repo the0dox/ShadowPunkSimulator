@@ -83,6 +83,7 @@ public class ThreatCone : MonoBehaviour
     // Returns the transforms of all players within the threat range to the behavior class
     public List<Transform> GetTargets()
     {
+        Debug.Log("tc " + visibleTargets.Count);
         return visibleTargets;
     }
 }

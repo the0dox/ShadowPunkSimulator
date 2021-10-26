@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 // Manages all time-based activities in the overworld
-public class ActionQueueDisplay : MonoBehaviour
+public class ActionQueueDisplay : MonoBehaviourPunCallbacks
 {
     // Used to store the activity entry prefab in editor
     [SerializeField] GameObject ActivityObjectReference;
@@ -15,34 +16,28 @@ public class ActionQueueDisplay : MonoBehaviour
     private static Vector3 activityDisplacement = new Vector3(0, 200, 0);
     //static reference of empty activity entry
     private static GameObject SActivityObjectReference;
+    private static PhotonView pv;
     // Assigns transform
     void Awake()
     {
+        pv = GetComponent<PhotonView>();
         ActionStack = new Stack<GameObject>();
         mytransform = gameObject.transform;
         SActivityObjectReference = ActivityObjectReference;
     }
 
     // used to add an activity from memory 
-    public static void LoadActivity(string name, float Progress, float Time)
+    public static void AddActivity(string name, float progress, float time)
     {
-        GameObject newActivity = Instantiate(SActivityObjectReference) as GameObject;
-        newActivity.GetComponent<LeadScript>().SetLead(name,Progress,Time);
-        ActionStack.Push(newActivity);
-        newActivity.transform.SetParent(mytransform);
-        newActivity.transform.localPosition = -(activityDisplacement * ActionStack.Count);
-        mytransform.transform.localPosition += activityDisplacement;
+        pv.RPC("RPC_AddActivity",RpcTarget.MasterClient,name,progress,time);
     }
 
-    // newActivity: a Gameobject to be added to the display
-    // Used to add an new activity that hasn't been modified by a player check
-    public static void AddActivity(int Modifier, int Time, PlayerStats[] PlayerSelection, string SkillChoice, string name)
+    [PunRPC]
+    void RPC_AddActivity(string name, float progress, float time)
     {
-        GameObject newActivity = Instantiate(SActivityObjectReference) as GameObject;
-        newActivity.GetComponent<LeadScript>().UpdateLead(Modifier,Time,PlayerSelection,SkillChoice, name);
+        GameObject newActivity = PhotonNetwork.Instantiate("Lead",new Vector3(), Quaternion.identity);
+        newActivity.GetComponent<LeadScript>().SetLead(name,progress,time,ActionStack.Count);
         ActionStack.Push(newActivity);
-        newActivity.transform.SetParent(mytransform);
-        newActivity.transform.localPosition = -(activityDisplacement * ActionStack.Count);
         mytransform.transform.localPosition += activityDisplacement;
     }
 

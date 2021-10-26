@@ -2,8 +2,9 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using Photon.Pun;
 
-public class GlobalManager : MonoBehaviour 
+public class GlobalManager : MonoBehaviourPunCallbacks 
 {
     public static GlobalManager Instance;
     [SerializeField] private CriticalDamageReference cdr;
@@ -12,59 +13,66 @@ public class GlobalManager : MonoBehaviour
     [SerializeField] private TileReference tr;
     [SerializeField] private ConditionsReference cr;
     [SerializeField] private PlayerSpawner ps;
+    [SerializeField] private PhotonView pv;
     public static SceneSaveData LoadedScene;
 
-    void Start()   
-       {
-        if (Instance == null)
-        {
-            DontDestroyOnLoad(gameObject);
-            Instance = this;
-            cdr.Init();
-            sr.Init();
-            ir.Init();
-            tr.Init();
-            cr.Init();
-            ps.Init();
-        }
-        else if (Instance != this)
-        {
-            Destroy (gameObject);
-        }
-        if (LoadedScene != null)
-        {
-            Instance.StartCoroutine(LoadOnStart());
-        }
+    void Awake()   
+    {
+        DontDestroyOnLoad(gameObject);
+        Instance = this;
+        cdr.Init();
+        sr.Init();
+        ir.Init();
+        tr.Init();
+        cr.Init();
+        ps.Init();  
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
+    [PunRPC]
+    void RPC_Start()
+    {
+        Debug.Log("Built");
+        
     }
 
     //Loads a level onto the board stage
     public static void PlayLevel(SceneSaveData myData, string type)
     {
-        if(SceneManager.GetActiveScene().name == "Overworld")
+        if(PhotonNetwork.IsMasterClient)
         {
-            OverworldManager.SaveOverworld();
+            if(SceneManager.GetActiveScene().name == "Overworld")
+            {
+                OverworldManager.SaveOverworld();
+            }
+            LoadedScene = myData;
+            PhotonNetwork.RemoveBufferedRPCs();
+            PhotonNetwork.IsMessageQueueRunning = false;
+            PhotonNetwork.LoadLevel(type);
         }
-        LoadedScene = myData;
-        SceneManager.LoadScene(type);
-        
+    }
+
+    void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        if(LoadedScene != null)
+        {
+            PhotonNetwork.IsMessageQueueRunning = true;
+            Dictionary<string,string> tileLocs = LoadedScene.GetTileLocations();
+            pv.RPC("RPC_LoadTile",RpcTarget.AllBuffered,tileLocs);
+            Instance.StartCoroutine(LoadOnStart());
+        }
     }
 
     IEnumerator LoadOnStart()
     {
-        yield return new WaitForSeconds(0.01f);
+        yield return new WaitForSeconds(0.05f);
         CameraButtons.UIFreeze(false);
-        Dictionary<Vector3,GameObject> entities = LoadedScene.GetTileLocations();
-        Dictionary<Vector3,CharacterSaveData> playerEntities = LoadedScene.GetPlayerLocations();
-        foreach(Vector3 pos in entities.Keys)
-        {
-            GameObject newEntity = Instantiate(entities[pos]) as GameObject;
-            newEntity.transform.position = pos;
-        }
+        Debug.Log(pv.ViewID);
+        yield return new WaitForSeconds(0.05f);
+        Dictionary<Vector3,string> playerEntities = LoadedScene.GetPlayerLocations();
         yield return new WaitForSeconds(0.01f);
         foreach(Vector3 pos in playerEntities.Keys)
         {
-            CharacterSaveData csd = playerEntities[pos];
-            PlayerSpawner.CreatePlayer(csd,pos, false);
+            PlayerSpawner.CreatePlayer(playerEntities[pos],pos, false);
         }
         GameObject GM = GameObject.FindGameObjectWithTag("GameController");
         if(GM.TryGetComponent<TurnManager>(out TurnManager tm))
@@ -82,11 +90,24 @@ public class GlobalManager : MonoBehaviour
             {
                 if(LoadedScene.LeadName[i] != null)
                 {
-                    ActionQueueDisplay.LoadActivity(LoadedScene.LeadName[i],LoadedScene.LeadProgress[i],LoadedScene.LeadMax[i]);
+                    ActionQueueDisplay.AddActivity(LoadedScene.LeadName[i],LoadedScene.LeadProgress[i],LoadedScene.LeadMax[i]);
                 }
             }
         }
 
         LoadedScene = null;
+    }
+
+    [PunRPC]
+    void RPC_LoadTile(Dictionary<string,string> TileLocations)
+    {
+        foreach(string posKey in TileLocations.Keys)
+        {
+            string[] posSplit = posKey.Split(',');
+            Vector3 pos = new Vector3(float.Parse(posSplit[0]),float.Parse(posSplit[1]),float.Parse(posSplit[2]));
+            GameObject Tile = TileReference.Tile(TileLocations[posKey]);
+            GameObject newEntity = Instantiate(Tile) as GameObject;
+            newEntity.transform.position = pos;
+        }
     }
 }

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Photon.Pun;
 
 // The main behavior of threat range objects, note that this is seperate from the threat cone script.
 // Where that script managed basic functions, this script knows what kind of threat range it is
@@ -26,20 +27,23 @@ public class ThreatRangeBehavior : MonoBehaviour
     public GameObject ConeToken;
     // Reference to a sphere shaped threat range object, used exclusively for blast weapons
     public GameObject BlastToken;
+    [SerializeField] private PhotonView pv;
+    private Vector3 origin;
+    private int ThrowRange;
 
     // Called on frame update, token movement and overwatch triggering happens here
     void Update()
     {
-        if(myRange.draw)
+        if(!pv.IsMine || myRange.draw)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             //if the mouse is pointed at a thing
             if (Physics.Raycast(ray, out hit))
             {
-                if(threatType.Equals("Blast") && hit.collider.tag == "Tile" && controllable)
+                if(threatType.Equals("Blast") && controllable)
                 {
-                    float distance = Vector3.Distance(attacker.transform.position, hit.point);
-                    if(distance <= w.getRange(attacker))
+                    float distance = Vector3.Distance(origin, hit.point);
+                    if(distance <= ThrowRange)
                     {
                         gameObject.transform.position = hit.point + new Vector3(0, 0.1f, 0);
                     }
@@ -53,7 +57,7 @@ public class ThreatRangeBehavior : MonoBehaviour
             float yRotation = transform.eulerAngles.y;
             transform.rotation = Quaternion.Euler(0,yRotation,0);
         }
-        else if(threatType.Equals("Overwatch"))
+        else if(pv.IsMine && threatType.Equals("Overwatch"))
         {
             List<Transform> inRangeTargets = myRange.GetTargets();
             foreach(Transform t in inRangeTargets)
@@ -99,28 +103,49 @@ public class ThreatRangeBehavior : MonoBehaviour
             if(!hitUi)
             {
                 List<Transform> selectedTargets = myRange.GetTargets();
-                if(threatType.Equals("Supress"))
+                List<int> ids = new List<int>();
+                foreach(Transform t in selectedTargets)
                 {
-                    TurnManager.SupressingFire(selectedTargets);
+                    ids.Add(t.GetComponent<PlayerStats>().GetID());
+                }
+                pv.RPC("RPC_MasterClick",RpcTarget.MasterClient, ids, transform.position, transform.eulerAngles);
+                if(!pv.IsMine)
+                {
                     Destroy(gameObject);
-                }
-                else if(threatType.Equals("Overwatch"))
-                {
-                    myRange.draw = false;
-                    TurnManager.OverwatchFinished();
-                }
-                else if(threatType.Equals("Flame"))
-                { 
-                    TurnManager.FlameAttack(selectedTargets);
-                    Destroy(gameObject);
-                }
-                else if(threatType.Equals("Blast") && controllable)
-                {
-                    controllable = false; 
-                    StartCoroutine(Scatter());
                 }
             }
-            
+        }
+    }
+
+    [PunRPC]
+    void RPC_MasterClick(List<int> ids, Vector3 pos, Vector3 eul)
+    {
+        transform.position = pos;
+        transform.eulerAngles = eul;
+        List<Transform> selectedTargets = new List<Transform>();
+        foreach(int i in ids)
+        {
+            selectedTargets.Add(PlayerSpawner.IDtoPlayer(i).transform);
+        }
+        controllable = false;
+        if(threatType.Equals("Supress"))
+        {
+            TurnManager.SupressingFire(selectedTargets);
+            Destroy(gameObject);
+        }
+        else if(threatType.Equals("Overwatch"))
+        {
+            myRange.draw = false;
+            TurnManager.OverwatchFinished();
+        }
+        else if(threatType.Equals("Flame"))
+        { 
+            TurnManager.FlameAttack(selectedTargets);
+            Destroy(gameObject);
+        }
+        else if(threatType.Equals("Blast"))
+        {
+            StartCoroutine(Scatter());
         }
     }
 
@@ -154,15 +179,40 @@ public class ThreatRangeBehavior : MonoBehaviour
             }
         }
         myRange.transform.localScale = dimensions;
+        ThrowRange = w.getRange(attacker);
+        origin = attacker.transform.position; 
         this.attacker = attacker;
         this.w = w;
+        pv.RPC("RPC_Parameter",RpcTarget.Others, dimensions, type, origin, ThrowRange);
+    }
+
+    [PunRPC]
+    void RPC_Parameter(Vector3 scale, string type, Vector3 origin, int ThrowRange)
+    {
+        this.origin= origin;
+        this.ThrowRange = ThrowRange;
+        threatType = type;
+        if(type.Equals("Blast"))
+        {
+            Destroy(ConeToken);
+            BlastToken.SetActive(true);
+            BlastToken.transform.localScale = scale;
+            Destroy(BlastToken.GetComponent<ThreatCone>());
+        }
+        else
+        {
+            Destroy(BlastToken);
+            ConeToken.SetActive(true);
+            ConeToken.transform.localScale = scale;
+            Destroy(ConeToken.GetComponent<ThreatCone>());
+        }
     }
 
     public void RemoveRange(PlayerStats owner)
     {
         if(owner == attacker)
         {
-            Destroy(gameObject);
+            PhotonNetwork.Destroy(gameObject);
         }
     }
 
@@ -179,9 +229,11 @@ public class ThreatRangeBehavior : MonoBehaviour
             int distance = Random.Range(1,6);
             transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
             gameObject.transform.Translate(transform.forward.normalized * distance);
-            CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");
-            yield return new WaitForSeconds (0.2f);
+            CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");    
         }
-        TurnManager.BlastAttack(myRange.GetTargets());
+        yield return new WaitForSeconds (0.5f);
+        List<Transform> inRangeTargets = myRange.GetTargets();
+        TurnManager.BlastAttack(inRangeTargets);
+
     }
 }

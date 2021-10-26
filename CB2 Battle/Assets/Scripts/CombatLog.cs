@@ -2,15 +2,18 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 // UI element that displays the events of the game, any script can access and make this display print a message to the player
-public class CombatLog : MonoBehaviour
+public class CombatLog : MonoBehaviourPunCallbacks
 {
     [SerializeField] private int MaxEntries = 10;
     [SerializeField] private Text textRef;
     // Static prefernce tp the game object
+    static int SMaxEntries;
     static Text displayText;
     static Vector3 DefaultPos;
+    private static PhotonView pv;
     static private Vector3 originalPos;
     // lines are entered into queue so that when the text box overflows, the first entry is deleted.
     private static Queue<string> ContentsQueue = new Queue<string>();
@@ -20,10 +23,18 @@ public class CombatLog : MonoBehaviour
 
     void Start()
     {
+        SMaxEntries = MaxEntries;
+        pv = GetComponent<PhotonView>();
         displayText = textRef;
         DefaultPos = displayText.transform.localPosition;
     }
     public static void Log(string text)
+    {
+        pv.RPC("RPC_Log",RpcTarget.All,text);
+    }
+
+    [PunRPC]
+    void RPC_Log(string text)
     {
         ContentsQueue.Enqueue(text);
         TrimEntries();
@@ -39,9 +50,10 @@ public class CombatLog : MonoBehaviour
         displayText.transform.localPosition = DefaultPos;
     }
 
+
     private static void TrimEntries()
     {
-        while(ContentsQueue.Count > 10)
+        while(ContentsQueue.Count > SMaxEntries)
         {
             ContentsQueue.Dequeue();
         }

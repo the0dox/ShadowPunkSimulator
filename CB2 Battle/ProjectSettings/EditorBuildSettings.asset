@@ -6,12 +6,18 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
+    path: Assets/Scenes/Loading.unity
+    guid: 9fbf3f9cd4de1a847874474d036f4c25
+  - enabled: 1
+    path: Assets/Scenes/Lobby.unity
+    guid: c80d1666559c3434d867cd21c52f5714
+  - enabled: 1
+    path: Assets/Scenes/Overworld.unity
+    guid: 8f4600effcb32284e96c6ccf7d1ecc88
+  - enabled: 1
     path: Assets/Scenes/Board.unity
     guid: 9fc0d4010bbf28b4594072e72b8655ab
   - enabled: 1
     path: Assets/Scenes/LevelEditor.unity
     guid: 7244f01c0f49bec45ba1c34a131ffec6
-  - enabled: 1
-    path: Assets/Scenes/Overworld.unity
-    guid: 8f4600effcb32284e96c6ccf7d1ecc88
   m_configObjects: {}

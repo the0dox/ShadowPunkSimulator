@@ -19,6 +19,8 @@ TagManager:
   - Canvas
   - Lead
   - UITile
+  - LeadParent
+  - Save
   layers:
   - Default
   - TransparentFX

@@ -1386,6 +1386,7 @@ GameObject:
   m_Component:
   - component: {fileID: 4271897129898102202}
   - component: {fileID: 4271897129898102203}
+  - component: {fileID: 815876640796502343}
   m_Layer: 5
   m_Name: Menu
   m_TagString: Untagged
@@ -1427,11 +1428,33 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   Display: {fileID: 4271897130369411396}
-  SavedCharacters: []
   PlayerScreen: {fileID: 4271897129921254589}
   SelectorButton: {fileID: 7911180783459019505, guid: f7c239d7e16bb394591d5d766c8c2f45, type: 3}
   SceneButton: {fileID: 4765943738630205888, guid: 5ea044d2809eea04fbb540f8eda25b0a, type: 3}
   MDRtoggleStatus: {fileID: 5324906599806574836}
+  pv: {fileID: 815876640796502343}
+--- !u!114 &815876640796502343
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4271897129898102181}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 0
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &4271897129921254589
 GameObject:
   m_ObjectHideFlags: 0

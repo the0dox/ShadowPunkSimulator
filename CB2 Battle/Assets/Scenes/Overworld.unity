@@ -5718,6 +5718,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1017713285}
   - component: {fileID: 1017713286}
+  - component: {fileID: 1017713287}
   m_Layer: 0
   m_Name: TimeManager
   m_TagString: GameController
@@ -5751,8 +5752,29 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b6e64a68845a9974ca8793888cdb84ba, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  ActionUIButton: {fileID: 8945126263117831706, guid: ad72cf5f1bf4abb42861c425bd912620, type: 3}
   ButtonReference: {fileID: 8945126263117831706, guid: ad72cf5f1bf4abb42861c425bd912620, type: 3}
+--- !u!114 &1017713287
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1017713284}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents: []
+  sceneViewId: 996
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
 --- !u!1 &1033247398
 GameObject:
   m_ObjectHideFlags: 0
@@ -6230,63 +6252,6 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1141662706}
   m_CullTransparentMesh: 1
---- !u!1001 &1146672316
-PrefabInstance:
-  m_ObjectHideFlags: 0
-  serializedVersion: 2
-  m_Modification:
-    m_TransformParent: {fileID: 0}
-    m_Modifications:
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_RootOrder
-      value: 6
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalPosition.x
-      value: 571.33923
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalPosition.y
-      value: 346.69864
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalPosition.z
-      value: -347.25082
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalRotation.w
-      value: 1
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalRotation.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalRotation.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalRotation.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.x
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.y
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 1558544755388879504, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_LocalEulerAnglesHint.z
-      value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 7503462489142894288, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
-      propertyPath: m_Name
-      value: GlobalManager
-      objectReference: {fileID: 0}
-    m_RemovedComponents: []
-  m_SourcePrefab: {fileID: 100100000, guid: 44cf596046603c04b8ddf937323f33dd, type: 3}
 --- !u!1 &1157225730
 GameObject:
   m_ObjectHideFlags: 0
@@ -7976,6 +7941,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 2127622705}
     m_Modifications:
+    - target: {fileID: 815876640796502343, guid: 5fc4b0d42525d3a48996ee8c0641854f, type: 3}
+      propertyPath: sceneViewId
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4271897129898102181, guid: 5fc4b0d42525d3a48996ee8c0641854f, type: 3}
       propertyPath: m_Name
       value: Menu
@@ -9405,6 +9374,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 2127622705}
     m_Modifications:
+    - target: {fileID: -6544872629915364003, guid: 1abd4268afb95f54785972a2cb92ad3a, type: 3}
+      propertyPath: sceneViewId
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 5524013374647901484, guid: 1abd4268afb95f54785972a2cb92ad3a, type: 3}
       propertyPath: m_Name
       value: UICombatLog
@@ -10219,9 +10192,11 @@ GameObject:
   - component: {fileID: 1845404544}
   - component: {fileID: 1845404543}
   - component: {fileID: 1845404545}
+  - component: {fileID: 1845404546}
+  - component: {fileID: 1845404547}
   m_Layer: 0
   m_Name: ActionQueueBackground
-  m_TagString: Untagged
+  m_TagString: LeadParent
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
@@ -10299,6 +10274,45 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   ActivityObjectReference: {fileID: 5436456842297937477, guid: ed0117f9668e4b7499a3b2a02ec17904, type: 3}
+--- !u!114 &1845404546
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845404541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: aa584fbee541324448dd18d8409c7a41, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ObservedComponentsFoldoutOpen: 1
+  Group: 0
+  prefixField: -1
+  Synchronization: 3
+  OwnershipTransfer: 0
+  observableSearch: 2
+  ObservedComponents:
+  - {fileID: 1845404547}
+  sceneViewId: 997
+  InstantiationId: 0
+  isRuntimeInstantiated: 0
+--- !u!114 &1845404547
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1845404541}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 627855c7f81362d41938ffe0b1475957, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  m_SynchronizePosition: 1
+  m_SynchronizeRotation: 1
+  m_SynchronizeScale: 0
+  m_UseLocal: 1
 --- !u!1 &1854853518
 GameObject:
   m_ObjectHideFlags: 0

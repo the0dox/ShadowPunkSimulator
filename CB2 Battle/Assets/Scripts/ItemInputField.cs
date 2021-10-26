@@ -7,33 +7,30 @@ public class ItemInputField : MonoBehaviour
 {
     private CharacterSheet mySheet;
     [SerializeField] private Text displayText;
-    private Item myItem;
+    private string myItem;
+    private int myStacks;
 
-    void Update()
+    public void UpdateStacks(int stacks)
     {
-        if(myItem != null)
-        {
-            displayText.text = myItem.GetStacks() + "x " + myItem.GetName();
-        }
+        myStacks = stacks;
+        displayText.text = myItem + " x " + myStacks;
     }
-    public void UpdateIn(Item input, CharacterSheet mySheet)
+
+    public void UpdateIn(string input, int stacks, CharacterSheet mySheet)
     {
         this.mySheet = mySheet;
         myItem = input;
+        UpdateStacks(stacks);
     }
 
     public void ReduceItem()
     {
-        myItem.SubtractStack();
-        if(myItem.IsConsumed() || !myItem.Stackable())
+        myStacks--;
+        UpdateStacks(myStacks);
+        if(myStacks < 1)
         {
             mySheet.Remove(myItem);
             Destroy(gameObject);
         }
-    }
-
-    public Item UpdateOut()
-    {
-        return myItem;
     }
 }

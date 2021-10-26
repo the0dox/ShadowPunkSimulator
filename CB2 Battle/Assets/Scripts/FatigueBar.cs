@@ -5,31 +5,21 @@ using UnityEngine.UI;
 
 public class FatigueBar : MonoBehaviour
 {
-    private Image Bar;
-    public float currentFatigue;
-    private float maxFatigue = 10;  
-    public PlayerStats player; 
-    // Start is called before the first frame update
+    [SerializeField] private Image Bar;
+
     void Start()
     {
-        Bar = GetComponent<Image>();
+        Bar.fillAmount = 0;
     }
 
     // Update is called once per frame
     void Update()
     {
         transform.LookAt(transform.position + Camera.main.transform.rotation *- Vector3.back, Camera.main.transform.rotation *- Vector3.down);
-        currentFatigue = player.GetStat("Fatigue");
-        maxFatigue = player.GetStatScore("T") + 1;
-        float difference = maxFatigue - currentFatigue;
-        if(difference == maxFatigue)
-        {
-            Bar.enabled = false;
-        }
-        else
-        {
-            Bar.enabled = true;
-        }
+    }
+    public void UpdateFatigue(int currentFatigue, int maxFatigue)
+    {
+        float difference = (float)maxFatigue - currentFatigue;
         Bar.fillAmount = difference / maxFatigue;  
     }
 }

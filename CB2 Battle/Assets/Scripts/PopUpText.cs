@@ -1,9 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine.UI;
+using Photon.Pun;
 
-public class PopUpText : MonoBehaviour
+public class PopUpText : MonoBehaviourPunCallbacks
 {
    public static GameObject DisplayText;
    public GameObject input;
@@ -15,10 +15,12 @@ public class PopUpText : MonoBehaviour
 
    private static List<GameObject> ActiveQueue = new List<GameObject>();
 
-   private static Dictionary<GameObject, Queue<GameObject>> DisplayQueue = new Dictionary<GameObject, Queue<GameObject>>();
-
+   private static Dictionary<Vector3, Queue<GameObject>> DisplayQueue = new Dictionary<Vector3, Queue<GameObject>>();
+    [SerializeField] private PhotonView pv;
+    private static PhotonView spv;
     void Start()
     {
+        spv = pv;
         DisplayText = input;
         instance = this;
         //DisplayQueue = new Queue<GameObject>();
@@ -27,14 +29,29 @@ public class PopUpText : MonoBehaviour
 
     public static void CreateText(string input, Color c, GameObject location)
     {
+        float[] colorcode = new float[4];
+        colorcode[0] = c.r;
+        colorcode[0] = c.b;
+        colorcode[0] = c.g;
+        colorcode[0] = c.a;
+        
+        spv.RPC("RPC_SaveText", RpcTarget.All, input, colorcode, location.transform.position);
+    }
+
+    [PunRPC]
+    void RPC_SaveText(string input, float[] colorcode, Vector3 location)
+    {
+        Color c = Color.yellow; //new Color(colorcode[0],colorcode[1],colorcode[2],colorcode[3]);
         if(!DisplayQueue.ContainsKey(location))
         {
             DisplayQueue.Add(location, new Queue<GameObject>());
         }
-        GameObject current = GameObject.Instantiate(DisplayText, new Vector3(0,0,0), Quaternion.identity);
+        GameObject current = Instantiate(DisplayText, new Vector3(0,0,0), Quaternion.identity);
+        current.name = "findme";
         current.GetComponent<DisplayTextScript>().SetInfo(c, input, location);
         current.SetActive(false);
         DisplayQueue[location].Enqueue(current);
+        Debug.Log("making text" + DisplayQueue.Count + current.name);
     }
 
     static IEnumerator InstantiatorCoroutine()
@@ -42,10 +59,11 @@ public class PopUpText : MonoBehaviour
         while (true)
         {
             if(!FinishedPrinting()){
-            foreach(GameObject location in DisplayQueue.Keys)
+            foreach(Vector3 location in DisplayQueue.Keys)
             {
                 if(DisplayQueue[location].Count != 0)
                 {
+                    Debug.Log("setting active");
                     DisplayQueue[location].Peek().SetActive(true);
                 }
             }
@@ -57,20 +75,19 @@ public class PopUpText : MonoBehaviour
             }
         }
     }
-
     public static bool FinishedPrinting()
     {
-        foreach(GameObject location in DisplayQueue.Keys)
+        foreach(Vector3 location in DisplayQueue.Keys)
+        {
+            if(DisplayQueue[location].Count > 0 && !DisplayQueue[location].Peek().activeInHierarchy)
             {
-                if(DisplayQueue[location].Count > 0 && !DisplayQueue[location].Peek().activeInHierarchy)
-                {
-                    return false;
-                }
+                return false;
             }
+        }
         return true;
     }
 
-    public static void Dequeue(GameObject location)
+    public static void Dequeue(Vector3 location)
     {
         DisplayQueue[location].Dequeue();
     }

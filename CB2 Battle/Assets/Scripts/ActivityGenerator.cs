@@ -262,19 +262,53 @@ public class ActivityGenerator : MonoBehaviour
     public void MakeActivity()
     {
         string name = "New Lead";
-        if(ItemChoice != null)
-        {
-            name = ItemChoice;
-            SkillChoice = "Inquiry";
-        }
         if(GetChoice(TypeField) == "Clock")
         {
-            ActionQueueDisplay.LoadActivity("Clock",0,Time);
+            ActionQueueDisplay.AddActivity("Clock",0,Time);
         }
         else
         {
-            ActionQueueDisplay.AddActivity(Modifier,Time,PlayerSelection,SkillChoice, name);
+            if(ItemChoice != null)
+            {
+                name = ItemChoice;
+                SkillChoice = "Inquiry";
+            }
+            else
+            {
+                name = PlayerSelection[0].GetName() +"'s lead"; 
+            }
+            int modifier = 0;
+            for(int i = 1; i < PlayerSelection.Length; i++)
+            {
+                if (PlayerSelection[i] != null)
+                {
+                    CombatLog.Log(PlayerSelection[i].GetName() + " assists and gives a + 10 Bonus!");
+                    modifier += 10;
+                }
+            }   
+            RollResult LeadResult = PlayerSelection[0].AbilityCheck(SkillChoice,modifier,"Lead");
+            StartCoroutine(waitForResult(LeadResult, name));
         }
+    }
+
+    IEnumerator waitForResult(RollResult input, string name)
+    {
+        while(!input.Completed())
+        {
+            yield return new WaitForSeconds(0.5f);
+        }
+        int extrahours = 0;
+        if(input.Passed())
+        {
+            int dieroll = Random.Range(1,11);
+            string usedStat = SkillReference.GetSkill(input.GetSkillType()).characterisitc;
+            int statScoreBonus = input.getOwner().GetStatScore(usedStat);
+            extrahours = dieroll + statScoreBonus;
+            CombatLog.Log(input.getOwner().GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
+            extrahours += input.GetDOF();
+            CombatLog.Log("Each degree of success (" + input.GetDOF() + ") counts for one more hour of progress!");
+        }
+        ActionQueueDisplay.AddActivity(name, extrahours,Time);
         gameObject.SetActive(false);
     }
 

@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
+using Photon.Pun;
 
 // UI element that is used to edit/spawn charactersavedata
 public class CharacterSelectorButton : MonoBehaviour
@@ -18,6 +19,8 @@ public class CharacterSelectorButton : MonoBehaviour
     [SerializeField] private GameObject ModelDisplay;
     // Button Reference to display model options
     [SerializeField] private GameObject ActionButton;
+    private int index;
+    bool isDummy = false;
 
     private float ModelButtonStartingX = 100.5f;
     private int ModelButtonStartingY = 40;
@@ -30,13 +33,13 @@ public class CharacterSelectorButton : MonoBehaviour
 
     // input: the save data this object will hold
     // called by DM menu when this object is created, saves its value to this object
-    public void SetData(CharacterSaveData input)
+    public void SetData(int index, CharacterSaveData input)
     {
         PopUp.SetActive(false);
         ModelDisplay.SetActive(false);
         myData = input;
         displayText.text = input.playername;
-        Dictionary<string,GameObject> models = PlayerSpawner.GetPlayers();
+        Dictionary<string,Mesh> models = PlayerSpawner.GetPlayers();
         float CurrentX = ModelButtonStartingX;
         int CurrentY = ModelButtonStartingY;
         foreach(string s in models.Keys)
@@ -52,29 +55,45 @@ public class CharacterSelectorButton : MonoBehaviour
             newButton.transform.localPosition = new Vector3(CurrentX,CurrentY,0);
             CurrentX += ModelButtonXDisplacement;
         }
+        isDummy = false;
+    }
+
+    public void SetDummyData(int index, string input)
+    {
+        PopUp.SetActive(false);
+        ModelDisplay.SetActive(false);
+        displayText.text = input;
+        this.index = index;
+        isDummy = true;
     }
 
     // creates a charactersheet from stored savedata for editing
     public void Edit()
     {
-        GameObject newSheet = Instantiate(CharacterSheet) as GameObject;
-        newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(myData);
+        GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet",new Vector3(), Quaternion.identity);
+        newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(myData, PhotonNetwork.LocalPlayer.ActorNumber);
         OnButtonPressed();
     }
 
     // creates a map token and downloads savedata into that token
     public void Spawn()
     {
-        PlayerSpawner.CreatePlayer(myData,spawningPos,true);
+        PlayerSpawner.CreatePlayer(myData.playername,spawningPos,true);
         OnButtonPressed();
         DmMenu.Toggle();
     }
-
     // Opens popup menu
     public void OnButtonPressed()
     {
-        PopUp.SetActive(!PopUp.activeInHierarchy);
-        ModelDisplay.SetActive(false);
+        if(isDummy)
+        {
+            DmMenu.DisplayCharacterSheet(index);
+        }
+        else
+        {
+            PopUp.SetActive(!PopUp.activeInHierarchy);
+            ModelDisplay.SetActive(false);
+        }
     }
 
     public void ModelToggle()

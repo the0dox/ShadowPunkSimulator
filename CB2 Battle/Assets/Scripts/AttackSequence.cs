@@ -76,7 +76,7 @@ public class AttackSequence
                 if(attackRoll.GetRoll() <= friendlyFireTarget)
                 {
                     PlayerStats[] adjacentTargets = target.GetComponent<TacticsMovement>().AdjacentPlayers().ToArray();
-                    target.GetComponent<TacticsMovement>().PaintCurrentTile(false);
+                    target.GetComponent<TacticsMovement>().PaintCurrentTile("");
                     target = adjacentTargets[Random.Range(0,adjacentTargets.Length - 1)];
                     CombatLog.Log("By missing their target by 20, " + attacker.GetName() + " the shot hits " + target.GetName() + " instead!");
                     attacks = 1;

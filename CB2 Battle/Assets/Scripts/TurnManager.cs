@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
+using Photon.Pun;
 
 // This is the big one, the game master for active play. This script manages all the logic required for playing CB2 combat
 public class TurnManager : TurnActions
@@ -10,20 +11,26 @@ public class TurnManager : TurnActions
     static Queue<string> turnKey = new Queue<string>();
     private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
     [SerializeField] private GameObject DebugToolTipReference; 
+    private bool gameStart = false;    
     public GameObject CharacterSheet;
     public GameObject SkillModifierScript;
     public InitativeTrackerScript It;
+    public GameObject PhotonHit;
     float incrementer = 0;
     SortedList<float, TacticsMovement> Sorter = new SortedList<float, TacticsMovement>();  
     // Start is called before the first frame update
-    void Start()
-    {   
-        SortQueue();
-        StartTurn();
-    }
 
     void Update ()
     {
+        // If client, ignore game logic just check mouse
+        if(!pv.IsMine)
+        {
+            CheckMouse();
+        }
+        // If server, game logic is ok
+        else
+        {
+            
         if(CurrentAttack == null)
         {
             if(AttackQueue.Count > 0)
@@ -117,8 +124,8 @@ public class TurnManager : TurnActions
                 break;
                 default:
                     break;
+                }
             }
-            
         }
     }
 
@@ -163,178 +170,225 @@ public class TurnManager : TurnActions
             //if the mouse clicked on a thing
             if (Physics.Raycast(ray, out hit) && !hitUi )
             {
-
-                switch(currentAction)
+                GameObject ServerHitObject = null;
+                //client sending info to main
+                if(!pv.IsMine)
                 {
-                case "Move":
-                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving && currentAction != null)
-                    {
-                        Tile t = hit.collider.GetComponent<Tile>();
-
-                        //player can reach 
-                        if (t.selectable)
-                        {
-                            //make tile green
-                            ActivePlayer.moveToTile(t);
-                            halfActions--;
-                            AttackOfOppertunity();
-                            ActivePlayer.RemoveSelectableTiles();
-
-                            if(ActivePlayerStats.hasCondition("Braced"))
-                            {
-                            CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                            PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                            ActivePlayerStats.RemoveCondition("Braced");
-                            }
-                        } 
-                        else if (t.selectableRunning)
-                        {
-                            //make tile green
-                            ActivePlayer.moveToTile(t);
-                            halfActions = 0;
-                            AttackOfOppertunity();
-                            ActivePlayer.RemoveSelectableTiles();
-
-                            if(ActivePlayerStats.hasCondition("Braced"))
-                            {
-                            CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                            PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                            ActivePlayerStats.RemoveCondition("Braced");
-                            }
-                        }
-                    }
-                    break;
-                case "Run":
-                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving)
-                    {
-                        Tile t = hit.collider.GetComponent<Tile>();
-                        //player can reach 
-                        ActivePlayerStats.SetCondition("Running",0,true);
-                        if (t.selectableRunning)
-                        {
-                            //make tile green
-                            ActivePlayer.moveToTile(t);
-                            AttackOfOppertunity();
-                            halfActions-=2;
-                            currentAction = "Move";
-                            ActivePlayer.RemoveSelectableTiles();
-
-                            
-                            if(ActivePlayerStats.hasCondition("Braced"))
-                            {
-                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                                ActivePlayerStats.RemoveCondition("Braced");
-                            }
-                        }
-                    }
-                    break;
-                case "Disengage":
-                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving)
-                    {
-                        Tile t = hit.collider.GetComponent<Tile>();
-                        //player can reach 
-                        if (t.selectableRunning)
-                        {
-                            //make tile green
-                            ActivePlayer.moveToTile(t);
-                            if(ActivePlayerStats.AbilityCheck("Acrobatics",0).Passed())
-                            {
-                                CombatLog.Log(ActivePlayerStats.GetName() + "'s successful acrobatics check reduces the cost of disengaging to a half action");
-                                halfActions--;
-                            }
-                            else
-                            {
-                                halfActions -= 2;
-                            }                  
-                            currentAction = "Move";  
-                            ActivePlayer.RemoveSelectableTiles();
-
-                            if(ActivePlayerStats.hasCondition("Braced"))
-                            {
-                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                                ActivePlayerStats.RemoveCondition("Braced");
-                            }
-                        }
-                    }
-                    break;
-                case "Advance":
-                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving)
-                    {
-                        Tile t = hit.collider.GetComponent<Tile>();
-                        //player can reach 
-                        if (t.selectableRunning)
-                        {
-                            //make tile green
-                            ActivePlayer.moveToTile(t);
-                            ActivePlayerStats.ApplyAdvanceBonus(TacticsAttack.SaveCoverBonus(ActivePlayerStats)); 
-                            halfActions-=2;
-
-                            if(ActivePlayerStats.hasCondition("Braced"))
-                            {
-                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                                ActivePlayerStats.RemoveCondition("Braced");
-                            }
-                        }
+                    Debug.Log("Sending info of my hitlocation");
+                    pv.RPC("RPC_Send_Hit_Left",RpcTarget.MasterClient, hit.collider.transform.position);
                 }
-                break;
-                case "Charge":
-                    if (hit.collider.tag == "Tile" && !ActivePlayer.moving)
-                    {
-                        Tile t = hit.collider.GetComponent<Tile>();
-                        //player can reach 
-                        if (t.selectableRunning)
-                        {
-                            //make tile green
-                            ActivePlayer.moveToTile(t);
-                            AttackOfOppertunity();
-                            ActivePlayerStats.SetCondition("Charging",1,true);
-                            ActivePlayerStats.SpendAction("Charge");
-                            currentAction = "Move";
-                            ActivePlayer.RemoveSelectableTiles();
-                            halfActions -= 2;
-
-                            if(ActivePlayerStats.hasCondition("Braced"))
-                            {
-                                CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                                PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                                ActivePlayerStats.RemoveCondition("Braced");
-                            }
-                        }
-                    }
-                    break;
-                case "Attack":
-                    if (hit.collider.tag == "Player")
-                    {
-                        RollToHit(hit.collider.GetComponent<PlayerStats>(), FireRate, ActiveWeapon, ActivePlayerStats);
-                    }
-                    break;
-                case "CM":
-                    if (hit.collider.tag == "Player")
-                    {
-                        if(FireRate.Equals("Stun"))
-                        {
-                            RollToStun(hit.collider.GetComponent<PlayerStats>(), ActivePlayerStats);
-                        }
-                        else if(FireRate.Equals("Grapple"))
-                        {
-                            RollToGrapple(hit.collider.GetComponent<PlayerStats>(), ActivePlayerStats);
-                        }
-                        else if(FireRate.Equals("Knock"))
-                        {
-                            RollToKnock(hit.collider.GetComponent<PlayerStats>(), ActivePlayerStats);
-                        }
-                        else if(FireRate.Equals("Feint"))
-                        {
-                            RollToFeint(hit.collider.GetComponent<PlayerStats>(), ActivePlayerStats);
-                        }
-                    }
-                break;
-                default:
-                    break;
+                else if (PhotonHit != null)
+                {
+                    ServerHitObject = PhotonHit;
+                    PhotonHit = null;
+                    Debug.Log("receieved" + ServerHitObject.name);
                 }
+                else
+                {
+                    ServerHitObject = hit.collider.gameObject;
+                    Debug.Log("Server side hit, no transfer");
+                }
+                ServerLeftClick(ServerHitObject);
+            }
+        }
+    }
+
+    
+    void ServerLeftClick(GameObject ServerHitObject)
+    {
+        switch(currentAction)
+        {
+        case "Move":
+            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving && currentAction != null)
+            {
+                Tile t = ServerHitObject.GetComponent<Tile>();
+
+                //player can reach 
+                if (t.selectable)
+                {
+                    //make tile green
+                    ActivePlayer.moveToTile(t);
+                    halfActions--;
+                    AttackOfOppertunity();
+                    ActivePlayer.RemoveSelectableTiles();
+
+                    if(ActivePlayerStats.hasCondition("Braced"))
+                    {
+                    CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                    PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                    ActivePlayerStats.RemoveCondition("Braced");
+                    }
+                } 
+                else if (t.selectableRunning)
+                {
+                    //make tile green
+                    ActivePlayer.moveToTile(t);
+                    halfActions = 0;
+                    AttackOfOppertunity();
+                    ActivePlayer.RemoveSelectableTiles();
+
+                    if(ActivePlayerStats.hasCondition("Braced"))
+                    {
+                    CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                    PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                    ActivePlayerStats.RemoveCondition("Braced");
+                    }
+                }
+            }
+            break;
+        case "Run":
+            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
+            {
+                Tile t = ServerHitObject.GetComponent<Tile>();
+                //player can reach 
+                ActivePlayerStats.SetCondition("Running",0,true);
+                if (t.selectableRunning)
+                {
+                    //make tile green
+                    ActivePlayer.moveToTile(t);
+                    AttackOfOppertunity();
+                    halfActions-=2;
+                    currentAction = "Move";
+                    ActivePlayer.RemoveSelectableTiles();
+
+                    
+                    if(ActivePlayerStats.hasCondition("Braced"))
+                    {
+                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                        ActivePlayerStats.RemoveCondition("Braced");
+                    }
+                }
+            }
+            break;
+        case "Disengage":
+            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
+            {
+                Tile t = ServerHitObject.GetComponent<Tile>();
+                //player can reach 
+                if (t.selectableRunning)
+                {
+                    //make tile green
+                    ActivePlayer.moveToTile(t);
+                    if(ActivePlayerStats.AbilityCheck("Acrobatics",0).Passed())
+                    {
+                        CombatLog.Log(ActivePlayerStats.GetName() + "'s successful acrobatics check reduces the cost of disengaging to a half action");
+                        halfActions--;
+                    }
+                    else
+                    {
+                        halfActions -= 2;
+                    }                  
+                    currentAction = "Move";  
+                    ActivePlayer.RemoveSelectableTiles();
+
+                    if(ActivePlayerStats.hasCondition("Braced"))
+                    {
+                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                        ActivePlayerStats.RemoveCondition("Braced");
+                    }
+                }
+            }
+            break;
+        case "Advance":
+            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
+            {
+                Tile t = ServerHitObject.GetComponent<Tile>();
+                //player can reach 
+                if (t.selectableRunning)
+                {
+                    //make tile green
+                    ActivePlayer.moveToTile(t);
+                    ActivePlayerStats.ApplyAdvanceBonus(TacticsAttack.SaveCoverBonus(ActivePlayerStats)); 
+                    halfActions-=2;
+
+                    if(ActivePlayerStats.hasCondition("Braced"))
+                    {
+                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                        ActivePlayerStats.RemoveCondition("Braced");
+                    }
+                }
+        }
+            break;
+        case "Charge":
+            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
+            {
+                Tile t = ServerHitObject.GetComponent<Tile>();
+                //player can reach 
+                if (t.selectableRunning)
+                {
+                    //make tile green
+                    ActivePlayer.moveToTile(t);
+                    AttackOfOppertunity();
+                    ActivePlayerStats.SetCondition("Charging",1,true);
+                    ActivePlayerStats.SpendAction("Charge");
+                    currentAction = "Move";
+                    ActivePlayer.RemoveSelectableTiles();
+                    halfActions -= 2;
+
+                    if(ActivePlayerStats.hasCondition("Braced"))
+                    {
+                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
+                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
+                        ActivePlayerStats.RemoveCondition("Braced");
+                    }
+                }
+            }
+            break;
+        case "Attack":
+            if (ServerHitObject.tag == "Player")
+            {
+                RollToHit(ServerHitObject.GetComponent<PlayerStats>(), FireRate, ActiveWeapon, ActivePlayerStats);
+            }
+            break;
+        case "CM":
+            if (ServerHitObject.tag == "Player")
+            {
+                PlayerStats CMtarget = ServerHitObject.GetComponent<PlayerStats>();
+                if(FireRate.Equals("Stun"))
+                {
+                    RollToStun(CMtarget, ActivePlayerStats);
+                }
+                else if(FireRate.Equals("Grapple"))
+                {
+                    RollToGrapple(CMtarget, ActivePlayerStats);
+                }
+                else if(FireRate.Equals("Knock"))
+                {
+                    RollToKnock(CMtarget, ActivePlayerStats);
+                }
+                else if(FireRate.Equals("Feint"))
+                {
+                    RollToFeint(CMtarget, ActivePlayerStats);
+                }
+            }
+            break;
+        default:
+            break;
+        }
+    }
+
+    [PunRPC]
+    void RPC_Send_Hit_Left(Vector3 ObjectLocation)
+    {
+        GameObject[] Players = GameObject.FindGameObjectsWithTag("Player");
+        GameObject[] Tiles = GameObject.FindGameObjectsWithTag("Tile");
+        foreach(GameObject p in Players)
+        {
+            if(p.transform.position == ObjectLocation)
+            {
+                ServerLeftClick(p);
+                break;
+            }
+        }
+        foreach(GameObject t in Tiles)
+        {
+            if(t.transform.position == ObjectLocation)
+            {
+                ServerLeftClick(t);
+                break;
             }
         }
     }
@@ -389,6 +443,7 @@ public class TurnManager : TurnActions
     //sorts initative order on beginning of game
     public void SortQueue()
     {
+        gameStart = true;
         InitativeOrder.Clear();
         Sorter.Clear(); 
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
@@ -433,10 +488,20 @@ public class TurnManager : TurnActions
     //Button to bring up player sheet
     public void DisplayCharacterSheet()
     {
-        if(ActivePlayerStats != null && !CameraButtons.UIActive())
+        if(!CameraButtons.UIActive())
         {
-            GameObject newSheet = Instantiate(CharacterSheet) as GameObject;
-            newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(ActivePlayerStats);
+            int myID = PhotonNetwork.LocalPlayer.ActorNumber;
+            pv.RPC("RPC_CharacterSheet",RpcTarget.MasterClient, myID);
+        }
+    }
+
+    [PunRPC]
+    void RPC_CharacterSheet(int callingPlayerID)
+    {
+        if(ActivePlayerStats != null)
+        {
+            GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet", new Vector3(), Quaternion.identity);
+            newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(ActivePlayerStats, callingPlayerID);
         }
     }
 
@@ -456,18 +521,22 @@ public class TurnManager : TurnActions
 
     public void PrintInitiative()
     {
-        int iterations = InitativeOrder.Count;
-        List<string> entries = new List<string>();
-        while (iterations > 0)
+        if(gameStart)
         {
-            TacticsMovement tm = InitativeOrder.Dequeue();
-            InitativeOrder.Enqueue(tm);
-            string name = tm.GetComponent<PlayerStats>().GetName();
-            string value = "" + tm.initative;
-            entries.Add(name + ": " + value);
-            iterations--;
+            int iterations = InitativeOrder.Count;
+            List<string> entries = new List<string>();
+            while (iterations > 0)
+            {
+                TacticsMovement tm = InitativeOrder.Dequeue();
+                InitativeOrder.Enqueue(tm);
+                string name = tm.GetComponent<PlayerStats>().GetName();
+                string value = "" + tm.initative;
+                entries.Add(name + ": " + value);
+                iterations--;
+            }
+            It.UpdateList(entries.ToArray());
         }
-        It.UpdateList(entries);
+        
     }
 
     //any special effects from conditions
@@ -706,24 +775,6 @@ public class TurnManager : TurnActions
         }
     }
 
-    public List<string> GetTooltip(RaycastHit hit)
-    {
-        List<string> output = new List<string>();
-        if(hit.collider == null || hit.collider.tag != "Player")
-        {
-            return output;
-        }
-        PlayerStats selectedPlayer = hit.collider.GetComponent<PlayerStats>();
-        if(currentAction != null && currentAction.Equals("Attack"))
-        {
-            return TacticsAttack.GenerateTooltip(selectedPlayer,ActivePlayerStats,ActiveWeapon,FireRate);
-        }
-        else
-        {
-            output.Add(selectedPlayer.ToString());
-        }
-        return output;
-    }
     public void AbilityCheck(string skill)
     {
         ActivePlayerStats.AbilityCheck(skill,0);
@@ -806,7 +857,7 @@ public class TurnManager : TurnActions
             ActivePlayer = null;
             InitativeOrder.Clear();
         }
-        Destroy(Player);
+        PhotonNetwork.Destroy(Player);
         PrintInitiative();
     }
 }

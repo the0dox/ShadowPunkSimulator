@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using Photon.Pun;
+// While nearly all player info is handled by Playerstats, Tacticsmovement covers all player movement.
+// Note that tacticsmovement Doesn't know the gamelogic of movement, it can't calculate how far a player can move
+// It needs to be supplied with the playerstats
 public class TacticsMovement : MonoBehaviour
 {
    List<Tile> selectableTiles = new List<Tile>();
@@ -24,29 +27,48 @@ public class TacticsMovement : MonoBehaviour
    float halfHeight = 0;
 
    Vector3 jumpTick = new Vector3(0,1,0);
+   [SerializeField] private PhotonView pv;
    
-   
+   void Start()
+   {
+      Init();
+   }
    public void Init()
+   {
+      pv.RPC("RPC_Init",RpcTarget.All);
+   }
+   [PunRPC]
+   void RPC_Init()
    {
       tiles = GameObject.FindGameObjectsWithTag("Tile");
       halfHeight = GetComponent<Collider>().bounds.extents.y; 
    }
 
-   public void PaintCurrentTile(bool paint)
+   public void PaintCurrentTile(string paint)
+   {
+     pv.RPC("RPC_Paint",RpcTarget.All,paint);
+   }
+
+   [PunRPC]
+   void RPC_Paint(string paint)
    {
       Tile targetTile = GetTargetTile(gameObject);
-      targetTile.current = paint;
-      targetTile.target = false;
-      targetTile.selectable = false; 
-      targetTile.selectableRunning = false;
-      targetTile.attack = false;
+      targetTile.current = paint.Equals("current");
+      targetTile.target = paint.Equals("target");
+      targetTile.selectable = paint.Equals("selectable"); 
+      targetTile.selectableRunning = paint.Equals("selectableRunning");
+      targetTile.attack = paint.Equals("attack");
       targetTile.UpdateIndictator();
    }
 
    public void GetCurrentTile()
    {
       currentTile = GetTargetTile(gameObject);
-      currentTile.current = true; 
+      if(currentTile != null)
+      {
+         currentTile.current = true; 
+         currentTile.UpdateIndictator();
+      }
    }
 
    public Tile GetTargetTile(GameObject target)
@@ -72,21 +94,26 @@ public class TacticsMovement : MonoBehaviour
 
    public void FindSelectableTiles(int move, int doubleMove, int team)
    {
+      pv.RPC("RPC_Walk", RpcTarget.All ,move,doubleMove);
+   }
+   [PunRPC]
+   void RPC_Walk(int move, int doubleMove)
+   {
       ComputeAdjacencyLists();
       GetCurrentTile();
 
       Queue<Tile> process = new Queue<Tile>();
 
       process.Enqueue(currentTile);
-      currentTile.visited = true;
-
-      while (process.Count > 0) 
+      if(currentTile != null)
       {
-         Tile t = process.Dequeue();
+         currentTile.visited = true;
 
-         selectableTiles.Add(t);
+         while (process.Count > 0) 
+         {
+            Tile t = process.Dequeue();
 
-         if(t.GetOccupant() == null || t.GetOccupant().GetTeam() == team){
+            selectableTiles.Add(t);
             if (t.distance <= move)
             {
                t.selectable = true;
@@ -116,90 +143,59 @@ public class TacticsMovement : MonoBehaviour
          }
       }
    }
-
-   public void FindSelectableTiles(int run, int team)
-   {
-      ComputeAdjacencyLists();
-      GetCurrentTile();
-
-      Queue<Tile> process = new Queue<Tile>();
-
-      process.Enqueue(currentTile);
-      currentTile.visited = true;
-
-      while (process.Count > 0) 
-      {
-         Tile t = process.Dequeue();
-
-         selectableTiles.Add(t);
-         
-         if(t.GetOccupant() == null){
-            t.selectableRunning = true; 
-            t.UpdateIndictator();
-         }
-
-         if (t.distance < run && (t.GetOccupant() == null || t.GetOccupant().GetTeam() == team)) {     
-
-            foreach (Tile tile in t.adjacencyList)
-            {
-               
-               if (!tile.visited)
-               {
-
-                  tile.parent = t;
-                  tile.visited = true;
-                  tile.distance = 1 + t.distance;
-                  process.Enqueue(tile);
-
-               }
-            }
-         } 
-      }
-   }
    public void FindChargableTiles(int charge, int team)
    {
+      pv.RPC("RPC_Charge",RpcTarget.All,charge,team);
+   }
+
+   [PunRPC] 
+   void RPC_Charge(int charge, int team)
+   {
       ComputeAdjacencyLists();
       GetCurrentTile();
 
       Queue<Tile> process = new Queue<Tile>();
 
       process.Enqueue(currentTile);
-      currentTile.visited = true;
-
-      while (process.Count > 0) 
+      if(currentTile != null)
       {
-         Tile t = process.Dequeue();
+         currentTile.visited = true;
 
-         selectableTiles.Add(t);
+         while (process.Count > 0) 
+         {
+            Tile t = process.Dequeue();
 
-         if(t.distance > 4) {
-            List<Tile> adjacentTiles = t.adjacencyList;
-            foreach (Tile adjacentTile in adjacentTiles)
-            {
-               if (adjacentTile.GetOccupant() != null && adjacentTile.GetOccupant().GetTeam() != team)
+            selectableTiles.Add(t);
+
+            if(t.distance > 4) {
+               List<Tile> adjacentTiles = t.adjacencyList;
+               foreach (Tile adjacentTile in adjacentTiles)
                {
-                  t.selectableRunning = true;
-                  t.UpdateIndictator();
+                  if (adjacentTile.GetOccupant() != null && adjacentTile.GetOccupant().GetTeam() != team)
+                  {
+                     t.selectableRunning = true;
+                     t.UpdateIndictator();
+                  }
                }
             }
+
+            if (t.distance < charge && (t.GetOccupant() == null || t.GetOccupant().GetTeam() == team)) {     
+
+               foreach (Tile tile in t.adjacencyList)
+               {
+                  
+                  if (!tile.visited)
+                  {
+
+                     tile.parent = t;
+                     tile.visited = true;
+                     tile.distance = 1 + t.distance;
+                     process.Enqueue(tile);
+
+                  }
+               }
+            } 
          }
-
-         if (t.distance < charge && (t.GetOccupant() == null || t.GetOccupant().GetTeam() == team)) {     
-
-            foreach (Tile tile in t.adjacencyList)
-            {
-               
-               if (!tile.visited)
-               {
-
-                  tile.parent = t;
-                  tile.visited = true;
-                  tile.distance = 1 + t.distance;
-                  process.Enqueue(tile);
-
-               }
-            }
-         } 
       }
    }
 
@@ -302,6 +298,12 @@ public class TacticsMovement : MonoBehaviour
 
    public void RemoveSelectableTiles()
    {
+      pv.RPC("RPC_TileClear",RpcTarget.All);
+   }
+
+   [PunRPC]
+   void RPC_TileClear()
+   {
       foreach (Tile t in selectableTiles)
       {
          t.reset();
@@ -331,16 +333,15 @@ public class TacticsMovement : MonoBehaviour
          PlayerStats target = p.GetComponent<PlayerStats>();
          if(w == null && target.GetTeam() != myStats.GetTeam())
          {
-            p.GetComponent<TacticsMovement>().GetTargetTile(p).attack = true;
-            p.GetComponent<TacticsMovement>().GetTargetTile(p).UpdateIndictator();
+            p.GetComponent<TacticsMovement>().PaintCurrentTile("attack");
          }
          else if(TacticsAttack.HasValidTarget(target,myStats,w))
          {
-            p.GetComponent<TacticsMovement>().GetTargetTile(p).attack = true;
-            p.GetComponent<TacticsMovement>().GetTargetTile(p).UpdateIndictator();
+            p.GetComponent<TacticsMovement>().PaintCurrentTile("attack");
          }
       }
    }
+
 
    public void GetGrapplePartner(PlayerStats myStats)
    {
@@ -348,15 +349,11 @@ public class TacticsMovement : MonoBehaviour
       GetCurrentTile();
       if(myStats.grappler != null)
       {
-         Tile targetTile = myStats.grappler.GetComponent<TacticsMovement>().GetTargetTile(myStats.grappler.gameObject);
-         targetTile.attack = true;
-         targetTile.UpdateIndictator();
+         myStats.grappler.GetComponent<TacticsMovement>().PaintCurrentTile("attack");
       }
       if(myStats.grappleTarget != null)
       {
-         Tile targetTile = myStats.grappleTarget.GetComponent<TacticsMovement>().GetTargetTile(myStats.grappleTarget.gameObject);
-         targetTile.attack = true;
-         targetTile.UpdateIndictator();
+        myStats.grappleTarget.GetComponent<TacticsMovement>().PaintCurrentTile("attack");
       }
    }
 

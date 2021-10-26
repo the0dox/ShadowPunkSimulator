@@ -1,9 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 // This is the class that defines a character, any data that a darkhersey charactersheet can hold is in this class
-public class PlayerStats : MonoBehaviour
+public class PlayerStats : MonoBehaviourPunCallbacks
 {
     // for determine who can or cannot be targeted in combat, Players are team 0, NPCS are team 1
     public int team; 
@@ -17,8 +18,6 @@ public class PlayerStats : MonoBehaviour
     public PlayerStats grappler;
     // A reference to who this player is currently grappling
     public PlayerStats grappleTarget;
-    // A reference to this players character model
-    public GameObject model;
     // A reference to the highlighted color that flashes when highlighted
     public Material SelectedColor;
     // A reference to the regular material the player spawns in with
@@ -48,26 +47,42 @@ public class PlayerStats : MonoBehaviour
     //quick reference for what die rolls correspond to a hit location
     private Dictionary<int, string> HitLocations;
     private RollResult currentRoll;
+    // used for multiplayer quick referencing
+    public int ID;
+    private PhotonView pv;
+
+    [SerializeField] private HealthBar HealthBar;
+    [SerializeField] private FatigueBar FatigueBar;
 
     // given a charactersavedata copies all the values onto the playerstats
-    public void DownloadSaveData(CharacterSaveData myData)
-    {
+    public void DownloadSaveData(CharacterSaveData myData, int id)
+    {   
         this.myData = myData;
         this.playername = myData.playername;
         this.team = myData.team;
         this.Stats = myData.GetStats();
-        this.Skills = myData.GetSkills();
+        this.Skills = new List<Skill>();
+        foreach(KeyValuePair<string,int> kvp in myData.GetSkills())
+        {  
+            Skills.Add(new Skill(SkillReference.GetSkill(kvp.Key),kvp.Value));
+        }
         this.HitLocations = myData.StandardHitLocations();
-        this.equipment = myData.GetEquipment();
-        Init();
-
+        this.equipment = ItemReference.DownloadEquipment(myData.GetEquipment());
+        DefaultColor = GetComponentInChildren<MeshRenderer>().material;
+        Init(id);
     }
+
     // Calculates bonuses from armor and stats
-    public void Init()
+    public void Init(int id)
     {
+        pv = GetComponent<PhotonView>();
+        SetID(id);
+        if(pv.IsMine)
+        {
+            pv.RPC("RPC_Init",RpcTarget.OthersBuffered, myData.team,myData.Model, id);
+        }
         CompleteDownload();
         StartCoroutine(modelDisplayDelay());
-        DefaultColor = model.GetComponentInChildren<MeshRenderer>().material;
         Weapon[] startingequipment = GetWeaponsForEquipment().ToArray();
         if (startingequipment.Length > 0)
         {
@@ -79,6 +94,26 @@ public class PlayerStats : MonoBehaviour
         }
     }
 
+    [PunRPC]
+    void RPC_Init(int team, string model, int ID)
+    {
+        SetID(ID);
+        this.team = team;
+        pv = GetComponent<PhotonView>();
+        if(!pv.IsMine)
+        {
+            if(team == 0)
+            {
+                GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SPlayerMaterial;
+            }
+            else
+            {
+                GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SNPCMaterial;   
+            }
+        }
+        GetComponentInChildren<MeshFilter>().mesh = PlayerSpawner.GetPlayers()[model];
+    }
+
     // temporarly paints the target
     IEnumerator modelDisplayDelay()
     {
@@ -88,11 +123,11 @@ public class PlayerStats : MonoBehaviour
             if(painted)
             {
                 painted = false;
-                model.GetComponentInChildren<MeshRenderer>().material = SelectedColor;
+                GetComponentInChildren<MeshRenderer>().material = SelectedColor;
             }
             else
             {    
-                model.GetComponentInChildren<MeshRenderer>().material = DefaultColor;
+                GetComponentInChildren<MeshRenderer>().material = DefaultColor;
             }
         }
     }
@@ -136,6 +171,13 @@ public class PlayerStats : MonoBehaviour
             TakeCritical(-Stats["Wounds"],location,damageType);
             Stats["Wounds"] = 0;
         }
+        pv.RPC("RPC_TakeDamage", RpcTarget.AllBuffered, Stats["Wounds"], Stats["MaxWounds"]);
+    }
+
+    [PunRPC]
+    void RPC_TakeDamage(int currentHP, int MaxHP)
+    {
+        HealthBar.UpdateHealth(currentHP, MaxHP);
     }
 
     public void TakeCritical(int critDamage, string location,string damageType)
@@ -161,6 +203,15 @@ public class PlayerStats : MonoBehaviour
             CombatLog.Log(GetName() + " takes more fatigue than their Toughness bonus and is knocked out!");
             SetCondition("Unconscious",0,true);
         }
+        int currentFatigue = GetStat("Fatigue");
+        int maxFatigue = GetStatScore("T") + 1;
+        pv.RPC("RPC_TakeFatigue", RpcTarget.AllBuffered, currentFatigue, maxFatigue);
+    }
+
+    [PunRPC]
+    void RPC_TakeFatigue(int currentFatigue, int maxFatigue)
+    {
+        FatigueBar.UpdateFatigue(currentFatigue, maxFatigue);
     }
 
     public Dictionary<int, string> GetHitLocations()
@@ -214,6 +265,8 @@ public class PlayerStats : MonoBehaviour
         UpdateMovement();
         UpdateAP();
         UpdateCarryWeight();
+        //HealthBar.UpdateHealth();
+        //FatigueBar.UpdateFatigue();
     }
 
     public void SetSkill(Skill input)
@@ -816,10 +869,6 @@ public class PlayerStats : MonoBehaviour
     {
         return Occupied;
     }
-    public void StartJob()
-    {
-        Occupied = true;
-    }
     public void EndJob()
     {
         Occupied = false;
@@ -987,5 +1036,28 @@ public class PlayerStats : MonoBehaviour
             CombatLog.Log(GetName() + " is unable to escape the grapple.");
         }
         currentRoll = null;
+    }
+
+    public void SetID(int id)
+    {
+        ID = id;
+    }
+
+    public int GetID()
+    {
+        return ID;
+    }
+
+    public void OverworldInit()
+    {
+        pv.RPC("RPC_Overworld_Init",RpcTarget.AllBuffered);
+    }
+
+    [PunRPC]
+    void RPC_Overworld_Init()
+    {
+        gameObject.AddComponent<OverworldMovement>();
+        HealthBar.gameObject.SetActive(false);
+        FatigueBar.gameObject.SetActive(false);
     }
 }
