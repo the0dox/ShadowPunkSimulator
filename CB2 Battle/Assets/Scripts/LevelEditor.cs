@@ -25,6 +25,7 @@ public class LevelEditor : UIButtonManager
     {
         HoldDelay = HoldDelayMax;
         ChangeTileTexture(SelectedTile);
+        TileLocations = TileGround.LoadTiles(20,20);
     }
 
     public void ChangeTileTexture(GameObject newTile)
@@ -59,7 +60,12 @@ public class LevelEditor : UIButtonManager
 
             if(!hitUi)
             {
-                if(hit.collider.tag.Equals("Tile") && !MouseHold)
+                if(hit.collider.tag.Equals("Ground"))
+                {
+                    viablePos = hit.point;
+                    viablePos.y = 1;
+                }
+                else if(hit.collider.tag.Equals("Tile") || !MouseHold)
                 {
                     viablePos = hit.collider.transform.position;
                     viablePos.y += 1;
@@ -101,6 +107,7 @@ public class LevelEditor : UIButtonManager
                     if(Player != null)
                     {
                         TileLocations.Add(viablePos,Player);
+                        Player.GetComponent<Collider>().enabled = true;
                         Player = null;
                         indicator.SetActive(true);
                     }
@@ -151,6 +158,7 @@ public class LevelEditor : UIButtonManager
 
     public void AddPlayer(GameObject input)
     {
+        input.GetComponent<Collider>().enabled = false;
         Player = input;
         indicator.SetActive(false);
     }
@@ -161,6 +169,7 @@ public class LevelEditor : UIButtonManager
         NameIF.text = null;
         SceneSaveData newScene = new SceneSaveData(name, TileLocations);
         SaveSystem.SaveScene(newScene);
+        CameraButtons.UIFreeze(false);
     }
 
     public void LoadLevel()

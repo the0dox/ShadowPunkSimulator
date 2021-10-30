@@ -7,7 +7,7 @@ using Photon.Pun;
 public class DmMenu : MonoBehaviourPunCallbacks
 {
     [SerializeField] private GameObject Display;
-    static private Dictionary<int, CharacterSaveData> SavedCharacters = new Dictionary<int, CharacterSaveData>();
+    static private Dictionary<int, CharacterSaveData> SavedCharacters;
     
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject SelectorButton;
@@ -26,7 +26,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     void Start()
     {
         spv = pv;
-        if(pv.IsMine)
+        if(pv.IsMine && SavedCharacters == null)
         {
             StartCoroutine(LoadDelay());
         }
@@ -41,6 +41,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     IEnumerator LoadDelay()
     {
         yield return new WaitForSeconds(1f);
+        SavedCharacters = new Dictionary<int, CharacterSaveData>();
         int index = 0;
         foreach(CharacterSaveData csd in SaveSystem.LoadPlayer())
         {
@@ -74,6 +75,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         {
             addition = "Automatic";
         }
+
         MDRtoggleStatus.text = "Die Entries: " + addition;
     }
 
@@ -95,6 +97,12 @@ public class DmMenu : MonoBehaviourPunCallbacks
         CharacterSaveData newplayer = new CharacterSaveData(false);
         SavedCharacters.Add(SavedCharacters.Count, newplayer);
         ViewCharacters();
+    }
+
+    public void newScene()
+    {
+        CameraButtons.UIFreeze(false);
+        PhotonNetwork.LoadLevel("LevelEditor");
     }
 
     public void Quit()

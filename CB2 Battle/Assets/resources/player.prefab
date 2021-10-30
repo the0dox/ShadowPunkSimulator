@@ -329,7 +329,7 @@ MonoBehaviour:
   moving: 0
   initative: 0
   finishedMove: 0
-  jumpHeight: 1
+  jumpHeight: 2
   moveSpeed: 4
   halfMove: 0
   pv: {fileID: 6456403412706441088}

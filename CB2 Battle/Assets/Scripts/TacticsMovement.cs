@@ -73,13 +73,10 @@ public class TacticsMovement : MonoBehaviour
 
    public Tile GetTargetTile(GameObject target)
    {
-      RaycastHit hit;
-
       Tile tile = null;
-      if (Physics.Raycast(target.transform.position, -Vector3.up, out hit, 1))
-      {
-         tile = hit.collider.GetComponent<Tile>(); 
-      }
+      Vector3 down = BoardBehavior.GetClosestTile(gameObject.transform.position + Vector3.down);
+      //Debug.Log("Getting tile" + down);
+      tile = BoardBehavior.GetTile(down);
       return tile;
    }
 
@@ -229,7 +226,7 @@ public class TacticsMovement : MonoBehaviour
          Tile t = path.Peek();
          Vector3 target = t.transform.position;
          //ensure player is standing on top of the tile
-         target.y += halfHeight + t.GetComponent<Collider>().bounds.extents.y;
+         target.y += 1.5f;
 
          //if we haven't reached it yet
          if (Vector3.Distance(transform.position, target) >= 0.05f)

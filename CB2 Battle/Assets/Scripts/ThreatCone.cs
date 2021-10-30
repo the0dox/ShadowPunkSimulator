@@ -64,7 +64,6 @@ public class ThreatCone : MonoBehaviour
                     }
                 }
             }
-            
         }
     }
 
@@ -85,5 +84,19 @@ public class ThreatCone : MonoBehaviour
     {
         Debug.Log("tc " + visibleTargets.Count);
         return visibleTargets;
+    }
+
+    public List<Transform> GetTargetsSphere()
+    {
+        Vector3 scale = transform.localEulerAngles;
+        Debug.Log("x scale: " + scale.x );
+        List<Transform> output = new List<Transform>();
+        Collider[] collisions = Physics.OverlapSphere(transform.position, scale.x, LayerMask.GetMask("Obstacle"));
+        foreach(Collider c in collisions)
+        {
+            Debug.Log(c.name);
+            output.Add(c.GetComponent<Transform>());
+        }
+        return output;
     }
 }

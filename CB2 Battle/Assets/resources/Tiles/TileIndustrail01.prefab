@@ -201,4 +201,6 @@ MonoBehaviour:
   parent: {fileID: 0}
   distance: 0
   ArmorValue: 12
+  TotalAV: 0
+  MapPosition: {x: 0, y: 0, z: 0}
   indicator: {fileID: 6073068602247506577}

@@ -767,7 +767,7 @@ public class TurnActions : UIButtonManager
         ActiveWeapon.ExpendAmmo(FireRate);
         foreach(Transform t in targets)
         {
-            AttackQueue.Enqueue(new AttackSequence (t.GetComponent<PlayerStats>(), ActivePlayerStats, ActiveWeapon,FireRate,1,true));
+            AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(), ActivePlayerStats, ActiveWeapon,FireRate,1,true));
         }
         halfActions--;
         RemoveRange(ActivePlayerStats);

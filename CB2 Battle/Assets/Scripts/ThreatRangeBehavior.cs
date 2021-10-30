@@ -34,7 +34,7 @@ public class ThreatRangeBehavior : MonoBehaviour
     // Called on frame update, token movement and overwatch triggering happens here
     void Update()
     {
-        if(!pv.IsMine || myRange.draw)
+        if(myRange.draw)
         {
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             //if the mouse is pointed at a thing
@@ -48,7 +48,7 @@ public class ThreatRangeBehavior : MonoBehaviour
                         gameObject.transform.position = hit.point + new Vector3(0, 0.1f, 0);
                     }
                 }
-                else if ( hit.collider.tag == "Tile" && controllable )
+                else if ( hit.collider.tag != "Player" && controllable )
                 {
                     gameObject.transform.LookAt(hit.point);
                 }
@@ -57,7 +57,7 @@ public class ThreatRangeBehavior : MonoBehaviour
             float yRotation = transform.eulerAngles.y;
             transform.rotation = Quaternion.Euler(0,yRotation,0);
         }
-        else if(pv.IsMine && threatType.Equals("Overwatch"))
+        else if(threatType.Equals("Overwatch"))
         {
             List<Transform> inRangeTargets = myRange.GetTargets();
             foreach(Transform t in inRangeTargets)
@@ -88,7 +88,7 @@ public class ThreatRangeBehavior : MonoBehaviour
     // Frame check for user left clicking 
     private void CheckMouse()
     {
-        if(Input.GetMouseButtonUp(0))
+        if(Input.GetMouseButtonUp(0) && controllable)
         {
             // standard check to make sure a left click on ui isn't interpreted as a left click for threat range
             bool hitUi = false;
@@ -108,7 +108,7 @@ public class ThreatRangeBehavior : MonoBehaviour
                 {
                     ids.Add(t.GetComponent<PlayerStats>().GetID());
                 }
-                pv.RPC("RPC_MasterClick",RpcTarget.MasterClient, ids, transform.position, transform.eulerAngles);
+                pv.RPC("RPC_MasterClick",RpcTarget.MasterClient, ids.ToArray(), transform.position, transform.eulerAngles);
                 if(!pv.IsMine)
                 {
                     Destroy(gameObject);
@@ -118,14 +118,16 @@ public class ThreatRangeBehavior : MonoBehaviour
     }
 
     [PunRPC]
-    void RPC_MasterClick(List<int> ids, Vector3 pos, Vector3 eul)
+    void RPC_MasterClick(int[] ids, Vector3 pos, Vector3 eul)
     {
+        Debug.Log("called");
         transform.position = pos;
         transform.eulerAngles = eul;
         List<Transform> selectedTargets = new List<Transform>();
-        foreach(int i in ids)
+        for(int i = 0; i < ids.Length; i++)
         {
-            selectedTargets.Add(PlayerSpawner.IDtoPlayer(i).transform);
+            int currentId = ids[i];
+            selectedTargets.Add(PlayerSpawner.IDtoPlayer(currentId).transform);
         }
         controllable = false;
         if(threatType.Equals("Supress"))
@@ -151,6 +153,7 @@ public class ThreatRangeBehavior : MonoBehaviour
 
     public void SetParameters(string type, Weapon w, PlayerStats attacker)
     {
+        
         TurnManager = GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>();
         threatType = type;
         Vector3 dimensions;
@@ -196,6 +199,7 @@ public class ThreatRangeBehavior : MonoBehaviour
         {
             Destroy(ConeToken);
             BlastToken.SetActive(true);
+            myRange = BlastToken.GetComponent<ThreatCone>();
             BlastToken.transform.localScale = scale;
             Destroy(BlastToken.GetComponent<ThreatCone>());
         }
@@ -204,6 +208,7 @@ public class ThreatRangeBehavior : MonoBehaviour
             Destroy(BlastToken);
             ConeToken.SetActive(true);
             ConeToken.transform.localScale = scale;
+            myRange = ConeToken.GetComponent<ThreatCone>();
             Destroy(ConeToken.GetComponent<ThreatCone>());
         }
     }
@@ -218,7 +223,6 @@ public class ThreatRangeBehavior : MonoBehaviour
 
     IEnumerator Scatter()
     {
-        Debug.Log("scattering");
         RollResult ScatterRoll = attacker.AbilityCheck("BS",0);
         while(!ScatterRoll.Completed())
         {
@@ -232,8 +236,7 @@ public class ThreatRangeBehavior : MonoBehaviour
             CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");    
         }
         yield return new WaitForSeconds (0.5f);
-        List<Transform> inRangeTargets = myRange.GetTargets();
-        TurnManager.BlastAttack(inRangeTargets);
+        TurnManager.BlastAttack(myRange.GetTargets());
 
     }
 }

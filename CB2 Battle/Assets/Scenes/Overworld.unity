@@ -9742,6 +9742,10 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 0}
     m_Modifications:
+    - target: {fileID: -5570635350014889889, guid: 5ea96aaeda5cb7947a2f0acf88156c6c, type: 3}
+      propertyPath: sceneViewId
+      value: 3
+      objectReference: {fileID: 0}
     - target: {fileID: 2919622788800997563, guid: 5ea96aaeda5cb7947a2f0acf88156c6c, type: 3}
       propertyPath: m_Name
       value: PopUpManager

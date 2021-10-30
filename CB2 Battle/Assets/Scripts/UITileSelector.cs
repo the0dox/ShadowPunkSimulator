@@ -1,10 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 public class UITileSelector : MonoBehaviour
 {
-    [SerializeField] private GameObject ButtonPrefab;
     private Vector3 CurrentPos;
     private Vector3 StartingPos = new Vector3(-140,60,-60);
     private Vector3 DisplacementPos = new Vector3(50,0,0);
@@ -13,12 +13,11 @@ public class UITileSelector : MonoBehaviour
     Dictionary<string,GameObject> DisplayTiles = new Dictionary<string, GameObject>();
     void Display()
     {
-
         CurrentPos = StartingPos;
         DisplayTiles = TileReference.Tiles();
         foreach(string s in DisplayTiles.Keys)
         {
-            GameObject button = Instantiate(ButtonPrefab) as GameObject;
+            GameObject button = PhotonNetwork.Instantiate("ActionButton", new Vector3(), Quaternion.identity) as GameObject;
             button.GetComponent<ActionButtonScript>().SetAction(s);
             button.transform.SetParent(gameObject.transform);
             button.transform.localScale = new Vector3(0.5f,0.5f,0.5f);
@@ -34,6 +33,11 @@ public class UITileSelector : MonoBehaviour
             current.tag = "UITile";
             
             CurrentPos += DisplacementPos;
+            if(CurrentPos.x > 140)
+            {
+                CurrentPos.x = StartingPos.x;
+                CurrentPos.y -= 50;
+            }
         }
     }
 

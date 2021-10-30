@@ -42,6 +42,7 @@ public class TurnManager : TurnActions
         {
             if(CurrentAttack.attackRoll != null && CurrentAttack.attackRoll.Completed() && !CurrentAttack.attackRolled)
             {
+                Debug.Log("finished roll");
                 CurrentAttack.AttackRollComplete();
                 TryReaction();
             }
@@ -170,25 +171,18 @@ public class TurnManager : TurnActions
             //if the mouse clicked on a thing
             if (Physics.Raycast(ray, out hit) && !hitUi )
             {
-                GameObject ServerHitObject = null;
-                //client sending info to main
-                if(!pv.IsMine)
+                Vector3 SentPos;
+                if(hit.collider.tag.Equals("Player") || hit.collider.tag.Equals("Tile"))
                 {
-                    Debug.Log("Sending info of my hitlocation");
-                    pv.RPC("RPC_Send_Hit_Left",RpcTarget.MasterClient, hit.collider.transform.position);
-                }
-                else if (PhotonHit != null)
-                {
-                    ServerHitObject = PhotonHit;
-                    PhotonHit = null;
-                    Debug.Log("receieved" + ServerHitObject.name);
+                    SentPos = hit.collider.transform.position;
                 }
                 else
                 {
-                    ServerHitObject = hit.collider.gameObject;
-                    Debug.Log("Server side hit, no transfer");
+                    SentPos = BoardBehavior.GetClosestTile(hit.point);
                 }
-                ServerLeftClick(ServerHitObject);
+            
+                Debug.Log("Sending info of my hitlocation");
+                pv.RPC("RPC_Send_Hit_Left",RpcTarget.MasterClient, SentPos);
             }
         }
     }
@@ -373,8 +367,8 @@ public class TurnManager : TurnActions
     [PunRPC]
     void RPC_Send_Hit_Left(Vector3 ObjectLocation)
     {
+        Debug.Log("finding object at " + ObjectLocation);
         GameObject[] Players = GameObject.FindGameObjectsWithTag("Player");
-        GameObject[] Tiles = GameObject.FindGameObjectsWithTag("Tile");
         foreach(GameObject p in Players)
         {
             if(p.transform.position == ObjectLocation)
@@ -383,13 +377,10 @@ public class TurnManager : TurnActions
                 break;
             }
         }
-        foreach(GameObject t in Tiles)
+        Tile myTile = BoardBehavior.GetTile(ObjectLocation);
+        if(myTile != null)
         {
-            if(t.transform.position == ObjectLocation)
-            {
-                ServerLeftClick(t);
-                break;
-            }
+            ServerLeftClick(myTile.gameObject);
         }
     }
 

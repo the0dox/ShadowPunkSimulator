@@ -16,8 +16,10 @@ public class InitativeTrackerScript : MonoBehaviour
     // displays the iniative order with the current player on top
     public void UpdateList(string[] initative)
     {
-        Debug.Log(initative.GetType() + " size: " + initative.Length);
-        pv.RPC("RPC_List",RpcTarget.All,initative);
+        if(initative.Length > 1)
+        {
+            pv.RPC("RPC_List",RpcTarget.All,initative);
+        }
     }
 
     // Sends l to all clients

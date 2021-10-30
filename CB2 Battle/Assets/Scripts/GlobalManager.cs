@@ -66,7 +66,6 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     {
         yield return new WaitForSeconds(0.05f);
         CameraButtons.UIFreeze(false);
-        Debug.Log(pv.ViewID);
         yield return new WaitForSeconds(0.05f);
         Dictionary<Vector3,string> playerEntities = LoadedScene.GetPlayerLocations();
         yield return new WaitForSeconds(0.01f);
@@ -109,5 +108,6 @@ public class GlobalManager : MonoBehaviourPunCallbacks
             GameObject newEntity = Instantiate(Tile) as GameObject;
             newEntity.transform.position = pos;
         }
+        BoardBehavior.Init();
     }
 }

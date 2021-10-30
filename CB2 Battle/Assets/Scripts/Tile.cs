@@ -20,6 +20,7 @@ public class Tile : MonoBehaviour
 
     public int ArmorValue = 8;
     public int TotalAV;
+    public Vector3 MapPosition;
 
     public static Vector3 topright = new Vector3(1,0,1);
     
@@ -29,6 +30,7 @@ public class Tile : MonoBehaviour
 
     void Start()
     {
+        MapPosition = transform.position;
         TotalAV = ArmorValue;
     }
     // Update is called once per frame
@@ -101,25 +103,18 @@ public class Tile : MonoBehaviour
 
     public void CheckTile(Vector3 direction, float jumpHeight)
     {
-        Vector3 halfExtents = new Vector3(0.25f, (1 + jumpHeight) / 2.0f, 0.25f);
-        Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfExtents);
-
-        foreach (Collider item in colliders)
+        for(int i = -1; i < jumpHeight; i++)
         {
-            Tile tile = item.GetComponent<Tile>();
-            // if the collided object has the Tile script and that script is walkable
-            if (tile != null && tile.walkable) 
+            Vector3 currentDir = new Vector3(direction.x, direction.y + i, direction.z);
+            if(BoardBehavior.ValidNeighbor(transform.position, currentDir))
             {
-                
-                RaycastHit hit;
-                Physics.Raycast(tile.transform.position,Vector3.up, out hit, 1);
-                //if there is nothing on top
-                if (hit.collider == null || hit.collider.tag != "Tile")
-                {
-                    adjacencyList.Add(tile);      
-                }
+                Tile tile = BoardBehavior.GetTile(transform.position + currentDir);
+                adjacencyList.Add(tile);      
             }
         }
+        //Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfExtents);
+
+        
     }
 
     public PlayerStats GetOccupant()
