@@ -89,4 +89,12 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
     {
         return SModels;
     }
+
+    public static void ClientUpdateIDs(PlayerStats newPlayer)
+    {
+        if(!pv.IsMine)
+        {
+            IDs.Add(newPlayer.GetID(), newPlayer);
+        }
+    }
 }

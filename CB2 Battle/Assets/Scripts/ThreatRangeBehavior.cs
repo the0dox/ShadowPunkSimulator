@@ -102,48 +102,39 @@ public class ThreatRangeBehavior : MonoBehaviour
             }
             if(!hitUi)
             {
-                List<Transform> selectedTargets = myRange.GetTargets();
-                List<int> ids = new List<int>();
-                foreach(Transform t in selectedTargets)
-                {
-                    ids.Add(t.GetComponent<PlayerStats>().GetID());
-                }
-                pv.RPC("RPC_MasterClick",RpcTarget.MasterClient, ids.ToArray(), transform.position, transform.eulerAngles);
-                if(!pv.IsMine)
-                {
-                    Destroy(gameObject);
-                }
+                controllable = false;
+                pv.RPC("RPC_MasterClick",RpcTarget.MasterClient, transform.position, transform.eulerAngles);
             }
         }
     }
 
     [PunRPC]
-    void RPC_MasterClick(int[] ids, Vector3 pos, Vector3 eul)
+    void RPC_MasterClick(Vector3 pos, Vector3 eul)
     {
-        Debug.Log("called");
+        controllable = false;
+        StartCoroutine(ClickDelay(pos,eul));
+    }
+
+    IEnumerator ClickDelay(Vector3 pos, Vector3 eul)
+    {
+        yield return new WaitForSeconds(0.5f);
         transform.position = pos;
         transform.eulerAngles = eul;
-        List<Transform> selectedTargets = new List<Transform>();
-        for(int i = 0; i < ids.Length; i++)
-        {
-            int currentId = ids[i];
-            selectedTargets.Add(PlayerSpawner.IDtoPlayer(currentId).transform);
-        }
-        controllable = false;
+        List<Transform> selectedTargets = myRange.GetTargets();
         if(threatType.Equals("Supress"))
         {
             TurnManager.SupressingFire(selectedTargets);
-            Destroy(gameObject);
+            RemoveRange(attacker);
         }
         else if(threatType.Equals("Overwatch"))
         {
-            myRange.draw = false;
+            myRange.Draw(false);
             TurnManager.OverwatchFinished();
         }
         else if(threatType.Equals("Flame"))
         { 
             TurnManager.FlameAttack(selectedTargets);
-            Destroy(gameObject);
+            RemoveRange(attacker);
         }
         else if(threatType.Equals("Blast"))
         {
@@ -186,13 +177,14 @@ public class ThreatRangeBehavior : MonoBehaviour
         origin = attacker.transform.position; 
         this.attacker = attacker;
         this.w = w;
-        pv.RPC("RPC_Parameter",RpcTarget.Others, dimensions, type, origin, ThrowRange);
+        pv.RPC("RPC_Parameter",RpcTarget.Others, dimensions, type, attacker.GetID(), ThrowRange);
     }
 
     [PunRPC]
-    void RPC_Parameter(Vector3 scale, string type, Vector3 origin, int ThrowRange)
+    void RPC_Parameter(Vector3 scale, string type, int attackerID, int ThrowRange)
     {
-        this.origin= origin;
+        PlayerStats attacker = PlayerSpawner.IDtoPlayer(attackerID);
+        this.origin = attacker.transform.position;
         this.ThrowRange = ThrowRange;
         threatType = type;
         if(type.Equals("Blast"))
@@ -200,8 +192,8 @@ public class ThreatRangeBehavior : MonoBehaviour
             Destroy(ConeToken);
             BlastToken.SetActive(true);
             myRange = BlastToken.GetComponent<ThreatCone>();
+            myRange.StrictLOS = true;
             BlastToken.transform.localScale = scale;
-            Destroy(BlastToken.GetComponent<ThreatCone>());
         }
         else
         {
@@ -209,7 +201,7 @@ public class ThreatRangeBehavior : MonoBehaviour
             ConeToken.SetActive(true);
             ConeToken.transform.localScale = scale;
             myRange = ConeToken.GetComponent<ThreatCone>();
-            Destroy(ConeToken.GetComponent<ThreatCone>());
+            myRange.avoidOwner = attacker.transform;
         }
     }
 
@@ -233,10 +225,16 @@ public class ThreatRangeBehavior : MonoBehaviour
             int distance = Random.Range(1,6);
             transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
             gameObject.transform.Translate(transform.forward.normalized * distance);
+            pv.RPC("RPC_ScatterMove",RpcTarget.Others, transform.position);
             CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");    
         }
-        yield return new WaitForSeconds (0.5f);
+        yield return new WaitForSeconds (0.2f);
         TurnManager.BlastAttack(myRange.GetTargets());
+    }
 
+    [PunRPC]
+    public void RPC_ScatterMove(Vector3 pos)
+    {
+        transform.position = pos;
     }
 }

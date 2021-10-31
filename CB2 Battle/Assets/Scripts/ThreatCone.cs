@@ -8,6 +8,8 @@ public class ThreatCone : MonoBehaviour
 {
     // Contains the transforms of each player gameobject within range
 	private List<Transform> visibleTargets = new List<Transform>();
+    // List of transforms that line of sight applies 
+    private List<Transform> validTargets = new List<Transform>();
     // Toggles wether the threat range (transparent red area) is visible to the player, determined by threatrangebehavior
     public bool draw = true;
     // Toggled to use the stricter los rules for blast weapons
@@ -21,30 +23,52 @@ public class ThreatCone : MonoBehaviour
     void Start()
     {
         MyMesh = GetComponent<MeshFilter>().mesh;
-        StartCoroutine(ThreatEunmerator());
+        StartCoroutine(LOSDelay());
     }
 
-    // Psuedo update that empties the visible targets if the cone is moved, also where draw is checked/applied
-    IEnumerator ThreatEunmerator()
+    public void Draw(bool enabled)
+    {
+        if(!enabled)
+        {
+            GetComponent<MeshFilter>().mesh = null;
+        }
+        else
+        {
+            GetComponent<MeshFilter>().mesh = MyMesh;
+        }
+        draw = enabled;
+    }
+
+    IEnumerator LOSDelay()
     {
         while(true)
         {
-            if(!draw)
+            yield return new WaitForSeconds(0.2f);
+            CheckLOS();
+        }
+    }
+
+    private void CheckLOS()
+    {
+        validTargets = new List<Transform>();
+        bool paint = false;
+        foreach(Transform t in visibleTargets)
+        {
+            if(ValidContact(t))
             {
-                GetComponent<MeshFilter>().mesh = null;
+                validTargets.Add(t);
+                if(draw)
+                {
+                    paint = true;
+                }
             }
-            else
-            {
-                GetComponent<MeshFilter>().mesh = MyMesh;
-            }
-            visibleTargets = new List<Transform>();
-            yield return new WaitForSeconds (0.02f);
+            t.GetComponent<PlayerStats>().PaintTarget(paint);
         }
     }
 
     // Called every frame another collider is within the threat range, adds every player object within the range
     // But only if line of sight can be drawn between the origin and the target
-    void OnCollisionStay(Collision collision)
+    void OnCollisionEnter(Collision collision)
     {
         foreach (ContactPoint contact in collision.contacts)
         {
@@ -52,51 +76,63 @@ public class ThreatCone : MonoBehaviour
             if(contact.otherCollider.tag == "Player")
             {
                 // checks los between players so long as they aren't excluded
-                if( ValidContact(contact) && contact.otherCollider.transform != avoidOwner)
+                if( ValidContact(contact.otherCollider.transform) && contact.otherCollider.transform != avoidOwner)
                 {
                     if(!visibleTargets.Contains(contact.otherCollider.transform) )
                     {
+                        
                         visibleTargets.Add(contact.otherCollider.transform);
-                        if(draw)
-                        {
-                            contact.otherCollider.GetComponent<PlayerStats>().PaintTarget();
-                        }
                     }
                 }
             }
         }
+        Debug.Log(visibleTargets.Count);
     }
 
-    private bool ValidContact(ContactPoint contact)
+    void OnCollisionExit(Collision collision)
     {
-        if(StrictLOS)
+        // los is expensive and should only be called on players
+        if(collision.gameObject.tag == "Player")
         {
-            return !Physics.Linecast(gameObject.transform.position, contact.otherCollider.transform.position, LayerMask.GetMask("Obstacle"));
+            Transform myTrans = collision.transform;
+            if(visibleTargets.Contains(myTrans))
+            {
+                myTrans.GetComponent<PlayerStats>().PaintTarget(false);
+                visibleTargets.Remove(myTrans);
+                Debug.Log(myTrans.gameObject.name + "has left my view");
+            }
+        }
+    }
+
+    private bool ValidContact(Transform target)
+    {
+        if(StrictLOS || avoidOwner == null)
+        {
+            return !Physics.Linecast(gameObject.transform.position, target.position, LayerMask.GetMask("Obstacle"));
         }
         else
         {
-            return TacticsAttack.HasLOS(contact.otherCollider.gameObject, avoidOwner.gameObject);
+            return TacticsAttack.HasLOS(target.gameObject, avoidOwner.gameObject);
         }
+
     }
 
     // Returns the transforms of all players within the threat range to the behavior class
     public List<Transform> GetTargets()
     {
-        Debug.Log("tc " + visibleTargets.Count);
+        CheckLOS();
+        foreach(Transform t in visibleTargets)
+        {
+            t.GetComponent<PlayerStats>().PaintTarget(false);
+        }
         return visibleTargets;
     }
 
-    public List<Transform> GetTargetsSphere()
+    void OnDestroy()
     {
-        Vector3 scale = transform.localEulerAngles;
-        Debug.Log("x scale: " + scale.x );
-        List<Transform> output = new List<Transform>();
-        Collider[] collisions = Physics.OverlapSphere(transform.position, scale.x, LayerMask.GetMask("Obstacle"));
-        foreach(Collider c in collisions)
+        foreach(Transform t in visibleTargets)
         {
-            Debug.Log(c.name);
-            output.Add(c.GetComponent<Transform>());
+            t.GetComponent<PlayerStats>().PaintTarget(false);
         }
-        return output;
     }
 }

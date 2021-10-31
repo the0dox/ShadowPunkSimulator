@@ -54,7 +54,7 @@ public class ThreatRange : MonoBehaviour
                     //Debug.Log("found you!");
 					if(draw)
 					{
-						target.GetComponent<PlayerStats>().PaintTarget();
+						target.GetComponent<PlayerStats>().PaintTarget(true);
 					}
                     visibleTargets.Add (target);
 				}
@@ -66,7 +66,7 @@ public class ThreatRange : MonoBehaviour
 					{
 						if(draw)
 						{
-							target.GetComponent<PlayerStats>().PaintTarget();
+							target.GetComponent<PlayerStats>().PaintTarget(true);
 						}
 						visibleTargets.Add (target);
 					}

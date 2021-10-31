@@ -85,6 +85,7 @@ MonoBehaviour:
   - RPC_SyncStatsOut
   - RPC_AskPlayers
   - RPC_GetDummyPlayers
+  - RPC_ScatterMove
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

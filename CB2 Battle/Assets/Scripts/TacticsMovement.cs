@@ -321,6 +321,7 @@ public class TacticsMovement : MonoBehaviour
    }
    public void GetValidAttackTargets(Weapon w)
    {
+      RemoveSelectableTiles();
       ComputeAdjacencyLists();
       GetCurrentTile();
       GameObject[] players = GameObject.FindGameObjectsWithTag("Player");

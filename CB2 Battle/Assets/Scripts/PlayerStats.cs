@@ -22,8 +22,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public Material SelectedColor;
     // A reference to the regular material the player spawns in with
     private Material DefaultColor;
-    // Returns true if selectedcolor is applied to model
-    private bool painted;
     // Reference to the savedata associated with this character
     public CharacterSaveData myData;
     // Characters can store the cover bonus of cover while advancing
@@ -82,7 +80,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             pv.RPC("RPC_Init",RpcTarget.OthersBuffered, myData.team,myData.Model, id);
         }
         CompleteDownload();
-        StartCoroutine(modelDisplayDelay());
         Weapon[] startingequipment = GetWeaponsForEquipment().ToArray();
         if (startingequipment.Length > 0)
         {
@@ -100,38 +97,18 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         SetID(ID);
         this.team = team;
         pv = GetComponent<PhotonView>();
-        if(!pv.IsMine)
+        if(team == 0)
         {
-            if(team == 0)
-            {
-                GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SPlayerMaterial;
-            }
-            else
-            {
-                GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SNPCMaterial;   
-            }
+            GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SPlayerMaterial;
         }
+        else
+        {
+            GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SNPCMaterial;   
+        }
+        PlayerSpawner.ClientUpdateIDs(this);
         GetComponentInChildren<MeshFilter>().mesh = PlayerSpawner.GetPlayers()[model];
-    }
-
-    // temporarly paints the target
-    IEnumerator modelDisplayDelay()
-    {
-        while(true)
-        {
-            yield return new WaitForSeconds (0.02f);
-            if(painted)
-            {
-                painted = false;
-                GetComponentInChildren<MeshRenderer>().material = SelectedColor;
-            }
-            else
-            {    
-                GetComponentInChildren<MeshRenderer>().material = DefaultColor;
-            }
-        }
-    }
-    public int getWounds()
+        DefaultColor = GetComponentInChildren<MeshRenderer>().material;
+    }    public int getWounds()
     {
         return Stats["Wounds"];
     }
@@ -183,7 +160,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public void TakeCritical(int critDamage, string location,string damageType)
     {
         Stats["Critical"] += critDamage;
-        Stats["Wounds"] = 0;
         CriticalDamageReference.DealCritical(this, damageType, Stats["Critical"],location);
     }
 
@@ -758,9 +734,16 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         }
     }
 
-    public void PaintTarget()
+    public void PaintTarget(bool painted)
     {
-        painted = true;
+        if(painted)
+        {
+            GetComponentInChildren<MeshRenderer>().material = SelectedColor;
+        }
+        else
+        {   
+            GetComponentInChildren<MeshRenderer>().material = DefaultColor;
+        }
     }
 
     public void SetGrappler(PlayerStats attacker)
