@@ -12,11 +12,12 @@ public class Tile : MonoBehaviour
     public bool attack = false;
     public bool selectableRunning = false; 
     public List<Tile> adjacencyList = new List<Tile>();
+    public List<Tile> diagonalList = new List<Tile>();
 
     //
     public bool visited = false;
     public Tile parent = null; 
-    public int distance = 0; 
+    public float distance = 0; 
 
     public int ArmorValue = 8;
     public int TotalAV;
@@ -83,6 +84,7 @@ public class Tile : MonoBehaviour
         parent = null; 
         distance = 0; 
         adjacencyList = new List<Tile>();
+        diagonalList = new List<Tile>();
         UpdateIndictator();
     }
 
@@ -90,18 +92,18 @@ public class Tile : MonoBehaviour
     public void FindNeighbors(float jumpHeight)
     {
         reset();
-        CheckTile(Vector3.forward, jumpHeight);
-        CheckTile(-Vector3.forward, jumpHeight);
-        CheckTile(Vector3.right, jumpHeight);
-        CheckTile(-Vector3.right, jumpHeight);
+        CheckTile(Vector3.forward, jumpHeight,false);
+        CheckTile(-Vector3.forward, jumpHeight,false);
+        CheckTile(Vector3.right, jumpHeight,false);
+        CheckTile(-Vector3.right, jumpHeight,false);
         //diagonal movement
-        CheckTile(topright,jumpHeight);
-        CheckTile(topleft,jumpHeight);
-        CheckTile(-topright,jumpHeight);
-        CheckTile(-topleft,jumpHeight);
+        CheckTile(topright,jumpHeight,true);
+        CheckTile(topleft,jumpHeight,true);
+        CheckTile(-topright,jumpHeight,true);
+        CheckTile(-topleft,jumpHeight,true);
     }
 
-    public void CheckTile(Vector3 direction, float jumpHeight)
+    public void CheckTile(Vector3 direction, float jumpHeight, bool diagonal)
     {
         for(int i = -1; i < jumpHeight; i++)
         {
@@ -109,18 +111,19 @@ public class Tile : MonoBehaviour
             if(BoardBehavior.ValidNeighbor(transform.position, currentDir))
             {
                 Tile tile = BoardBehavior.GetTile(transform.position + currentDir);
-                adjacencyList.Add(tile);      
+                if(diagonal)
+                {
+                    diagonalList.Add(tile);
+                }
+                adjacencyList.Add(tile);    
             }
         }
-        //Collider[] colliders = Physics.OverlapBox(transform.position + direction, halfExtents);
-
-        
     }
 
     public PlayerStats GetOccupant()
     {
         RaycastHit hit;
-        if (Physics.Raycast(transform.position, Vector3.up, out hit, 1))
+        if (Physics.Raycast(transform.position, Vector3.up, out hit, 1, LayerMask.GetMask("Character")))
         {
             return hit.collider.GetComponent<PlayerStats>();
         }

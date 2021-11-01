@@ -213,10 +213,10 @@ public class TurnActions : UIButtonManager
     public void GuardedAttack()
     { 
         currentAction = "Attack";
-        PushToolTips();
         FireRate = "Full";
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         ActivePlayerStats.SetCondition("GuardedAttack", 0, false);
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         Dictionary<string,string> d = new Dictionary<string,string>();
         d.Add("Cancel","GuardedCancel");
         ConstructActions(d);
@@ -225,10 +225,10 @@ public class TurnActions : UIButtonManager
     public void AllOut()
     {
         currentAction = "Attack";
-        PushToolTips();
         FireRate = "Full";
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         ActivePlayerStats.SetCondition("AllOut", 0, false);
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         Dictionary<string,string> d = new Dictionary<string,string>();
         d.Add("Cancel","AllOutCancel");
         ConstructActions(d);
@@ -618,17 +618,18 @@ public class TurnActions : UIButtonManager
     public void StandardAttack()
     {
         currentAction = "Attack";
+        FireRate = "S";
         PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        FireRate = "S";
         List<string> l = new List<string>{"Cancel"};
         ConstructActions(l);
     }
     public void ChargeAttack()
     {
         currentAction ="Attack";
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "Full";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Cancel","Combat");
         ConstructActions(d);
@@ -650,11 +651,11 @@ public class TurnActions : UIButtonManager
     public void Head()
     {
         currentAction = "Attack";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "Head";
         ActivePlayerStats.SetCondition("Called",1,false);
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
 
         Dictionary<string, string> d = new Dictionary<string,string>();
         d.Add("Cancel", "CalledCancel");
@@ -663,11 +664,11 @@ public class TurnActions : UIButtonManager
     public void RightArm()
     {
         currentAction = "Attack";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "RightArm";
         ActivePlayerStats.SetCondition("Called",1,false);
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         
         Dictionary<string, string> d = new Dictionary<string,string>();
         d.Add("Cancel", "CalledCancel");
@@ -676,12 +677,12 @@ public class TurnActions : UIButtonManager
     public void LeftArm()
     {
         currentAction = "Attack";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "LeftArm";
         ActivePlayerStats.SetCondition("Called",1,false);
-        
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+
         Dictionary<string, string> d = new Dictionary<string,string>();
         d.Add("Cancel", "CalledCancel");
         ConstructActions(d);
@@ -689,12 +690,12 @@ public class TurnActions : UIButtonManager
     public void Body()
     {
         currentAction = "Attack";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "Body";
         ActivePlayerStats.SetCondition("Called",1,false);
-        
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+
         Dictionary<string, string> d = new Dictionary<string,string>();
         d.Add("Cancel", "CalledCancel");
         ConstructActions(d);
@@ -702,12 +703,12 @@ public class TurnActions : UIButtonManager
     public void RightLeg()
     {
         currentAction = "Attack";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "RightLeg";
         ActivePlayerStats.SetCondition("Called",1,false);
-        
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+
         Dictionary<string, string> d = new Dictionary<string,string>();
         d.Add("Cancel", "CalledCancel");
         ConstructActions(d);
@@ -715,11 +716,11 @@ public class TurnActions : UIButtonManager
     public void LeftLeg()
     {
         currentAction = "Attack";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         FireRate = "S";
         HitLocation = "LeftLeg";
         ActivePlayerStats.SetCondition("Called",1,false);
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         
         Dictionary<string, string> d = new Dictionary<string,string>();
         d.Add("Cancel", "CalledCancel");
@@ -736,8 +737,8 @@ public class TurnActions : UIButtonManager
     public void SemiAuto()
     {
         currentAction = "Attack";
-        PushToolTips();
         FireRate = "Semi";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         List<string> l = new List<string>{"Cancel"};
         ConstructActions(l);
@@ -745,8 +746,8 @@ public class TurnActions : UIButtonManager
     public void FullAuto()
     {
         currentAction = "Attack";
-        PushToolTips();
         FireRate = "Auto";
+        PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         List<string> l = new List<string>{"Cancel"};
         ConstructActions(l);

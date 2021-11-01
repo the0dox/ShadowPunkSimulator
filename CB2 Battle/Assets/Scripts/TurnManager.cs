@@ -17,6 +17,7 @@ public class TurnManager : TurnActions
     public InitativeTrackerScript It;
     public GameObject PhotonHit;
     float incrementer = 0;
+    
     SortedList<float, TacticsMovement> Sorter = new SortedList<float, TacticsMovement>();  
     // Start is called before the first frame update
 
@@ -180,8 +181,6 @@ public class TurnManager : TurnActions
                 {
                     SentPos = BoardBehavior.GetClosestTile(hit.point);
                 }
-            
-                Debug.Log("Sending info of my hitlocation");
                 pv.RPC("RPC_Send_Hit_Left",RpcTarget.MasterClient, SentPos);
             }
         }
@@ -367,7 +366,6 @@ public class TurnManager : TurnActions
     [PunRPC]
     void RPC_Send_Hit_Left(Vector3 ObjectLocation)
     {
-        Debug.Log("finding object at " + ObjectLocation);
         GameObject[] Players = GameObject.FindGameObjectsWithTag("Player");
         foreach(GameObject p in Players)
         {

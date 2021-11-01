@@ -91,10 +91,10 @@ public class TacticsMovement : MonoBehaviour
 
    public void FindSelectableTiles(int move, int doubleMove, int team)
    {
-      pv.RPC("RPC_Walk", RpcTarget.All ,move,doubleMove);
+      pv.RPC("RPC_Walk", RpcTarget.All ,move,doubleMove, team);
    }
    [PunRPC]
-   void RPC_Walk(int move, int doubleMove)
+   void RPC_Walk(int move, int doubleMove, int team)
    {
       ComputeAdjacencyLists();
       GetCurrentTile();
@@ -111,32 +111,45 @@ public class TacticsMovement : MonoBehaviour
             Tile t = process.Dequeue();
 
             selectableTiles.Add(t);
-            if (t.distance <= move)
-            {
-               t.selectable = true;
-               t.UpdateIndictator(); 
-            }
-            else
-            {
-               t.selectableRunning = true; 
-               t.UpdateIndictator();
-            }
-            if (t.distance < doubleMove) {     
-
-               foreach (Tile tile in t.adjacencyList)
+            PlayerStats occupant = t.GetOccupant();
+            if(occupant == null || occupant.GetTeam() == team)
+            { 
+               if (t.distance <= move)
                {
-                  
-                  if (!tile.visited)
+                  if(occupant == null)
                   {
-
-                     tile.parent = t;
-                     tile.visited = true;
-                     tile.distance = 1 + t.distance;
-                     process.Enqueue(tile);
-
+                     t.selectable = true;
+                     t.UpdateIndictator(); 
                   }
                }
-            } 
+               else
+               {
+                  if(occupant == null)
+                  {
+                     t.selectableRunning = true;
+                     t.UpdateIndictator(); 
+                  }
+               }
+               if (t.distance < doubleMove) {     
+
+                  foreach (Tile tile in t.adjacencyList)
+                  {
+                     
+                     if (!tile.visited)
+                     {
+                        tile.parent = t;
+                        tile.visited = true;
+                        float distanceCost = 1;
+                        if(t.diagonalList.Contains(tile))
+                        {
+                           distanceCost = 1.5f;
+                        }
+                        tile.distance = distanceCost + t.distance;
+                        process.Enqueue(tile);
+                     }
+                  }
+               }
+            }
          }
       }
    }
@@ -170,8 +183,11 @@ public class TacticsMovement : MonoBehaviour
                {
                   if (adjacentTile.GetOccupant() != null && adjacentTile.GetOccupant().GetTeam() != team)
                   {
-                     t.selectableRunning = true;
-                     t.UpdateIndictator();
+                     if(t.GetOccupant() == null)
+                     {
+                        t.selectableRunning = true;
+                        t.UpdateIndictator();
+                     }
                   }
                }
             }
@@ -183,12 +199,15 @@ public class TacticsMovement : MonoBehaviour
                   
                   if (!tile.visited)
                   {
-
                      tile.parent = t;
                      tile.visited = true;
-                     tile.distance = 1 + t.distance;
+                     float distanceCost = 1;
+                     if(t.diagonalList.Contains(tile))
+                     {
+                        distanceCost = 1.5f;
+                     }
+                     tile.distance = distanceCost + t.distance;
                      process.Enqueue(tile);
-
                   }
                }
             } 
