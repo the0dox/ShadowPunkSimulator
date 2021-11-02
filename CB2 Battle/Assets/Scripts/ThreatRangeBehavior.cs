@@ -104,6 +104,11 @@ public class ThreatRangeBehavior : MonoBehaviour
             {
                 controllable = false;
                 pv.RPC("RPC_MasterClick",RpcTarget.MasterClient, transform.position, transform.eulerAngles);
+                if(!pv.IsMine)
+                {
+                    myRange.DestroyToken();
+                    Destroy(this);
+                }
             }
         }
     }
