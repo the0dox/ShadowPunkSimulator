@@ -5,34 +5,72 @@ using UnityEngine.UI;
 
 public class SkillScript : MonoBehaviour
 {
-    public Skill MySkill;
+    [SerializeField] private SkillTemplate mySkill;
+    [SerializeField] private InputField IF;
+    [SerializeField] private Text Level;
+    [SerializeField] private Text FinalResult;
+    [SerializeField] private Dropdown SpecializationField;
+    [SerializeField] private CharacterSaveData myData;
+    public GameObject ButtonText; 
 
-    public Toggle LevelOne;
-    public Toggle LevelTwo;
-    public Toggle LevelThree;
-    //public Toggle LevelFour; 
-    public GameObject ButtonText;
-    public GameObject TurnOrder;
-
-    public void UpdateValue(Skill input)
+    public void Start()
     {
-        MySkill = input;
-        ButtonText.GetComponent<Text>().text = MySkill.name + " (" + MySkill.characterisitc + ")";
-        LevelOne.isOn = MySkill.levels > 0;
-        LevelTwo.isOn = MySkill.levels > 1;
-        LevelThree.isOn = MySkill.levels > 2;
+        transform.localScale = Vector3.one;
     }
 
-    public Skill GetSkill()
+    public void DownloadCharacter(CharacterSaveData myData, SkillTemplate mySkill)
     {
-        //updates level values
-        MySkill.levels = (LevelOne.isOn ? 1 : 0) + (LevelTwo.isOn ? 1 : 0) + (LevelThree.isOn ? 1 : 0);
-        return MySkill;
+        this.myData = myData;
+        this.mySkill = mySkill;
+        SpecializationField.ClearOptions();
+        List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
+        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
+        baseResponse.text = "None";
+        int specializationIndex = myData.skillSpecialization[mySkill.name];
+        results.Add(baseResponse);
+        foreach(string Key in mySkill.Specializations)
+        {
+            Dropdown.OptionData NewData = new Dropdown.OptionData();
+            NewData.text = Key;
+            results.Add(NewData);
+        }
+        SpecializationField.AddOptions(results);
+        SpecializationField.value = specializationIndex;
+        UpdateValue();
+    }
+
+    public void UpdateValue()
+    {
+        int total = myData.GetSkill(mySkill.name);
+        int levels = myData.skills[mySkill.name];
+        IF.text = "" + levels;
+        ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.characterisitc + ")";
+        FinalResult.text = "[" + total +"]";
+    }
+
+    public void UpdateSpecalization()
+    {
+        myData.setSpecialization(mySkill.name,SpecializationField.value);
+    }
+
+    public void OnValueChange()
+    {
+        int value = 0;
+        if (!int.TryParse(Level.text, out value))
+        {
+            value = 0;
+        }
+        myData.SetSkill(mySkill.name, value);
+        UpdateValue();
+    }
+
+    public string GetSkill()
+    {
+        return mySkill.name;
     }
 
     public void SkillCheck()
     {
-        Debug.Log(MySkill.name);
-        GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().AbilityCheck(MySkill.name);
+        GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().AbilityCheck(mySkill.name);
     }
 }

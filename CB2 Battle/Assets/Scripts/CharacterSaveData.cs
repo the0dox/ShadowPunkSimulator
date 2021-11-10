@@ -7,44 +7,19 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    // Basic character stats
-    private int BS = 20;
-    private int WS = 20;
-    private int S = 20;
-    private int T = 20;
-    private int A = 20;
-    private int INT = 20;
-    private int PER = 20;
-    private int WP = 20;
-    private int FEL = 20;
-    private int Wounds = 5;
-    private int MaxWounds = 5;
-    private int MoveHalf = 0;
-    private int MoveFull = 0;
-    private int MoveCharge = 0;
-    private int MoveRun = 0;
-    private int Head = 0;
-    private int Body = 0;
-    private int RightArm = 0;
-    private int LeftArm = 0;
-    private int RightLeg = 0;
-    private int LeftLeg = 0;
-    private int Fatigue = 0;
-    private int Critical = 0;
-    private int Fate = 0;
-    private int FateMax = 0;
-    private int Gelt = 0;
-    private int Income = 0;
+    // Basic character stats Shadowrunner
+    public Dictionary<string, int> attribues = new Dictionary<string, int>(); 
+
+    // Skills Shadowrunner
+    public Dictionary<string, int> skills = new Dictionary<string, int>();
+    
+    // Skills Shadowrunner
+    public Dictionary<string, int> skillSpecialization = new Dictionary<string, int>();
+    // non ttrpg stats used for game logic
     public int team = 0; 
-    public int ID;
     public string playername;
     // Name of mesh model
     public string Model;
-    // Each entry is a unique skill name for the skillreference
-    
-    private string[] SkillNames = new string[50];
-    // Each entry is the levels the player has in the skill of the same index
-    private int[] SkillLevels = new int[50]; 
     // Each entry is a unique skill name for the itemReference
     public string[] equipment = new string[20];
     // Each entry is the number of each equipment piece a player has of the same index
@@ -66,202 +41,143 @@ public class CharacterSaveData
             Model = "Renegade";
             team = 1;
         }
-        BasicSkills();
-        StandardHitLocations();
+        CalculateCharacteristics();
     }
 
-    // Saves a set of basic skills every player will have to SkillNames and SkillLevels
-    private void BasicSkills()
+    public CharacterSaveData(string playername, Dictionary<string,int> attribues, Dictionary<string,int> skills, Dictionary<string,int> specalizations)
     {
-        Dictionary<string, SkillTemplate> templates = SkillReference.SkillsTemplates(); 
-        foreach (string key in templates.Keys)
-        {
-            // Advanced skills are excluded
-            if(templates[key].basic)
-            {
-                // By default all skills are level 0, untrained
-                addSkill(new Skill(templates[key], 0));
-            }
-        }
-    }
-
-    // Determines what a body part is hit depending on the hit result, same for all humanoids
-    // To implement: new hitlocations for monsters/vehicles
-    public Dictionary<int,string> StandardHitLocations()
-    {
-        Dictionary<int,string> HitLocations = new Dictionary<int, string>();
-        HitLocations.Add(10, "Head");
-        HitLocations.Add(20, "RightArm");
-        HitLocations.Add(30, "LeftArm");
-        HitLocations.Add(70, "Body");
-        HitLocations.Add(85, "RightLeg");
-        HitLocations.Add(100, "LeftLeg");
-        return HitLocations;
+        this.playername = playername;
+        this.attribues = attribues;
+        this.skills = skills;
+        this.skillSpecialization = specalizations;
     }
 
     // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
     // a dictionary when the player is created 
     public Dictionary<string,int> GetStats()
     {
-        Dictionary<string, int> output = new Dictionary<string, int>();
-        output.Add("BS",BS);
-        output.Add("WS",WS);
-        output.Add("S",S);
-        output.Add("T",T);
-        output.Add("A",A);
-        output.Add("INT",INT);
-        output.Add("PER",PER);
-        output.Add("WP",WP);
-        output.Add("FEL",FEL);
-        output.Add("Wounds",Wounds);
-        output.Add("MaxWounds",MaxWounds);
-        output.Add("MoveHalf",MoveHalf);
-        output.Add("MoveFull",MoveFull);
-        output.Add("MoveCharge",MoveCharge);
-        output.Add("MoveRun",MoveRun);
-        output.Add("Head",Head);
-        output.Add("RightArm",RightArm);
-        output.Add("LeftArm",LeftArm);
-        output.Add("Body",Body);
-        output.Add("RightLeg",RightLeg);
-        output.Add("LeftLeg",LeftLeg);
-        output.Add("Critical",Critical);
-        output.Add("Fatigue", Fatigue);
-        output.Add("Fate",Fate);
-        output.Add("FateMax",FateMax);
-        output.Add("Gelt",Gelt);
-        output.Add("Income",Income);
-        return output;
+        return attribues;
     }
 
     // Key: Specific stat being modified
     // Value: New value of modified stat
     // updates a stat's value 
-    public void SetStat(string key, int value)
+    public void SetAttribute(string key, int value, bool calculate)
     {
-        switch (key)
+        if(!attribues.ContainsKey(key))
         {
-            case "BS":
-            BS = value;
-            break;
-            case "WS":
-            WS = value;
-            break;
-            case "S":
-            S = value;
-            break;
-            case "T":
-            T = value;
-            break;
-            case "A":
-            A = value;
-            break;
-            case "INT":
-            INT = value;
-            break;
-            case "PER":
-            PER = value;
-            break;
-            case "WP":
-            WP = value;
-            break;
-            case "FEL":
-            FEL = value;
-            break;
-            case "Wounds":
-            Wounds = value;
-            break;
-            case "MaxWounds":
-            MaxWounds = value;
-            break;
-            case "MoveHalf":
-            MoveHalf = value;
-            break;
-            case "MoveFull":
-            MoveFull = value;
-            break;
-            case "MoveCharge":
-            MoveCharge = value;
-            break;
-            case "MoveRun":
-            MoveRun = value;
-            break;
-            case "Head":
-            Head = value;
-            break;
-            case "RightArm":
-            RightArm = value;
-            break;
-            case "LeftArm":
-            LeftArm = value;
-            break;
-            case "Body":
-            Body = value;
-            break;
-            case "RightLeg":
-            RightLeg = value;
-            break;
-            case "LeftLeg":
-            LeftLeg = value;
-            break;
-            case "Fatigue":
-            Fatigue = value;
-            break;
-            case "Critical":
-            Critical = value;
-            break;
-            case "Fate":
-            Fate = value;
-            break;
-            case "FateMax":
-            FateMax = value;
-            break;
-            case "Gelt":
-            Gelt = value;
-            break;
-            case "Income":
-            Income = value;
-            break;
+            attribues.Add(key,0);
+        }
+        attribues[key] = value;
+        if(calculate)
+        {
+            CalculateCharacteristics();
+        }
+    }
+
+    public void SetSkill(string key, int value)
+    {
+        if(!skills.ContainsKey(key))
+        {
+            skills.Add(key,0);
+        }
+        skills[key] = value;
+        setSpecialization(key, 0);
+    }
+
+    public int GetAttribute(string key)
+    {
+        if(!attribues.ContainsKey(key))
+        {
+            attribues.Add(key,0);
+        }
+        return attribues[key];
+    }
+
+    public int GetSkill(string key)
+    {
+        if(!skills.ContainsKey(key))
+        {
+            skills.Add(key, 0);
+        }
+        int levels = skills[key];
+        int bonus = GetAttribute(SkillReference.GetDerrivedAttribute(key));
+        if(levels > 0)
+        {
+            return levels + bonus;
+        }
+        else if(SkillReference.Defaultable(key))
+        {
+            return bonus - 1;
+        }
+        else
+        {
+            return 0;
         }
     }
 
     // Converts SkillNames and Skill Levels into a list of skill objects that playerstats can read
     public Dictionary<string,int> GetSkills()
     {
-        Dictionary<string, int> output = new Dictionary<string, int>();
-        for(int i = 0; i < 50; i++)
-        {
-            if(SkillNames[i] != null)
-            {
-                output.Add( SkillNames[i],SkillLevels[i]);
-            }
-        }
-        return output;
+        return skills;
     }
 
     // Resets all Skills, used when charactersheet is editing skills
     public void ClearSkills()
     {
-        SkillNames = new string[50];
-        SkillLevels = new int[50];
+        skills.Clear();
+        skillSpecialization.Clear();
     }
 
-    // Skill: an specific skill object
-    // Converts object into back into basic structures 
-    public void addSkill(Skill input)
+    // whenever characteristics are set, updates all abilities/stats that are dependent on those conditions
+    public void CalculateCharacteristics()
     {
-        int newindex = 1;
-        while(newindex < 50 && SkillNames[newindex] != null)
-        {
-             newindex++;
-        }
-        //if there is space
-        if(SkillNames[newindex] == null)
-        {
-            SkillNames[newindex] = input.name;
-            SkillLevels[newindex] = input.levels;
-        }
+        // Base Initative = reaction + Intuition
+        SetAttribute(AttributeKey.InitativeStandard,GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
+        // Astral initative = Intuition * 2
+        SetAttribute(AttributeKey.InitativeAstral, GetAttribute(AttributeKey.Intuition) * 2, false);
+        // Matrix initative = Data processing + Intuition
+        // SetAttribute(AttributeKey.InitativeMatrix, Dataprocessing + GetAttribute(AttributeKey.Intuition));
+        // Mental Limit = [(Logic x 2) + Intuition + Willpower] / 3
+        float MentalLimit = (float)(GetAttribute(AttributeKey.Logic) * 2 + GetAttribute(AttributeKey.Intuition) + GetAttribute(AttributeKey.Willpower));
+        MentalLimit /= 3f;
+        SetAttribute(AttributeKey.MentalLimit, Mathf.CeilToInt(MentalLimit),false);
+        // Physical Limit = [(Strength x 2) + Body + Reaction] / 3 (round up)
+        float PhysicalLimit = (float)(GetAttribute(AttributeKey.Strength) * 2 + GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Reaction));
+        PhysicalLimit /= 3f;
+        SetAttribute(AttributeKey.PhysicalLimit, Mathf.CeilToInt(PhysicalLimit),false);
+        // Social Limit = [(Charisma x 2) + Willpower + Essence] / 3 (round up) 
+        float SocialLimit = (float)(GetAttribute(AttributeKey.Charisma) * 2 + GetAttribute(AttributeKey.Willpower) + GetAttribute(AttributeKey.Essense));
+        SocialLimit /= 3f;
+        SetAttribute(AttributeKey.SocialLimit, Mathf.CeilToInt(SocialLimit), false);
+        // Health max = [Physical / 2] + 8 
+        float healthBonus = (float)(GetAttribute(AttributeKey.Body)) / 2f;
+        SetAttribute(AttributeKey.PhysicalHealth, Mathf.CeilToInt(healthBonus) + 8, false);
+        // Stun max = [Willpower / 2] + 8 
+        float StunBonus = (float)(GetAttribute(AttributeKey.Willpower)) / 2f;
+        SetAttribute(AttributeKey.StunHealth, Mathf.CeilToInt(StunBonus) + 8, false);
+        SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) * 2,false);
+        SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.Agility) * 4, false);
+        // COMPOSURE (CHA + WIL)
+        SetAttribute(AttributeKey.Composure, GetAttribute(AttributeKey.Agility) + GetAttribute(AttributeKey.Willpower),false);
+        // JUDGE INTENTIONS (CHA + INT)
+        SetAttribute(AttributeKey.JudgeIntentions, GetAttribute(AttributeKey.Charisma) + GetAttribute(AttributeKey.Intuition),false);
+        // LIFTING/CARRYING (BOD + STR)
+        SetAttribute(AttributeKey.LiftCarry, GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Strength),false);
+        // MEMORY (LOG + WIL)
+        SetAttribute(AttributeKey.Memory, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Willpower),false);
     }
+
+    public void setSpecialization(string skillKey, int SpecializationIndex)
+    {
+        if(!skillSpecialization.ContainsKey(skillKey))
+        {
+            skillSpecialization.Add(skillKey,0);
+        }
+        skillSpecialization[skillKey] = SpecializationIndex;
+    }
+
+
 
     // Converts Equipment and EquipmentSize into a readable list of Item objects
     public Dictionary<string,int> GetEquipment()
@@ -337,6 +253,7 @@ public class CharacterSaveData
                     myPlayer = g.GetComponent<PlayerStats>();
                 }
             }
+            /*
             if(myPlayer != null)
             {
                 Debug.Log("Found My player");
@@ -355,6 +272,7 @@ public class CharacterSaveData
                 ClearEquipment();
                 AddEquipment(myPlayer.equipment);
             }
+            */
         }
     }
 }

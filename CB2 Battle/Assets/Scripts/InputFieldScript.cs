@@ -10,6 +10,7 @@ public class InputFieldScript : MonoBehaviour
     public GameObject TextObject; 
 
     public GameObject Placeholder; 
+    private CharacterSheet mySheet;
 
     public InputField IF;
 
@@ -28,11 +29,12 @@ public class InputFieldScript : MonoBehaviour
         {
             value = 0;
         }
+        mySheet.UpdatedAttribute(stat, value);
     }
 
-    public void UpdateValue(int value)
+    public void UpdateValue(int value, CharacterSheet mySheet)
     {
-        //Debug.Log("Successfuly called!");
+        this.mySheet = mySheet;
         this.value = value;
         IF.text = "" + value;
         TextObject.GetComponent<Text>().text = "" + value; 

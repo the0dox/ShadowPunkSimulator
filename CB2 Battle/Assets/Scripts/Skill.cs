@@ -37,7 +37,7 @@ public class Skill
         this.name = template.name;
         this.levels = levels;
         this.characterisitc = template.characterisitc;
-        this.basic = template.basic;
+        this.basic = template.defaultable;
         this.visible = template.visible;
         if(!this.visible)
         {

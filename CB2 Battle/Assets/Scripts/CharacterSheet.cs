@@ -9,27 +9,23 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 {
     // Reference to all Inputfieldscripts so that the charactersheet only accesses its own inputs
     [SerializeField] private List<InputFieldScript> EntryList;
+    // Reference to all skillinputfields so that the charactersheet can download its save data into it
+    [SerializeField] private List<SkillScript> SkillEntryList;
     // editable fields for basic stats like BS,WS etc
     private Dictionary<string, InputFieldScript> TextEntries;
     private Dictionary<string, ItemInputField> ItemEntries;
     private List<GameObject> WeaponEntries;
     // reference for editing savedata
     private static CharacterSaveData ActivePlayer; 
-    // reference for editing map tokens
-    private static PlayerStats ActivePlayerStats; 
     // an indvidual field for displaying weapon stats
     [SerializeField] private GameObject WeaponDisplay;
     // unique inputfield that saves the players name
     [SerializeField] private InputField NameField;
     // reference to the skillinputfield prefab
     [SerializeField] private GameObject SkillInputButton;
-    // reference to the skill adder button so that its position can be modified
-    [SerializeField] private GameObject SkillAdderButton;
     // Stack used to preserve order all skills when one is removed
     private List<GameObject> BasicSkills;
     private Stack<GameObject> LastSkills;
-    // Dropdown used to select what skill is created by the skill adder button
-    [SerializeField] private Dropdown SkillAdderName;
     // Reference to the Item Adder button so items can be created
     [SerializeField] private GameObject ItemAdder;
     // Individual displays of the names/quantities of each item
@@ -54,19 +50,19 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     private Dictionary<string, int> PlayerSkills;
     // same but for equipment
     private Dictionary<string,int> PlayerEquipment;
-    // players original name
-    private string PlayerDisplayName;
+    [SerializeField] private TrackerSheet HealthMonitor;
+    [SerializeField] private TrackerSheet StunMonitor;
+    [SerializeField] private TrackerSheet EdgeMonitor;
     // Called when created downloads player data onto the sheet and freezes the screen
     public void Init(){
         CameraButtons.UIFreeze(true);
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
-        transform.localPosition = startingPos;
+        transform.localPosition = new Vector3();
         transform.localScale = new Vector3(1,1,1);
         LastSkills = new Stack<GameObject>();
         BasicSkills = new List<GameObject>();
         ItemEntries = new Dictionary<string, ItemInputField>();
         ItemAdder.GetComponent<WeaponAdder>().Init();
-        UpdateSkillDropdown();
         TextEntries = new Dictionary<string, InputFieldScript>();
         foreach (InputFieldScript t in EntryList)
         {
@@ -74,108 +70,14 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         }
     }
 
-    public void OnButtonPressed()
-    {
-        PlayerStats = new Dictionary<string, int>();
-        foreach (KeyValuePair<string, InputFieldScript> kvp in TextEntries){
-            int newValue = kvp.Value.GetValue();
-            PlayerStats.Add(kvp.Key, newValue);
-        }
-        PlayerSkills = new Dictionary<string, int>();
-        GameObject[] EntryListSkillsBasic = BasicSkills.ToArray(); 
-        GameObject[] EntryListSkills = LastSkills.ToArray(); 
-        foreach (GameObject g in EntryListSkillsBasic)
-        {
-            Skill currentSkill = g.GetComponent<SkillScript>().GetSkill();
-            PlayerSkills.Add(currentSkill.name,currentSkill.levels);
-            Destroy(g);
-        }
-        //skills
-        foreach (GameObject g in EntryListSkills)
-        {
-            Skill currentSkill = g.GetComponent<SkillScript>().GetSkill();
-            PlayerSkills.Add(currentSkill.name,currentSkill.levels);
-            Destroy(g);
-        }
-        UpdateStatsOut();
-    }
-
     // Uploading data is different depending on if we are editing save data of a map token
     public void UpdateStatsOut()
     {
         CameraButtons.UIFreeze(false);
-        if(pv.IsMine)
+        if(!pv.IsMine)
         {
-            if(ActivePlayerStats != null)
-            {
-                UpdateStatsOut(ActivePlayerStats);
-            }
-            else if(ActivePlayer != null)
-            {
-                UpdateStatsOut(ActivePlayer);
-            }
+            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, PlayerStats,PlayerSkills, ActivePlayer.skillSpecialization, PlayerEquipment);
         }
-        else
-        {
-            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, PlayerStats,PlayerSkills,PlayerEquipment);
-            Destroy(gameObject);
-        }
-    }
-
-    //transfers sheet info to player for a map token
-    public void UpdateStatsOut(PlayerStats output){
-        output.playername = NameField.text;
-        Dictionary<string, int> newCharacteristics = new Dictionary<string, int>();
-        output.Stats.Clear();
-        Debug.Log(PlayerStats.Count);
-        foreach (KeyValuePair<string, int> kvp in PlayerStats){
-            output.SetStat(kvp.Key, kvp.Value);
-        }
-        output.Skills.Clear();
-        foreach(KeyValuePair<string,int> kvp in PlayerSkills)
-        {
-            Skill newSkill = new Skill(SkillReference.GetSkill(kvp.Key), kvp.Value);
-            output.Skills.Add(newSkill);
-        }
-        output.equipment = ItemReference.DownloadEquipment(PlayerEquipment);
-        Destroy(gameObject);
-        /*
-        GameObject[] EntryListSkills = GameObject.FindGameObjectsWithTag("Skill");
-        PlayerSkills.Clear();    
-        //skills
-        foreach (GameObject g in EntryListSkills)
-        {
-            SkillScript input = g.GetComponent<SkillScript>();
-            PlayerSkills.Add(input.GetSkill());
-            Destroy(g);
-        }
-        PlayerEquipment.Clear();
-        //weapons
-        foreach(Item i in Equipment)
-        {
-            PlayerEquipment.Add(i);
-        }
-        */
-    }
-
-    //transfers sheet info to player for save data
-    public void UpdateStatsOut(CharacterSaveData output){
-        output.playername = NameField.text;
-        output.ClearSkills();
-        output.ClearEquipment();
-        //characterisitcs
-        foreach (KeyValuePair<string, int> kvp in PlayerStats){
-            ActivePlayer.SetStat(kvp.Key, kvp.Value);
-        }
-        GameObject[] EntryListSkills = GameObject.FindGameObjectsWithTag("Skill"); 
-        //skills
-        foreach(KeyValuePair<string,int> kvp in PlayerSkills)
-        {
-            Skill newSkill = new Skill(SkillReference.GetSkill(kvp.Key), kvp.Value);
-            ActivePlayer.addSkill(newSkill);   
-        }
-        //weapons
-        ActivePlayer.AddEquipment(PlayerEquipment);
         Destroy(gameObject);
     }
 
@@ -185,99 +87,62 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     // to the player that called for a charactersheet
     public void UpdateStatsIn(PlayerStats input, int callingPlayerID)
     {
-        ActivePlayerStats = input;
-        PlayerSkills = new Dictionary<string, int>();
-        foreach(Skill s in input.Skills)
-        {
-            PlayerSkills.Add(s.name, s.levels);
-        }
-        PlayerEquipment = new Dictionary<string, int>();
-        foreach(Item i in input.equipment)
-        {
-            PlayerEquipment.Add(i.GetName(),i.GetStacks());
-        }
-        Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
-        pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.Stats, PlayerSkills, PlayerEquipment);
-        /*
-        ActivePlayerStats = input;
-        PlayerStats = input.Stats;
-        PlayerSkills = input.Skills;
-        PlayerEquipment = input.equipment;
-        PlayerDisplayName = input.playername;
-        UpdateStatsIn();
-        */
+        UpdateStatsIn(input.myData,callingPlayerID);
     }
     // Doownloads data from savedata
     public void UpdateStatsIn(CharacterSaveData input, int callingPlayerID)
     {
         ActivePlayer = input;
-        PlayerStats = input.GetStats();
-        PlayerSkills = input.GetSkills();
-        PlayerEquipment = input.GetEquipment();
-        PlayerDisplayName = input.playername;
-        Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
-        pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, PlayerStats, PlayerSkills, PlayerEquipment);
+        if(pv.IsMine)
+        {
+            UpdateStatsIn();
+        }
+        else
+        { 
+            Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
+            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.GetStats(), input.GetSkills(), input.skillSpecialization);
+        }
     }
     // Generic info that both kinds of download needs to know
     public void UpdateStatsIn(){
         Init();
-        NameField.text = PlayerDisplayName;
+        NameField.text = ActivePlayer.playername;
         PlacementPosAdvanced = new Vector3(149.5f, 166,0);
         PlacementPosBasic = new Vector3(-258, 193,0);
         PlacementWeaponRanged = new Vector3(783, 212,0);
         PlacementWeaponMelee = new Vector3(375, 209,0);
         PlacementItems = new Vector3(780,-202,0);
-        SkillAdderButton.transform.localPosition = new Vector3(-16,164,0);
-        //characterisitcs
-        foreach (KeyValuePair<string, int> kvp in PlayerStats){
-            if (TextEntries.ContainsKey(kvp.Key))
-            {
-                TextEntries[kvp.Key].UpdateValue(kvp.Value);   
-            }
-        }
-        //skills
-        foreach (KeyValuePair<string,int> kvp in PlayerSkills){
-            Skill s = new Skill(SkillReference.GetSkill(kvp.Key), kvp.Value);
-            if(s.visible)
-            {
-                if (s.basic)
-                {
-                    BasicSkills.Add(CreateSkill(s, PlacementPosBasic));
-                    PlacementPosBasic -= SkillDisplacement;
-                }
-                else
-                {
-                    LastSkills.Push(CreateSkill(s, PlacementPosAdvanced));
-                    PlacementPosAdvanced -= SkillDisplacement;
-                    SkillAdderButton.transform.localPosition -= SkillDisplacement;
-                }
-            }
-            else
-            {
-                GameObject hiddenSkill = CreateSkill(s,PlacementPosBasic);
-                BasicSkills.Add(hiddenSkill);
-                hiddenSkill.transform.SetParent(null);
-            }
-        }
-        foreach(KeyValuePair<string, int> i in PlayerEquipment)
-        {
-            CreateItem(i.Key, i.Value);
-        }
-    }
-    public bool IsInitalized(){
-        return TextEntries != null; 
+        
+        ActivePlayer.CalculateCharacteristics();
+        HealthMonitor.Init();
+        StunMonitor.Init();
+        EdgeMonitor.Init();
+
+        UpdateInputFields();
+        SkillAdder.DownloadOwner(ActivePlayer);
     }
 
-    // input: a skill gameobject that was added by skilladderbutton
-    // location: where the skill ought to be placed relative to the charactersheet
-    // creates a skill input field at the designated location and increments the position for the next skill
-    private GameObject CreateSkill(Skill input, Vector3 location)
+    public void UpdateName()
     {
-        GameObject newEntry = Instantiate(SkillInputButton) as GameObject;
-        newEntry.transform.SetParent(gameObject.transform, false);
-        newEntry.transform.localPosition = location;
-        newEntry.GetComponent<SkillScript>().UpdateValue(input);
-        return newEntry;
+        ActivePlayer.playername = NameField.text;
+    }
+
+    public void UpdatedAttribute(string key, int value)
+    {
+        ActivePlayer.SetAttribute(key,value,true);
+        UpdateInputFields();
+        SkillAdder.UpdateSkillFields();
+    } 
+
+    private void UpdateInputFields()
+    {
+        foreach (KeyValuePair<string, InputFieldScript> kvp in TextEntries)
+        {
+            kvp.Value.UpdateValue(ActivePlayer.GetAttribute(kvp.Key), this);   
+        }
+        HealthMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.PhysicalHealth));
+        StunMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.StunHealth));
+        EdgeMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.Edge));
     }
 
     // w: a weapon gameobject that was added itemadder 
@@ -290,35 +155,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         newEntry.transform.localPosition = location;
         newEntry.GetComponent<WeaponInputScript>().UpdateIn(w);
         return newEntry;
-    }
-
-    // used to create advanced skills, should say buttonright not left
-    public void CreateSkillButtonLeft()
-    {
-        if(LastSkills.Count < 24)
-        {
-            LastSkills.Push(CreateSkill(new Skill(SkillReference.GetSkill(SkillAdderName.captionText.text),1), PlacementPosAdvanced));
-            PlacementPosAdvanced -= SkillDisplacement;
-            SkillAdderButton.transform.localPosition -= SkillDisplacement;
-        }
-    }
-
-    // uploads the names of all advanced skills to the dropdown, to be converted into skills later
-    public void UpdateSkillDropdown()
-    {
-        SkillAdderName.ClearOptions();
-        Dictionary<string, SkillTemplate> d = SkillReference.SkillsTemplates();
-        List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
-        foreach(string key in d.Keys)
-        {
-            if(!d[key].basic)
-            {
-                Dropdown.OptionData newData = new Dropdown.OptionData(); 
-                newData.text = key;
-                results.Add(newData);
-            }
-        }
-        SkillAdderName.AddOptions(results);
     }
 
     public void CreateItem(string name, int stack)
@@ -392,36 +228,22 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         PlayerEquipment.Remove(removedItem);
     }
 
-    // Deletes the last skill in the queue and updates the position of the ui elements accordingly 
-    public void DeleteSkill()
-    {
-        if(LastSkills.Count > 0)
-        {
-            Destroy(LastSkills.Pop());
-            PlacementPosAdvanced += SkillDisplacement;
-            SkillAdderButton.transform.localPosition += SkillDisplacement;
-        }
-    }
-
-    // Master sends this to the client 
+    // Master sends this to the client to be edited
     [PunRPC]
-    void RPC_SyncStats(string name, Dictionary<string,int> characteristics, Dictionary<string, int> skills, Dictionary<string, int> equipment)
+    void RPC_SyncStats(string name, Dictionary<string,int> characteristics, Dictionary<string, int> skills, Dictionary<string,int> specalizations)
     {
-        PlayerDisplayName = name;
-        PlayerStats = characteristics;
-        PlayerSkills = skills;
-        PlayerEquipment = equipment;
+        ActivePlayer = new CharacterSaveData(name, characteristics, skills, specalizations);
         UpdateStatsIn();
     }
 
-    // Client sends this to the master
+    // Client sends this to the master to be saved 
     [PunRPC]
-    void RPC_SyncStatsOut(string newName,  Dictionary<string, int> newCharacteristics, Dictionary<string,int> newskills, Dictionary<string,int> newEquipment)
+    void RPC_SyncStatsOut(string newName,  Dictionary<string, int> newCharacteristics, Dictionary<string,int> newskills, Dictionary<string,int> newSpecalizations, Dictionary<string,int> newEquipment)
     {
-        NameField.text = newName;
-        PlayerStats = newCharacteristics;
-        PlayerSkills = newskills;
-        PlayerEquipment = newEquipment;
+        ActivePlayer.playername = newName;
+        ActivePlayer.attribues = newCharacteristics;
+        ActivePlayer.skills = newskills;
+        ActivePlayer.skillSpecialization = newSpecalizations;
         UpdateStatsOut();
     }
 }

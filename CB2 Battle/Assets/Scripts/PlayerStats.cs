@@ -26,8 +26,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public CharacterSaveData myData;
     // Characters can store the cover bonus of cover while advancing
     private int AdvanceBonus;
-    // A character sheet that can be used to alter the stats of this character
-    public GameObject MyCharacterSheet;
     // Reference for all player stats
     public Dictionary<string, int> Stats = new Dictionary<string, int>();
     // Keys are every condition this player has, values are the duration of the conditions
@@ -64,7 +62,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {  
             Skills.Add(new Skill(SkillReference.GetSkill(kvp.Key),kvp.Value));
         }
-        this.HitLocations = myData.StandardHitLocations();
+        //this.HitLocations = myData.StandardHitLocations();
         this.equipment = ItemReference.DownloadEquipment(myData.GetEquipment());
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
         Init(id);

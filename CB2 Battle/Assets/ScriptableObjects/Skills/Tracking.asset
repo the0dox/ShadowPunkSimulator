@@ -12,10 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
   m_Name: Tracking
   m_EditorClassIdentifier: 
-  basic: 0
+  defaultable: 1
   characterisitc: INT
   visible: 1
   Descriptor: []
-  displayText: The Tracking Skill is used to follow prey be it animals or otherwise.
-    Tests are only required when tracks are not obvious. If the target tries to cover
-    their tracks, then its an opposed check with their concealment skill.
+  displayText: 
+  Specializations: []

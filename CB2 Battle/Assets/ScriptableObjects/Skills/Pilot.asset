@@ -12,14 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
   m_Name: Pilot
   m_EditorClassIdentifier: 
-  basic: 0
-  characterisitc: A
+  defaultable: 1
+  characterisitc: REA
   visible: 1
-  Descriptor:
-  - Operator
-  displayText: The Pilot skill is used to fly anything  from small atmospheric craft
-    such as  ornithopters and landers, all the way  up to spaceship-sized vessels.
-    Piloting  a ship under normal conditions does  not require a Test. However, Tests
-    may  be called for when flying in conditions  such as storms, going at excessive
-    speed  or attempting dangerous manoeuvres. When chasing another vehicle, you 
-    and your opponent make Opposed  Pilot Tests.
+  Descriptor: []
+  displayText: 
+  Specializations: []

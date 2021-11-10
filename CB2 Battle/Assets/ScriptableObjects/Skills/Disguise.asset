@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
   m_Name: Disguise
   m_EditorClassIdentifier: 
-  basic: 1
-  characterisitc: FEL
+  defaultable: 1
+  characterisitc: INT
   visible: 1
   Descriptor: []
-  displayText: "The Disguise skill is used to mask your  true appearance. Disguise
-    is an Opposed Skill Test against your  foes\u2019 Scrutiny."
+  displayText: 
+  Specializations: []

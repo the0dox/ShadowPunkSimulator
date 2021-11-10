@@ -12,12 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
   m_Name: Navigation
   m_EditorClassIdentifier: 
-  basic: 0
+  defaultable: 1
   characterisitc: INT
   visible: 1
-  Descriptor:
-  - 
-  displayText: 'You employ the Navigation skill  whenever you want to use maps, technical
-    readouts, innate knowledge and landmarks to chart a proper course  and avoid
-    becoming lost. A test each day is sufficient to keep you on track but a failure
-    will potentially take make the trip take longer or end in failure. '
+  Descriptor: []
+  displayText: 
+  Specializations: []
