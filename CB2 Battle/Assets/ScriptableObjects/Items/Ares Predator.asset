@@ -1,0 +1,39 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Ares Predator
+  m_EditorClassIdentifier: 
+  weight: 0
+  cost: 0
+  availablity: 
+  description: The Ares Macrotechnologies most iconic handgun, the perfect blend
+    of efficiency and brutality.
+  unique: 1
+  rating: 1
+  icon: {fileID: 21300000, guid: ed34c39c541849c4789886b4ffc4de42, type: 3}
+  upgrades:
+  - {fileID: 11400000, guid: 3c7ae887e4a50fe488b80b3aff5a121b, type: 2}
+  Attributes: []
+  Class: Pistol
+  numDice: 1
+  sizeDice: 10
+  damageBonus: 1
+  range: 30
+  pen: 1
+  reloadMax: 2
+  single: 1
+  semi: 0
+  auto: 0
+  clipMax: 30
+  damageType: I
+  blast: 0
+  AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}

@@ -4,6 +4,10 @@ using UnityEngine;
 
 public static class AttributeKey
 {
+    public static string Overflow = "OF";
+    public static string PDamage = "P";
+    public static string SDamage = "S";
+    public static string CurrentEdge = "CEDG";
     public static string Body = "BOD";
     public static string Agility = "AGI";
     public static string Reaction = "REA";

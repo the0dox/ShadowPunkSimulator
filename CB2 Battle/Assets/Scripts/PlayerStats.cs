@@ -63,7 +63,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             Skills.Add(new Skill(SkillReference.GetSkill(kvp.Key),kvp.Value));
         }
         //this.HitLocations = myData.StandardHitLocations();
-        this.equipment = ItemReference.DownloadEquipment(myData.GetEquipment());
+        //this.equipment = ItemReference.DownloadEquipment(myData.GetEquipment());
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
         Init(id);
     }

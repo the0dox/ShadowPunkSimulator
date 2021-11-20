@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6da0ad1fd625bcd45832633e9540655c, type: 3}
+  m_Name: Cyberdeck
+  m_EditorClassIdentifier: 
+  weight: 5
+  cost: 10000
+  availablity: 
+  description: The cyberdeck is a necessity for the modern hacker. Cyberdecks are
+    specialized interfaces used to crack open the matrix. These highly illegal devices
+    are used for a variety of tasks from gathering information, to bricking a smartgun.
+  unique: 0
+  rating: 4
+  icon: {fileID: 21300000, guid: ed34c39c541849c4789886b4ffc4de42, type: 3}
+  upgrades:
+  - {fileID: 11400000, guid: 5ca0c628baa5e1c4d82b589036994e61, type: 2}

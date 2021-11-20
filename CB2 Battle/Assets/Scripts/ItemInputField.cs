@@ -5,32 +5,35 @@ using UnityEngine.UI;
 
 public class ItemInputField : MonoBehaviour
 {
-    private CharacterSheet mySheet;
     [SerializeField] private Text displayText;
-    private string myItem;
-    private int myStacks;
-
-    public void UpdateStacks(int stacks)
+    [SerializeField] private TooltipTrigger tooltipContent;
+    private CharacterSaveData owner;
+    private Item myData;
+    
+    public void DownloadCharacter(CharacterSaveData owner, Item myData)
     {
-        myStacks = stacks;
-        displayText.text = myItem + " x " + myStacks;
+        this.owner = owner;
+        this.myData = myData;
     }
 
-    public void UpdateIn(string input, int stacks, CharacterSheet mySheet)
+    void Update()
     {
-        this.mySheet = mySheet;
-        myItem = input;
-        UpdateStacks(stacks);
+        displayText.text = myData.GetName() + " x " + myData.GetStacks();
+        tooltipContent.content = myData.getTooltip();
+        tooltipContent.header = myData.GetName();
     }
 
-    public void ReduceItem()
+    public void Reduce()
     {
-        myStacks--;
-        UpdateStacks(myStacks);
-        if(myStacks < 1)
+        owner.RemoveItem(myData);
+        if(!owner.equipmentObjects.Contains(myData))
         {
-            mySheet.Remove(myItem);
             Destroy(gameObject);
         }
+    }
+
+    public void displayTooltip()
+    {
+        Debug.Log(myData.getTooltip());
     }
 }

@@ -16,5 +16,6 @@ MonoBehaviour:
   characterisitc: LOG
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: This represents any academic knowlege a runner may have picked up
+    in their background
   Specializations: []

@@ -11,6 +11,10 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     [SerializeField] private List<InputFieldScript> EntryList;
     // Reference to all skillinputfields so that the charactersheet can download its save data into it
     [SerializeField] private List<SkillScript> SkillEntryList;
+    // main page reference
+    [SerializeField] private GameObject page1;
+    // equipment page reference
+    [SerializeField] private GameObject page2;
     // editable fields for basic stats like BS,WS etc
     private Dictionary<string, InputFieldScript> TextEntries;
     private Dictionary<string, ItemInputField> ItemEntries;
@@ -26,23 +30,10 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     // Stack used to preserve order all skills when one is removed
     private List<GameObject> BasicSkills;
     private Stack<GameObject> LastSkills;
-    // Reference to the Item Adder button so items can be created
-    [SerializeField] private GameObject ItemAdder;
     // Individual displays of the names/quantities of each item
     [SerializeField] private GameObject ItemDisplay;
     // Vectors are used to ensure proper spacing of ui elements when new skills/items are added
     [SerializeField] private PhotonView pv;
-    //references for ui Movement
-    private Vector3 weaponDisplacementRight = new Vector3(0,98.5f,0);
-    private Vector3 weaponDisplacementLeft = new Vector3(0,82.5f,0);
-    private Vector3 SkillDisplacement = new Vector3(0,14.5f,0);
-    private Vector3 startingPos = new Vector3(-300,120,0);
-    private Vector3 ItemDisplacement = new Vector3(0,-16,0);
-    Vector3 PlacementPosAdvanced;
-    Vector3 PlacementPosBasic;
-    Vector3 PlacementWeaponRanged;
-    Vector3 PlacementWeaponMelee;
-    Vector3 PlacementItems;
     // dicitionary form of map tokens stats for translating into the sheet
     private Dictionary<string, int> PlayerStats;
     
@@ -62,7 +53,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         LastSkills = new Stack<GameObject>();
         BasicSkills = new List<GameObject>();
         ItemEntries = new Dictionary<string, ItemInputField>();
-        ItemAdder.GetComponent<WeaponAdder>().Init();
         TextEntries = new Dictionary<string, InputFieldScript>();
         foreach (InputFieldScript t in EntryList)
         {
@@ -76,7 +66,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         CameraButtons.UIFreeze(false);
         if(!pv.IsMine)
         {
-            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, PlayerStats,PlayerSkills, ActivePlayer.skillSpecialization, PlayerEquipment);
+            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, PlayerStats,PlayerSkills, ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment());
         }
         Destroy(gameObject);
     }
@@ -100,26 +90,80 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         else
         { 
             Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
-            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.GetStats(), input.GetSkills(), input.skillSpecialization);
+            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.GetStats(), input.GetSkills(), input.skillSpecialization, input.compileEquipment());
         }
     }
     // Generic info that both kinds of download needs to know
     public void UpdateStatsIn(){
         Init();
         NameField.text = ActivePlayer.playername;
-        PlacementPosAdvanced = new Vector3(149.5f, 166,0);
-        PlacementPosBasic = new Vector3(-258, 193,0);
-        PlacementWeaponRanged = new Vector3(783, 212,0);
-        PlacementWeaponMelee = new Vector3(375, 209,0);
-        PlacementItems = new Vector3(780,-202,0);
         
         ActivePlayer.CalculateCharacteristics();
         HealthMonitor.Init();
         StunMonitor.Init();
         EdgeMonitor.Init();
-
+        HealthMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.PDamage));
+        StunMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.SDamage));
+        EdgeMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.Edge));
         UpdateInputFields();
+        //AddItem("Cyberdeck");
         SkillAdder.DownloadOwner(ActivePlayer);
+        ItemAdder.DownloadOwner(ActivePlayer);
+        MainButton();
+    }
+
+    public void AddHealth()
+    {
+        if(ActivePlayer.attribues[AttributeKey.PDamage] < 18)
+        {
+            HealthMonitor.IncrementValue();
+            ActivePlayer.attribues[AttributeKey.PDamage]++;
+        }
+    }
+
+    public void DecreaseHealth()
+    {
+        if(ActivePlayer.attribues[AttributeKey.PDamage] > 0)
+        {
+            HealthMonitor.SubtractValue();
+            ActivePlayer.attribues[AttributeKey.PDamage]--;
+        }
+    }
+
+    public void AddStun()
+    {
+        if(ActivePlayer.attribues[AttributeKey.SDamage] < 12)
+        {
+            StunMonitor.IncrementValue();
+            ActivePlayer.attribues[AttributeKey.SDamage]++;
+        }
+    }
+
+    public void DecreaseStun()
+    {
+        if(ActivePlayer.attribues[AttributeKey.SDamage] > 0)
+        {
+            StunMonitor.SubtractValue();
+            ActivePlayer.attribues[AttributeKey.SDamage]--;
+        }
+    }
+
+    public void AddEdge()
+    {
+        if(ActivePlayer.attribues[AttributeKey.CurrentEdge] < 7)
+        {
+            EdgeMonitor.IncrementValue();
+            ActivePlayer.attribues[AttributeKey.CurrentEdge]++;
+        }
+    }
+
+    public void DecreaseEdge()
+    {
+        if(ActivePlayer.attribues[AttributeKey.CurrentEdge] > 0)
+        {
+            EdgeMonitor.SubtractValue();
+            ActivePlayer.attribues[AttributeKey.CurrentEdge]--;
+        }
     }
 
     public void UpdateName()
@@ -157,70 +201,23 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         return newEntry;
     }
 
-    public void CreateItem(string name, int stack)
+    public void AddItem(string name)
     {
-        GameObject newText = Instantiate(ItemDisplay) as GameObject;
-        newText.GetComponent<ItemInputField>().UpdateIn(name, stack, this);
-        ItemEntries.Add(name, newText.GetComponent<ItemInputField>());
-        newText.transform.SetParent(gameObject.transform);
-        newText.transform.localPosition = PlacementItems;
-        PlacementItems += ItemDisplacement;
+        string[] dummyTest = new string[1];
+        dummyTest[0] = "1";
+        ActivePlayer.AddItem(ItemReference.GetItem(name,1,dummyTest));
     }
 
-    // Takes the current selection in the item adder button and creates an item out of it
-    public void CreateItem()
+    public void MainButton()
     {
-        CreateItem(ItemAdder.GetComponent<WeaponAdder>().GetItem().GetName());
+        page1.SetActive(true);
+        page2.SetActive(false);
     }
 
-    // given an Item from either the item adder or savedata, places it on the equipment display
-    public void CreateItem(string itemName)
+    public void EquipmentButton()
     {
-        if(!PlayerEquipment.ContainsKey(itemName))
-        {
-            PlayerEquipment.Add(itemName, 0);
-            CreateItem(itemName, 0);
-        }
-        PlayerEquipment[itemName] += 1;
-        ItemEntries[itemName].UpdateStacks(PlayerEquipment[itemName]);
-        /* stackable items just automatically stack onto exisiting items of the same type
-        if(input.Stackable())
-        {
-            foreach(Item i in Equipment)
-            {
-                if(i.GetName().Equals(input.GetName()))
-                {
-                    i.AddStack();
-                    stacked = true;
-                }
-            }
-        }
-        // unique items like weapons that can be dual wielded can't be stacked
-        if(!stacked)
-        {
-            Equipment.Add(input);
-
-            if(input.GetType() == typeof(Weapon))
-            {
-                Weapon newWeapon = (Weapon) input;
-                if(newWeapon.GetClass().Equals("Melee"))
-                {
-                    CreateWeapon(newWeapon, PlacementWeaponMelee);
-                    PlacementWeaponMelee -= weaponDisplacementLeft;
-                }
-                else
-                {
-                    CreateWeapon(newWeapon, PlacementWeaponRanged);
-                    PlacementWeaponRanged -= weaponDisplacementRight;
-                }
-            }
-            GameObject newText = Instantiate(ItemDisplay) as GameObject;
-            newText.GetComponent<ItemInputField>().UpdateIn(input,this);
-            newText.transform.SetParent(gameObject.transform);
-            newText.transform.localPosition = PlacementItems;
-            PlacementItems += ItemDisplacement;
-        }
-        */
+        page1.SetActive(false);
+        page2.SetActive(true);
     }
 
     public void Remove(string removedItem)
@@ -230,20 +227,21 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Master sends this to the client to be edited
     [PunRPC]
-    void RPC_SyncStats(string name, Dictionary<string,int> characteristics, Dictionary<string, int> skills, Dictionary<string,int> specalizations)
+    void RPC_SyncStats(string name, Dictionary<string,int> characteristics, Dictionary<string, int> skills, Dictionary<string,int> specalizations, List<string> equipment)
     {
-        ActivePlayer = new CharacterSaveData(name, characteristics, skills, specalizations);
+        ActivePlayer = new CharacterSaveData(name, characteristics, skills, specalizations, equipment);
         UpdateStatsIn();
     }
 
     // Client sends this to the master to be saved 
     [PunRPC]
-    void RPC_SyncStatsOut(string newName,  Dictionary<string, int> newCharacteristics, Dictionary<string,int> newskills, Dictionary<string,int> newSpecalizations, Dictionary<string,int> newEquipment)
+    void RPC_SyncStatsOut(string newName,  Dictionary<string, int> newCharacteristics, Dictionary<string,int> newskills, Dictionary<string,int> newSpecalizations, List<string> newequipment)
     {
         ActivePlayer.playername = newName;
         ActivePlayer.attribues = newCharacteristics;
         ActivePlayer.skills = newskills;
         ActivePlayer.skillSpecialization = newSpecalizations;
+        ActivePlayer.decompileEquipment(newequipment);
         UpdateStatsOut();
     }
 }

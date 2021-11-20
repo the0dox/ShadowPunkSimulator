@@ -41,17 +41,18 @@ public class Weapon : Item
     private string Class;
     // Special weapons with the recharge abilitiy use this to determine if they can fire this turn or not
     private int Recharging;
-    private int ID;
-
     public Weapon(WeaponTemplate template)
     {
+        Template = template;
         this.name = template.name;
         this.weight = template.weight;
         this.cost = template.cost;
-        this.unique = template.unique;
-        this.stacks = 1;
         this.availablity = template.availablity;
         this.description = template.description;
+        this.rating = template.rating;
+        this.stacks = 1;
+        this.unique = template.unique;
+
         this.Attributes = template.Attributes;
         this.numDice = template.numDice;
         this.sizeDice = template.sizeDice;
@@ -71,7 +72,13 @@ public class Weapon : Item
         this.damageType = template.damageType;
         this.Class = template.Class;
         Recharging = 0;
-        ID = Random.Range(0,100000);
+        
+        upgrades = new Dictionary<ItemTemplate, bool>();
+        foreach(ItemTemplate ug in template.upgrades)
+        {
+            this.upgrades.Add(ug, false);
+        }
+        UpdateTooltip();
     }
 
     public int GetStat(string key)
@@ -250,6 +257,7 @@ public class Weapon : Item
                 clip = 0;
             }
             Recharging = 2;
+            UpdateTooltip();
             return cost;
         }
     }
@@ -299,6 +307,7 @@ public class Weapon : Item
                     }
                 }
             }
+            UpdateTooltip();
             return true;
         }
         return false;
@@ -474,7 +483,13 @@ public class Weapon : Item
 
     public int getClip()
     {
-        return clipMax;
+        return clip;
+    }
+
+    public void SetClip(int newClip)
+    {
+        clip = newClip;
+        UpdateTooltip();
     }
 
     public void OnTurnStart()
@@ -546,5 +561,38 @@ public class Weapon : Item
         {
             return clipMax - clip;
         }
+    }
+
+    public override void UpdateTooltip()
+    {
+        tooltip = "Rating " + rating + " " + Class;
+        tooltip += "\n\n" + DisplayDamageRange() + " " + damageType;
+        if(IsWeaponClass("Thrown"))
+        {
+            tooltip += "\nRange: SB * 3m";
+        }
+        else if(!IsWeaponClass("Melee"))
+        {
+            tooltip += "\nRange: " + range + "m";
+        }
+        tooltip += "\nArmor Penetration: " + pen;
+        tooltip += "\nReload: " + reloadToString();
+        tooltip += "\nRate of Fire: " + ROFtoString(); 
+        tooltip += "\nClip: " + clip + "/" + clipMax;
+        tooltip += "\nAmmo type: " + AmmoSource.name;
+        tooltip += "\nupgrades:";
+        string upgradedesc = " ";
+        foreach(ItemTemplate ug in upgrades.Keys)
+        {
+            if(upgrades[ug])
+            {
+                upgradedesc += ug.name + ",";
+            } 
+            upgradedesc = upgradedesc.TrimEnd(upgradedesc[upgradedesc.Length - 1]);
+        }
+        tooltip += upgradedesc;
+        tooltip += "\nweight: " + weight;
+        tooltip += "\nvalue: " + cost;
+        tooltip += "\n\n\"" + description + "\"";
     }
 }

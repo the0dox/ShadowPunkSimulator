@@ -25,12 +25,17 @@ public class SaveSystem : MonoBehaviourPunCallbacks
                 stream.Close();
                 PlayerFiles.Add(data);
             }
+            foreach(CharacterSaveData csd in PlayerFiles)
+            {
+                csd.OnLoad();
+            }
             //pv.RPC("RPC_Recieve_Players",RpcTarget.AllBuffered,convertedFiles.ToArray());
         }
     }
 
     public static void SavePlayer(CharacterSaveData data)
     {
+        data.OnSave();
         CreateSaveFile();
         BinaryFormatter formatter = new BinaryFormatter();
         

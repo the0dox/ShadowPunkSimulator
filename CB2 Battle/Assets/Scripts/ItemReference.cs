@@ -14,42 +14,38 @@ public class ItemReference : MonoBehaviour
         }
     }
 
-    public static ItemTemplate GetItem(string name)
+    public static Item GetItem(string name)
     {
         if(!Library.ContainsKey(name))
         {
             Debug.Log("Error " + name + " not found!");
         }
+        ItemTemplate template = GetTemplate(name);
+        if(template.GetType().Equals(typeof(WeaponTemplate)))
+        {
+            return new Weapon((WeaponTemplate)template);
+        }
+        return new Item(GetTemplate(name));
+    }
+    
+    public static Item GetItem(string name, int stacks, string[] upgrades)
+    {
+        Item output = GetItem(name);
+        output.SetStack(stacks);
+        for(int i = 0; i < upgrades.Length; i++)
+        {
+            output.SetUpgrade(i, upgrades[i].Equals("1"));
+        }
+        return output;
+    }
+
+    public static ItemTemplate GetTemplate(string name)
+    {
         return Library[name];
     }
 
     public static Dictionary<string, ItemTemplate> ItemTemplates()
     {
         return Library;
-    }
-    
-    public static List<Item> DownloadEquipment(Dictionary<string,int> PhotonEquipment)
-    {
-        List<Item> output = new List<Item>();
-        foreach(KeyValuePair<string,int> kvp in PhotonEquipment)
-        {
-            // specific types of items have to be created seperately
-            Item current = null;
-            if(ItemReference.ItemTemplates()[kvp.Key].GetType() == typeof(WeaponTemplate))
-            {
-                current = new Weapon((WeaponTemplate)ItemReference.ItemTemplates()[kvp.Key]);
-            }
-            else if(ItemReference.ItemTemplates()[kvp.Key].GetType() == typeof(ArmorTemplate))
-            {
-                current = new Armor((ArmorTemplate)ItemReference.ItemTemplates()[kvp.Key]);
-            }
-            else
-            {
-                current = new Item(ItemReference.GetItem(kvp.Key));
-            }
-            current.SetStack(kvp.Value);
-            output.Add(current);
-        }
-        return output;
     }
 }

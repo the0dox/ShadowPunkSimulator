@@ -11,6 +11,7 @@ public class SkillScript : MonoBehaviour
     [SerializeField] private Text FinalResult;
     [SerializeField] private Dropdown SpecializationField;
     [SerializeField] private CharacterSaveData myData;
+    [SerializeField] private TooltipTrigger tooltipTrigger;
     public GameObject ButtonText; 
 
     public void Start()
@@ -46,6 +47,27 @@ public class SkillScript : MonoBehaviour
         IF.text = "" + levels;
         ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.characterisitc + ")";
         FinalResult.text = "[" + total +"]";
+
+        string description = mySkill.displayText;
+        description += "\n\n Derrived Attribute: " + mySkill.characterisitc;
+        description += "\n Defaultable: " + mySkill.defaultable;
+        if(levels < 1 && !mySkill.defaultable)
+        {
+            description += " \n\n cannot attempt with no training!";
+        }
+        else
+        {
+            description += " \n\n Die: " + total;
+            description += " \n Base: " + levels + " from skill level";
+            if(levels < 1 && mySkill.defaultable)
+            {
+                description += "\n -1 from defaulting";
+            }
+            description += " \n +" + myData.GetAttribute(mySkill.characterisitc) + " from " + mySkill.characterisitc + " attribute";  
+            // space for modifiers
+        }
+        tooltipTrigger.header = mySkill.name;
+        tooltipTrigger.content = description;
     }
 
     public void UpdateSpecalization()

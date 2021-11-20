@@ -24,6 +24,9 @@ public class CharacterSaveData
     public string[] equipment = new string[20];
     // Each entry is the number of each equipment piece a player has of the same index
     public int[] equipmentSize = new int[20];
+    // Condensed list of equipment and there properties, only modified on load and save
+    public List<string> equipmentCode = new List<string>(); 
+    public List<Item> equipmentObjects = new List<Item>();
     
     // Playable: whether to create an NPC or Player character
     // Creates a new Save Data with default skills and hit locations
@@ -41,15 +44,77 @@ public class CharacterSaveData
             Model = "Renegade";
             team = 1;
         }
+        SetAttribute(AttributeKey.PDamage, 0,false);
+        SetAttribute(AttributeKey.SDamage, 0,false);
+        SetAttribute(AttributeKey.CurrentEdge, 0, false);
+        SetAttribute(AttributeKey.Overflow, 0, false);
         CalculateCharacteristics();
     }
 
-    public CharacterSaveData(string playername, Dictionary<string,int> attribues, Dictionary<string,int> skills, Dictionary<string,int> specalizations)
+    public CharacterSaveData(string playername, Dictionary<string,int> attribues, Dictionary<string,int> skills, Dictionary<string,int> specalizations, List<string> newequipment)
     {
         this.playername = playername;
         this.attribues = attribues;
         this.skills = skills;
         this.skillSpecialization = specalizations;
+        decompileEquipment(newequipment);
+    }
+
+    public void OnLoad()
+    {
+        if(equipmentObjects == null)
+        {
+            equipmentObjects = new List<Item>();
+        }   
+        decompileEquipment(equipmentCode);
+    }
+
+    public void OnSave()
+    {
+        equipmentCode = compileEquipment();
+        equipmentObjects = null;
+    }
+
+    public void decompileEquipment(List<string> newequipmentcode)
+    {
+        foreach(string code in newequipmentcode)
+        {
+            string[] codeDecompiled = code.Split('|');
+            //decompile
+            string name = codeDecompiled[0];
+            int stacks = int.Parse(codeDecompiled[1]);
+            string[] upgrades = codeDecompiled[2].Split(',');
+            Item newItem = ItemReference.GetItem(name,stacks,upgrades);
+            if(codeDecompiled.Length > 3)
+            {
+                int clip = int.Parse(codeDecompiled[3]);
+                Weapon castItem = (Weapon) newItem;
+                castItem.SetClip(clip);
+            } 
+            AddItem(newItem);
+        }
+    }  
+
+    public List<string> compileEquipment()
+    {
+        List<string> output = new List<string>();
+        foreach(Item item in equipmentObjects)
+        {
+            string name = item.GetName();
+            string stack = "" + item.GetStacks();
+            
+            //compile
+            string code = name + "|" + stack + "|" + item.CompileUpgrades();
+            if(item.GetType().Equals(typeof(Weapon)))
+            {
+                Weapon weaponcast = (Weapon)item;
+                int clip = weaponcast.getClip();
+                code+="|" + clip;
+            }
+            Debug.Log(code);
+            output.Add(code); 
+        }
+        return output;
     }
 
     // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
@@ -228,6 +293,63 @@ public class CharacterSaveData
             equipment[newIndex] = i.GetName();
             equipmentSize[newIndex] = i.GetStacks();
             newIndex++;
+        }
+    }
+
+    public void AddItem(Item item)
+    {
+        // if this object is already owned by the player
+        if(item.Stackable())
+        {
+            if(equipmentObjects.Contains(item))
+            {
+                item.AddStack();
+            }
+            else
+            {
+                Item myItem = GetItem(item.Template.name);
+                if(myItem != null)
+                {
+                    myItem.AddStack();
+                }
+                else
+                {
+                    equipmentObjects.Add(item);   
+                }
+            }
+        }
+        else 
+        {
+            equipmentObjects.Add(item);
+        }
+    }
+
+    public Item GetItem(string key)
+    {
+        ItemTemplate myTemplate = ItemReference.GetTemplate(key);
+        foreach(Item item in equipmentObjects)
+        {
+            if(item.Template == myTemplate)
+            {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public void RemoveItem(Item item)
+    {
+        if(!equipmentObjects.Contains(item))
+        {
+            Debug.Log("Error: Item not found");
+        }
+        else
+        {
+            item.SubtractStack();
+            if(item.IsConsumed())
+            {
+                equipmentObjects.Remove(item);
+            }
         }
     }
 

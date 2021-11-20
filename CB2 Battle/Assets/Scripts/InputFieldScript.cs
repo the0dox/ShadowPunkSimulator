@@ -14,6 +14,11 @@ public class InputFieldScript : MonoBehaviour
 
     public InputField IF;
 
+    [SerializeField] private TooltipTrigger tooltipTrigger;
+    
+    [TextArea(5,5)]
+    [SerializeField] private string baseDescription;
+
     public string GetStat()
     {
         return stat;
@@ -39,6 +44,16 @@ public class InputFieldScript : MonoBehaviour
         IF.text = "" + value;
         TextObject.GetComponent<Text>().text = "" + value; 
         Placeholder.GetComponent<Text>().text = "" + value;  
+        
+        if(tooltipTrigger != null)
+        {
+            string description = baseDescription;    
+            //modifiers
+            description += " \n\n Die: " + value;
+            description += " \n Base: " + value + " from characteristic";
+            tooltipTrigger.content = description;
+        }
+
     }
 
     public void ShowPlaceHolder()
