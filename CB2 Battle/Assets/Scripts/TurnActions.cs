@@ -265,7 +265,7 @@ public class TurnActions : UIButtonManager
     {
         FireRate = "Full";
         currentAction = "Charge";
-        ActivePlayer.FindChargableTiles(ActivePlayerStats.GetStat("MoveCharge"),ActivePlayerStats.GetTeam());     
+        //ActivePlayer.FindChargableTiles(ActivePlayerStats.GetStat("MoveCharge"),ActivePlayerStats.GetTeam());     
         ConstructActions(new List<string>{"Cancel"});
     } 
     public void ChargeGrapple()
@@ -427,38 +427,20 @@ public class TurnActions : UIButtonManager
     public void Advance()
     {
         currentAction = "Advance";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetTeam());  
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Walk"),ActivePlayerStats.GetTeam());  
         ConstructActions(new List<string>{"Cancel"});
     }
 
     public void Move()
     {
         currentAction = "Move";
-        if(!ActivePlayerStats.hasCondition("Prone"))
-        {  
-            if(halfActions > 1)
-            {
-                ActivePlayer.FindSelectableTiles(ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetMovement("Full"),ActivePlayerStats.GetTeam());     
-            }
-            else if( halfActions > 0)
-            {
-                ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetTeam());     
-            } 
-            else 
-            {
-                ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());     
-            }
-        }
-        else
-        {
-            ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());
-        }
+        ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());     
     }
 
     public void Disengage()
     {
         currentAction = "Disengage";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Half"),ActivePlayerStats.GetTeam()); 
+        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Walk"),ActivePlayerStats.GetTeam()); 
         ConstructActions(new List<string>{"Cancel"});
     }
 
@@ -1040,8 +1022,8 @@ public class TurnActions : UIButtonManager
         {
             if(CurrentAttack.attacks > 0)
             {
-                int StunDamage = Random.Range(1,11) + CurrentAttack.attacker.GetStatScore("S");
-                int StunResist = Random.Range(1,11) + CurrentAttack.target.GetStatScore("T") + CurrentAttack.target.GetStat("Head");
+                int StunDamage = Random.Range(1,11);
+                int StunResist = Random.Range(1,11);
                 CombatLog.Log(CurrentAttack.attacker.GetName() + " Rolls 1d10 + SB = " + StunDamage);
                 CombatLog.Log(CurrentAttack.target.name + " Rolls 1d10 + T + HeadAP = " + StunResist);
                 int diff = StunDamage - StunResist;

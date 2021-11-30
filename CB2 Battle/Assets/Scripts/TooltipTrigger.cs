@@ -25,15 +25,24 @@ public class TooltipTrigger : MonoBehaviour, IPointerEnterHandler, IPointerExitH
     {
         selected = false;
         StopCoroutine(ClickDelay());
+        HideTooltip();
+    }
+    public void ShowTooltip()
+    {
+        TooltipSystem.show(content,header);
+    }
+    public void HideTooltip()
+    {
         TooltipSystem.hide();
     }
+
     // Sends the message to tooltip system with header content after popupDelay seconds
     IEnumerator ClickDelay()
     {
         yield return new WaitForSeconds(popupDelay);
         if(selected)
         {
-            TooltipSystem.show(content,header);
+            ShowTooltip();
         }
     }
 }

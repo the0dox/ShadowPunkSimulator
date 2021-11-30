@@ -127,6 +127,7 @@ public class SkillAdder : MonoBehaviour
             newButton.name = skillname; 
             newButton.GetComponentInChildren<Text>().text = skillname;
             newButton.transform.SetParent(SContent);
+            newButton.transform.localScale = Vector3.one;
         }
     }
 }

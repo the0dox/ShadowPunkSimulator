@@ -149,7 +149,7 @@ public class Weapon : Item
         //damageBonus is calculated differently for melee weapons SB is added on top of everything else 
         if (IsWeaponClass("Melee"))
         {
-            DB += player.GetStatScore("S");
+            DB += player.GetStat(AttributeKey.Strength);
         }
         output += " " + DB;
         value += DB;
@@ -174,7 +174,7 @@ public class Weapon : Item
         if(crit)
         {
             CombatLog.Log(player.GetName() + " rolls a natural max damage and strikes with Righteous Fury!");
-            target.TakeCritical(Random.Range(1,6), hitBodyPart, damageType);
+            //target.TakeCritical(Random.Range(1,6), hitBodyPart, damageType);
         }
         return value;
     }
@@ -184,7 +184,7 @@ public class Weapon : Item
         //damageBonus is calculated differently for melee weapons SB is added on top of everything else 
         if (IsWeaponClass("Melee"))
         {
-            DB += player.GetStatScore("S");
+            DB += player.GetStat(AttributeKey.Strength);
         }
         value += DB;
         if(HasWeaponAttribute("Unstable"))
@@ -398,7 +398,7 @@ public class Weapon : Item
     {
         if(IsWeaponClass("Thrown"))
         {
-            return owner.GetStatScore("S") * 3;
+            return owner.GetStat(AttributeKey.Strength) * 3;
         }
         return range;
     }

@@ -59,7 +59,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 17fb9c5b16a50dc4d8578a481b2d20ea, type: 2}
+  - {fileID: 2100000, guid: 7909bf125c5aa9e4092acb83ef29aeeb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -197,8 +197,13 @@ MonoBehaviour:
   attack: 0
   selectableRunning: 0
   adjacencyList: []
+  diagonalList: []
   visited: 0
   parent: {fileID: 0}
   distance: 0
   ArmorValue: 12
+  TotalAV: 0
+  MapPosition: {x: 0, y: 0, z: 0}
   indicator: {fileID: 6411151272165617167}
+  transMat: {fileID: 2100000, guid: b5ecadc6e6a64ae4a96bf9ab6e70058e, type: 2}
+  solidMat: {fileID: 2100000, guid: 7909bf125c5aa9e4092acb83ef29aeeb, type: 2}

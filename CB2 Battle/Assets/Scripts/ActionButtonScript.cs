@@ -16,7 +16,8 @@ public class ActionButtonScript : MonoBehaviour
     void Awake()
     {
         pv = GetComponent<PhotonView>();
-        transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+        transform.SetParent(UIActionbar.current.transform);
+        transform.localScale = Vector3.one;
     }
 
     // Called by whatevered instantiated the button to set its saved string and display name

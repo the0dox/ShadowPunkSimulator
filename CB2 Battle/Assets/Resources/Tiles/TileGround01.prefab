@@ -59,7 +59,7 @@ MeshRenderer:
   m_RenderingLayerMask: 1
   m_RendererPriority: 0
   m_Materials:
-  - {fileID: 2100000, guid: 17fb9c5b16a50dc4d8578a481b2d20ea, type: 2}
+  - {fileID: 2100000, guid: 7909bf125c5aa9e4092acb83ef29aeeb, type: 2}
   m_StaticBatchInfo:
     firstSubMesh: 0
     subMeshCount: 0
@@ -94,7 +94,6 @@ GameObject:
   - component: {fileID: 3534537776242009878}
   - component: {fileID: 3534537776242009873}
   - component: {fileID: 3534537776242009877}
-  - component: {fileID: -4924448391678772853}
   m_Layer: 3
   m_Name: TileGround01
   m_TagString: Tile
@@ -198,20 +197,13 @@ MonoBehaviour:
   attack: 0
   selectableRunning: 0
   adjacencyList: []
+  diagonalList: []
   visited: 0
   parent: {fileID: 0}
   distance: 0
   ArmorValue: 12
+  TotalAV: 0
+  MapPosition: {x: 0, y: 0, z: 0}
   indicator: {fileID: 3534537775813596215}
---- !u!114 &-4924448391678772853
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 3534537776242009875}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 2372b00431db6224b965c458a0832921, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
+  transMat: {fileID: 2100000, guid: b5ecadc6e6a64ae4a96bf9ab6e70058e, type: 2}
+  solidMat: {fileID: 2100000, guid: 7909bf125c5aa9e4092acb83ef29aeeb, type: 2}

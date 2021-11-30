@@ -125,25 +125,11 @@ public static class TacticsAttack
         */
         return output;
     }
-    public static string HitLocation(int attackRoll, PlayerStats target)
-    {
-        int attackOnes = attackRoll % 10;
-        int attackTens = attackRoll / 10;
-        int location = attackTens + (attackOnes * 10); 
-        foreach (KeyValuePair<int, string> kvp in target.GetHitLocations()){
-            if (location <= kvp.Key)
-            {
-                CombatLog.Log("Reversed hit roll of " + location + " hits the target's " + kvp.Value);
-                return kvp.Value;  
-            }
-        }
-        return "Left Leg";
-    }
 
     public static void DealDamage(PlayerStats target, PlayerStats myStats, int attackRoll, Weapon w)
     {
-            string hitBodyPart = HitLocation(attackRoll, target);
-            DealDamage(target, myStats, hitBodyPart, w);
+        string hitBodyPart = "";
+        DealDamage(target, myStats, hitBodyPart, w);
     }
 
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
@@ -157,7 +143,7 @@ public static class TacticsAttack
             AP *= 2;
         } 
         AP += myStats.GetAdvanceBonus(hitBodyPart);
-        int soak = target.GetStatScore("T");
+        int soak = target.GetStat(AttributeKey.Body);
         if(cover != null && !w.HasWeaponAttribute("Flame") && !w.HasWeaponAttribute("Blast"))
         {
             AP += cover.CoverReduction(damageRoll, w.GetAP());
@@ -694,7 +680,7 @@ public static class TacticsAttack
                     output.Add(outputStack.Pop());
                 }
                 output.Add(w.DisplayDamageRange());
-                output.Add(target.GetAverageSoak());
+                //output.Add(target.GetAverageSoak());
                 if(!w.IsWeaponClass("Melee") && !myStats.hasCondition("Called"))
                 {
                     Tile cover = CalculateCover(myStats.gameObject,target.gameObject,"Left Leg");

@@ -58,6 +58,7 @@ public class ItemAdder : MonoBehaviour
             ItemInputField indicator = Instantiate(ItemInput as GameObject).GetComponent<ItemInputField>();
             indicator.DownloadCharacter(owner, newItem);
             indicator.transform.SetParent(SDisplay);
+            indicator.transform.localScale = Vector3.one;
         }
     }
 
@@ -89,6 +90,7 @@ public class ItemAdder : MonoBehaviour
             newButton.name = itemKey; 
             newButton.GetComponentInChildren<Text>().text = itemKey;
             newButton.transform.SetParent(SAdderContent);
+            newButton.transform.localScale = Vector3.one;
         }
     }
 }

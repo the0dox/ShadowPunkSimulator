@@ -5,12 +5,12 @@ using Photon.Pun;
 // While nearly all player info is handled by Playerstats, Tacticsmovement covers all player movement.
 // Note that tacticsmovement Doesn't know the gamelogic of movement, it can't calculate how far a player can move
 // It needs to be supplied with the playerstats
-public class TacticsMovement : MonoBehaviour
+public class TacticsMovement : MonoBehaviourPunCallbacks
 {
    List<Tile> selectableTiles = new List<Tile>();
    GameObject[] tiles; 
 
-   Stack<Tile> path = new Stack<Tile>();
+   Stack<Vector3> path = new Stack<Vector3>();
    Tile currentTile;
 
    public bool moving = false!;
@@ -19,9 +19,6 @@ public class TacticsMovement : MonoBehaviour
    public float jumpHeight = 2;
    public float moveSpeed = 4; 
    public Weapon activeWeapon;
-   public bool halfMove;
-   
-
    Vector3 velocity = new Vector3();
    Vector3 heading = new Vector3();
    float halfHeight = 0;
@@ -102,97 +99,17 @@ public class TacticsMovement : MonoBehaviour
       Queue<Tile> process = new Queue<Tile>();
 
       process.Enqueue(currentTile);
-      if(currentTile != null)
+      currentTile.visited = true;
+
+      while (process.Count > 0) 
       {
-         currentTile.visited = true;
+         Tile t = process.Dequeue();
 
-         while (process.Count > 0) 
-         {
-            Tile t = process.Dequeue();
-
-            selectableTiles.Add(t);
-            PlayerStats occupant = t.GetOccupant();
-            if(occupant == null || occupant.GetTeam() == team)
-            { 
-               if (t.distance <= move)
-               {
-                  if(occupant == null)
-                  {
-                     t.selectable = true;
-                     t.UpdateIndictator(); 
-                  }
-               }
-               else
-               {
-                  if(occupant == null)
-                  {
-                     t.selectableRunning = true;
-                     t.UpdateIndictator(); 
-                  }
-               }
-               if (t.distance < doubleMove) {     
-
-                  foreach (Tile tile in t.adjacencyList)
-                  {
-                     
-                     if (!tile.visited)
-                     {
-                        tile.parent = t;
-                        tile.visited = true;
-                        float distanceCost = 1;
-                        if(t.diagonalList.Contains(tile))
-                        {
-                           distanceCost = 1.5f;
-                        }
-                        tile.distance = distanceCost + t.distance;
-                        process.Enqueue(tile);
-                     }
-                  }
-               }
-            }
-         }
-      }
-   }
-   public void FindChargableTiles(int charge, int team)
-   {
-      pv.RPC("RPC_Charge",RpcTarget.All,charge,team);
-   }
-
-   [PunRPC] 
-   void RPC_Charge(int charge, int team)
-   {
-      ComputeAdjacencyLists();
-      GetCurrentTile();
-
-      Queue<Tile> process = new Queue<Tile>();
-
-      process.Enqueue(currentTile);
-      if(currentTile != null)
-      {
-         currentTile.visited = true;
-
-         while (process.Count > 0) 
-         {
-            Tile t = process.Dequeue();
-
-            selectableTiles.Add(t);
-
-            if(t.distance > 4) {
-               List<Tile> adjacentTiles = t.adjacencyList;
-               foreach (Tile adjacentTile in adjacentTiles)
-               {
-                  if (adjacentTile.GetOccupant() != null && adjacentTile.GetOccupant().GetTeam() != team)
-                  {
-                     if(t.GetOccupant() == null)
-                     {
-                        t.selectableRunning = true;
-                        t.UpdateIndictator();
-                     }
-                  }
-               }
-            }
-
-            if (t.distance < charge && (t.GetOccupant() == null || t.GetOccupant().GetTeam() == team)) {     
+         selectableTiles.Add(t);
+         PlayerStats occupant = t.GetOccupant();
+         if(occupant == null || occupant.GetTeam() == team)
+         { 
+            if (t.distance < doubleMove) {     
 
                foreach (Tile tile in t.adjacencyList)
                {
@@ -210,31 +127,84 @@ public class TacticsMovement : MonoBehaviour
                      process.Enqueue(tile);
                   }
                }
-            } 
+            }
+         }
+      }
+   }
+   public void FindTiles()
+   {
+      PlayerStats myStats = GetComponent<PlayerStats>();
+      float distance = (float)myStats.GetMovement("walk");
+      int team = myStats.GetTeam();
+      ComputeAdjacencyLists();
+      GetCurrentTile();
+
+      Queue<Tile> process = new Queue<Tile>();
+
+      process.Enqueue(currentTile);
+      if(currentTile != null)
+      {
+         currentTile.visited = true;
+
+         while (process.Count > 0) 
+         {
+            Tile t = process.Dequeue();
+
+            selectableTiles.Add(t);
+            PlayerStats occupant = t.GetOccupant();
+            if(occupant == null || occupant.GetTeam() == team)
+            { 
+               if (t.distance < distance) {     
+
+                  foreach (Tile tile in t.adjacencyList)
+                  {
+                     
+                     if (!tile.visited)
+                     {
+                        tile.visited = true;
+                        float distanceCost = 1;
+                        if(t.diagonalList.Contains(tile))
+                        {
+                           distanceCost = 1.5f;
+                        }
+                        tile.distance = distanceCost + t.distance;
+                        if(tile.distance <= distance)
+                        {
+                           tile.parent = t;
+                           process.Enqueue(tile);
+                        }
+                     }
+                  }
+               }
+            }
          }
       }
    }
 
-   public void moveToTile(Tile tile)
+   public void moveToTile(Vector3[] pathArray)
    {
-      //action economy for full/half move
-      halfMove = tile.selectable; 
-
       //reset any previous movement
       path.Clear();
-
-      tile.target = true;
-      tile.UpdateIndictator();
-      moving = true; 
+      moving = true;
       
-      Tile next = tile;
       //until we reach the location
-      while (next != null)
+      for (int i = 0; i < pathArray.Length; i++)
       {
          //add current tile to pathing and move on to the next
-         path.Push(next);
-         next = next.parent;
+         path.Push(pathArray[i]);
       }
+   
+      StartCoroutine(moveDelay());
+   }
+
+   IEnumerator moveDelay()
+   {
+      while(moving)
+      {  
+         Move();
+         yield return new WaitForEndOfFrame(); 
+      }
+      finishedMoving();
    }
 
    public void Move()
@@ -242,8 +212,7 @@ public class TacticsMovement : MonoBehaviour
       //if our stack still has move orders, we can move
       if (path.Count > 0)
       {
-         Tile t = path.Peek();
-         Vector3 target = t.transform.position;
+         Vector3 target = path.Peek();
          //ensure player is standing on top of the tile
          target.y += 1.5f;
 
@@ -272,7 +241,7 @@ public class TacticsMovement : MonoBehaviour
                }
                else
                {
-                   Vector3 newLevel = new Vector3(transform.position.x, target.y, transform.position.z);
+                  Vector3 newLevel = new Vector3(transform.position.x, target.y, transform.position.z);
                   transform.position = newLevel;
                }
             }
@@ -308,7 +277,7 @@ public class TacticsMovement : MonoBehaviour
          }
 
          //signal to turn manager that actions need to be spent
-         finishedMove = true;
+         //finishedMoving();
       }
    }
 
@@ -415,10 +384,13 @@ public class TacticsMovement : MonoBehaviour
 
    public bool finishedMoving()
    {
-      bool output = finishedMove;
-      if(output)
+      if(finishedMove)
       {
-         finishedMove = false;
+         foreach (Tile t in selectableTiles)
+         {
+            t.reset();
+         }
+         selectableTiles.Clear();
          return true;
       }
       return false;

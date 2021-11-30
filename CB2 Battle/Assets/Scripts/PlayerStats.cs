@@ -26,26 +26,22 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public CharacterSaveData myData;
     // Characters can store the cover bonus of cover while advancing
     private int AdvanceBonus;
-    // Reference for all player stats
-    public Dictionary<string, int> Stats = new Dictionary<string, int>();
     // Keys are every condition this player has, values are the duration of the conditions
     public Dictionary<ConditionTemplate, int> Conditions = new Dictionary<ConditionTemplate, int>();
     // Used for overworld only, true if a player is occupied with a job
     private bool Occupied = false;
-    // level of skill training a character has, is called first
-    public List<Skill> Skills = new List<Skill>();
     // Every item, weapon and piece of armor this character holds
     public List<Item> equipment = new List<Item>();
     // Reference to the weapon in the player secondary hand
     public Weapon SecondaryWeapon;
     // Reference to the weapon in the player primary hand
     public Weapon PrimaryWeapon; 
-    //quick reference for what die rolls correspond to a hit location
-    private Dictionary<int, string> HitLocations;
     private RollResult currentRoll;
     // used for multiplayer quick referencing
     public int ID;
     private PhotonView pv;
+    public int NPCHealth;
+    private int moveMax;
 
     [SerializeField] private HealthBar HealthBar;
     [SerializeField] private FatigueBar FatigueBar;
@@ -55,15 +51,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     {   
         this.myData = myData;
         this.playername = myData.playername;
-        this.team = myData.team;
-        this.Stats = myData.GetStats();
-        this.Skills = new List<Skill>();
-        foreach(KeyValuePair<string,int> kvp in myData.GetSkills())
-        {  
-            Skills.Add(new Skill(SkillReference.GetSkill(kvp.Key),kvp.Value));
+        this.team = myData.team;    
+        if(team != 0)
+        {
+            NPCHealth = 0;
         }
-        //this.HitLocations = myData.StandardHitLocations();
-        //this.equipment = ItemReference.DownloadEquipment(myData.GetEquipment());
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
         Init(id);
     }
@@ -77,16 +69,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {
             pv.RPC("RPC_Init",RpcTarget.OthersBuffered, myData.team,myData.Model, id);
         }
-        CompleteDownload();
-        Weapon[] startingequipment = GetWeaponsForEquipment().ToArray();
-        if (startingequipment.Length > 0)
-        {
-            Weapon firstWep = startingequipment[0];
-            if(firstWep != null)
-            {
-                EquipPrimary(firstWep);
-            }
-        }
+        OnDownload();
     }
 
     [PunRPC]
@@ -106,9 +89,46 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         PlayerSpawner.ClientUpdateIDs(this);
         GetComponentInChildren<MeshFilter>().mesh = PlayerSpawner.GetPlayers()[model];
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
-    }    public int getWounds()
+    }    
+
+    public void OnDownload()
     {
-        return Stats["Wounds"];
+        pv.RPC("RPC_SetHP", RpcTarget.All, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
+        pv.RPC("RPC_SetSP", RpcTarget.All, myData.GetAttribute(AttributeKey.SDamage), myData.GetAttribute(AttributeKey.StunHealth));   
+        pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.Agility));
+    }
+
+    [PunRPC]
+    void RPC_SetMove(int agility)
+    {
+        moveMax = agility * 2;
+        Debug.Log(moveMax);
+    }
+
+    [PunRPC]
+    void RPC_SetHP(int currentHP, int MaxHP)
+    {
+        HealthBar.UpdateHealth(currentHP, MaxHP);
+    }
+
+    [PunRPC]
+    void RPC_SetSP(int currentFatigue, int maxFatigue)
+    {
+        FatigueBar.UpdateFatigue(currentFatigue, maxFatigue);
+    }
+
+    public int getWounds()
+    {
+        int currentHP; 
+        if(team != 0)
+        {
+            currentHP = NPCHealth;
+        }
+        else
+        {
+            currentHP = myData.GetAttribute(AttributeKey.PDamage);
+        }
+        return currentHP;
     }
 
     public int GetTeam()
@@ -119,11 +139,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public string GetName()
     {
         return playername;
-    }
-    
-    public void SetName(string input)
-    {
-        playername = input;
     }
 
     /*  damage: how much incoming damage already altered 
@@ -137,127 +152,36 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public void takeDamage(int damage, string location,string damageType)
     {
-        //Debug.Log(playername + "'s " + location + " armor reduces the incoming damage to " + damage);
-        if (damage > 0) {
-            Stats["Wounds"] -= damage;
-        }
-        if(Stats["Wounds"] < 0)
-        {    
-            TakeCritical(-Stats["Wounds"],location,damageType);
-            Stats["Wounds"] = 0;
-        }
-        pv.RPC("RPC_TakeDamage", RpcTarget.AllBuffered, Stats["Wounds"], Stats["MaxWounds"]);
-    }
-
-    [PunRPC]
-    void RPC_TakeDamage(int currentHP, int MaxHP)
-    {
-        HealthBar.UpdateHealth(currentHP, MaxHP);
-    }
-
-    public void TakeCritical(int critDamage, string location,string damageType)
-    {
-        Stats["Critical"] += critDamage;
-        CriticalDamageReference.DealCritical(this, damageType, Stats["Critical"],location);
+        int currentHealth = getWounds();
+        myData.SetAttribute(AttributeKey.SDamage, currentHealth + damage,false);
+        pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
     }
 
     public void takeFatigue(int levels)
     {
-        if (levels > 0)
-        {
-            if(!hasCondition("Fatigued"))
-            {
-                SetCondition("Fatigued",0,true);
-            }
-            CombatLog.Log(GetName() + " takes " + levels + " levels of fatigue");
-            Stats["Fatigue"] += levels;
-        }
-        if(Stats["Fatigue"] > GetStatScore("T"))
-        {
-            CombatLog.Log(GetName() + " takes more fatigue than their Toughness bonus and is knocked out!");
-            SetCondition("Unconscious",0,true);
-        }
-        int currentFatigue = GetStat("Fatigue");
-        int maxFatigue = GetStatScore("T") + 1;
-        pv.RPC("RPC_TakeFatigue", RpcTarget.AllBuffered, currentFatigue, maxFatigue);
+        int currentStun = myData.GetAttribute(AttributeKey.SDamage);
+        myData.SetAttribute(AttributeKey.SDamage, currentStun + levels,false);
+        pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
     }
-
-    [PunRPC]
-    void RPC_TakeFatigue(int currentFatigue, int maxFatigue)
-    {
-        FatigueBar.UpdateFatigue(currentFatigue, maxFatigue);
-    }
-
-    public Dictionary<int, string> GetHitLocations()
-    {
-        return HitLocations; 
-    } 
 
     public int GetStat(string key)
     {
-        if(!Stats.ContainsKey(key))
-        {
-            Debug.Log("Error: " + key + " does not exist!");
-            return 0; 
-        }
-        return Stats[key]; 
+        return myData.GetAttribute(key);
     }
 
     public int GetMovement(string Key)
     {
-        string stat = "Move" + Key;
+        return moveMax;
+        /*
         if(IsHelpless() || Grappling() || hasCondition("Stunned"))
         {
             return 0;
         }
         if(hasCondition("Prone"))
         {
-            return GetStat(stat)/2;
+            return moveMax/2;
         }
-        return GetStat(stat);
-    }
-
-    public int GetStatScore(string key)
-    {
-        if(!Stats.ContainsKey(key))
-        {
-            Debug.Log("Error: " + key + " does not exist!");
-            return 0; 
-        }
-        int StatTotal = Stats[key];
-        StatTotal += CalculateStatModifiers(key);
-        return StatTotal/10; 
-    }
-
-    public void SetStat(string key, int value)
-    {
-        Stats[key] = value; 
-    }
-
-    public void CompleteDownload()
-    {
-        UpdateMovement();
-        UpdateAP();
-        UpdateCarryWeight();
-        //HealthBar.UpdateHealth();
-        //FatigueBar.UpdateFatigue();
-    }
-
-    public void SetSkill(Skill input)
-    {
-        bool contains = false;
-        foreach(Skill s in Skills)
-        {
-            if(s.compareSkill(input))
-            {
-                contains = true;
-            }
-        }
-        if(!contains)
-        {   
-            Debug.Log("adding" + input.name + "to skills, value" + input.levels);
-            Skills.Add(input);
-        }
+        */
     }
 
     public void Unequip(Weapon w)
@@ -301,12 +225,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
     public RollResult AbilityCheck(string input, int modifiers,string command, PlayerStats other)
     {
-        int SkillTarget;
-        string type;
+        int SkillTarget = 10;
         int ConditionalModifiers = modifiers;
         //Debug.Log("attempting " + input);
-        Skill convertedSkill = GetSkillReference(input);
-        //for skills not characteristics
+        //Skill convertedSkill = GetSkillReference(input);
+        /*for skills not characteristics
         if (convertedSkill != null)
         {
             //modifier for skills
@@ -337,6 +260,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
         SkillTarget += ConditionalModifiers;  
         
+        */
         RollResult output;
         output = new RollResult(this,SkillTarget,input,command);
         if(other != null)
@@ -362,26 +286,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public void SpendAction(string actionName)
     {
       CompletedActions.Add(actionName);
-    }
-
-    public void SpendFate()
-    {
-        if(Stats["Fate"] > 0)
-        {
-            Stats["Fate"]--;
-        }
-    }
-
-    public void BurnFate()
-    {
-        if(Stats["FateMax"] > 0)
-        {
-            Stats["FateMax"]--;
-        }
-        if(Stats["Fate"] > Stats["FateMax"])
-        {
-            Stats["Fate"] = Stats["FateMax"];
-        }
     }
 
     public void ResetActions()
@@ -457,120 +361,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             return false;  
         }
     }
-
-    //enforces rules on movement, must be called whenever A is changed
-    public void UpdateMovement()
-    {
-        int agilityScore = GetStatScore("A");
-        Stats["MoveHalf"] = agilityScore;
-        Stats["MoveFull"] = agilityScore * 2;
-        Stats["MoveCharge"] = agilityScore * 3;
-        Stats["MoveRun"] = agilityScore * 6;
-    }
-
-    public void UpdateCarryWeight()
-    {
-        if(!Stats.ContainsKey("Weight"))
-        {
-            Stats.Add("Weight",0);
-        }
-        if(!Stats.ContainsKey("MaxWeight"))
-        {
-            Stats.Add("MaxWeight",0);
-        }
-        float total = 0;
-        foreach(Item i in equipment)
-        {
-            total += i.getWeight();
-        }
-        Stats["Weight"] = (int) total;
-        int CarryBonus = GetStatScore("S") + GetStatScore("T");
-        if (CarryBonus > 19)
-        {
-            Stats["MaxWeight"] = 2250;
-        }
-        else if (CarryBonus > 18)
-        {
-            Stats["MaxWeight"] = 1800;
-        }
-        else if (CarryBonus > 17)
-        {
-            Stats["MaxWeight"] = 1350;    
-        }
-        else if (CarryBonus > 16)
-        {
-            Stats["MaxWeight"] = 900;  
-        }
-        else if (CarryBonus > 15)
-        {
-            Stats["MaxWeight"] = 675;  
-        }
-        else if (CarryBonus > 14)
-        {
-            Stats["MaxWeight"] = 450;  
-        }
-        else if (CarryBonus > 13)
-        {
-            Stats["MaxWeight"] = 337;  
-        }
-        else if (CarryBonus > 12)
-        {
-            Stats["MaxWeight"] = 225;  
-        }
-        else if (CarryBonus > 11)
-        {
-            Stats["MaxWeight"] = 112;  
-        }
-        else if (CarryBonus > 10)
-        {
-            Stats["MaxWeight"] = 90;  
-        }
-        else if (CarryBonus > 9)
-        {
-            Stats["MaxWeight"] = 78;   
-        }
-        else if (CarryBonus > 8)
-        {
-            Stats["MaxWeight"] = 67;  
-        }
-        else if (CarryBonus > 7)
-        {
-            Stats["MaxWeight"] = 56;  
-        }
-        else if (CarryBonus > 6)
-        {
-            Stats["MaxWeight"] = 45;  
-        }
-        else if (CarryBonus > 5)
-        {
-            Stats["MaxWeight"] = 36;  
-        }
-        else if (CarryBonus > 4)
-        {
-            Stats["MaxWeight"] = 27;  
-        }
-        else if (CarryBonus > 3)
-        {
-            Stats["MaxWeight"] = 18;  
-        }
-        else if (CarryBonus > 2)
-        {
-            Stats["MaxWeight"] = 9;  
-        }
-        else if (CarryBonus > 1)
-        {
-            Stats["MaxWeight"] = 5;  
-        }
-        else if (CarryBonus > 0)
-        {
-            Stats["MaxWeight"] = 2;  
-        }
-        else
-        {
-            Stats["MaxWeight"] = 1;  
-        }
-    }
-
+    
     //sets string as a reference for tactics action to repeat untill ClearRepeatingAction() is called
     public void SetRepeatingAction(string input)
     {
@@ -664,15 +455,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             }
         }
         return bestAP;
-    }
-
-    //like updatemovement, players can't actually input their AP instead the display is modified to show their best AP from their equiped armor
-    public void UpdateAP()
-    {
-        foreach(KeyValuePair<int,string> kvp in HitLocations)
-        {
-            Stats[kvp.Value] = GetAP(kvp.Value, null);
-        }
     }
 
     //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
@@ -788,37 +570,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             return 0;
         }
         return AdvanceBonus;
-    }
-
-    public string GetAverageSoak()
-    {
-        int highestAP = 0;
-        int lowestAP = 100;
-        foreach(KeyValuePair<int,string> kvp in HitLocations)
-        {
-            int AP = GetStat(kvp.Value);
-            if ( AP > highestAP)
-            {
-                highestAP = AP;
-            }
-            if ( AP < lowestAP)
-            {
-                lowestAP = AP;
-            }
-        }
-        return "Soak: " + (lowestAP + GetStatScore("T")) + " - " + (highestAP + GetStatScore("T"));
-    }
-
-    private Skill GetSkillReference(string input)
-    {
-        foreach(Skill s in Skills)
-        {
-            if(s.name.Equals(input))
-            {
-                return s;
-            }
-        }
-        return null;
     }
 
     public List<Weapon> GetWeaponsForEquipment()
@@ -1038,7 +789,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     void RPC_Overworld_Init()
     {
         gameObject.AddComponent<OverworldMovement>();
-        HealthBar.gameObject.SetActive(false);
-        FatigueBar.gameObject.SetActive(false);
+        //HealthBar.gameObject.SetActive(false);
+        //FatigueBar.gameObject.SetActive(false);
     }
 }

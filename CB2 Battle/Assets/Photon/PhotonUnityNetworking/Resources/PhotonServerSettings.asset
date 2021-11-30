@@ -86,6 +86,12 @@ MonoBehaviour:
   - RPC_AskPlayers
   - RPC_GetDummyPlayers
   - RPC_ScatterMove
+  - RPC_SetHP
+  - RPC_SetSP
+  - RPC_Move
+  - RPC_SetMove
+  - RPC_MoveToTile
+  - RPC_PlaceToken
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

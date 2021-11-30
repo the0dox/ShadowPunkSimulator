@@ -28,11 +28,15 @@ public class Tile : MonoBehaviour
     public static Vector3 topleft = new Vector3(1,0,-1);
     public GameObject indicator;
     private MeshFilter myFilter;
+    [SerializeField] private Material transMat;
+    [SerializeField] private Material solidMat;
+    [SerializeField] private GameObject ScrolledBox;
 
     void Start()
     {
         MapPosition = transform.position;
         TotalAV = ArmorValue;
+        ScrolledBox.SetActive(false);
     }
     // Update is called once per frame
     public void  UpdateIndictator()
@@ -44,28 +48,33 @@ public class Tile : MonoBehaviour
             indicator.GetComponent<Renderer>().material.color = currentColor;
             if (current)
             {
-                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);;
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);
             }
             else if (target)
-            {
-                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);;
+            {   
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);
             }
             else if (selectable)
             {
-                indicator.GetComponent<Renderer>().material.color = new Color(0,1,1,0.75f);;
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color = new Color(0,1,1,0.75f);
             }
             else if (attack)
             {
-                indicator.GetComponent<Renderer>().material.color = new Color(1,0,0,0.75f);;
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color = new Color(1,0,0,0.75f);
             }
             else if (selectableRunning)
             {
+                indicator.GetComponent<Renderer>().material = solidMat;
                 indicator.GetComponent<Renderer>().material.color = new Color(1,0.92f,0.016f,0.75f);
             }
             else
             {
+                indicator.GetComponent<Renderer>().material = transMat;
                 currentColor = indicator.GetComponent<Renderer>().material.color;
-                currentColor.a = 0.25f;
                 indicator.GetComponent<Renderer>().material.color = currentColor;
             }
         
@@ -85,6 +94,7 @@ public class Tile : MonoBehaviour
         distance = 0; 
         adjacencyList = new List<Tile>();
         diagonalList = new List<Tile>();
+        ScrolledBox.SetActive(false);
         UpdateIndictator();
     }
 
@@ -148,6 +158,11 @@ public class Tile : MonoBehaviour
         return ArmorValue + 1;
         }
         return ArmorValue;
+    }
+
+    public void OnScrolled(bool on)
+    {
+        ScrolledBox.SetActive(on);
     }
 
 

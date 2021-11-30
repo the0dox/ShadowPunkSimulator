@@ -35,7 +35,6 @@ public class CharacterSelectorButton : MonoBehaviour
     // called by DM menu when this object is created, saves its value to this object
     public void SetData(int index, CharacterSaveData input)
     {
-        transform.localScale = Vector3.one;
         PopUp.SetActive(false);
         ModelDisplay.SetActive(false);
         myData = input;

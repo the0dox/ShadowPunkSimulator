@@ -19,7 +19,18 @@ public class FatigueBar : MonoBehaviour
     }
     public void UpdateFatigue(int currentFatigue, int maxFatigue)
     {
-        float difference = (float)maxFatigue - currentFatigue;
-        Bar.fillAmount = difference / maxFatigue;  
+        float fill = (float)(maxFatigue - currentFatigue) / maxFatigue;
+        if(fill < 0)
+        {
+            fill = 0;
+        }
+        if(fill == 0)
+        {
+            Bar.fillAmount = 0;
+        }
+        else
+        {
+            Bar.fillAmount = fill;
+        }
     }
 }

@@ -38,7 +38,7 @@ public class ActionQueueDisplay : MonoBehaviourPunCallbacks
         GameObject newActivity = PhotonNetwork.Instantiate("Lead",new Vector3(), Quaternion.identity);
         newActivity.GetComponent<LeadScript>().SetLead(name,progress,time,ActionStack.Count);
         ActionStack.Push(newActivity);
-        mytransform.transform.localPosition += activityDisplacement;
+        //mytransform.transform.localPosition += activityDisplacement;
     }
 
     // oldActivity: a Gameobject to be removed from the display
@@ -51,7 +51,7 @@ public class ActionQueueDisplay : MonoBehaviourPunCallbacks
             ActionStack.Peek().transform.localPosition += activityDisplacement;
             tempActionQueue.Enqueue(ActionStack.Pop());
         }
-        mytransform.localPosition -= activityDisplacement;
+        //mytransform.localPosition -= activityDisplacement;
         Destroy(ActionStack.Pop());
         while(ActionStack.Count > 0)
         {

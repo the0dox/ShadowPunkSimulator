@@ -154,6 +154,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
             {  
                 newButton.GetComponent<CharacterSelectorButton>().SetDummyData(index, DummyCharacters[index]);
             }
+            newButton.transform.localScale = Vector3.one;
             PrevSelectorButtons.Add(newButton);
             CharacterSelectorPos -= new Vector3(125,0,0);
             if(CharacterSelectorPos.x < -250)

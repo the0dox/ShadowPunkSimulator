@@ -17,6 +17,17 @@ public class TurnManager : TurnActions
     public InitativeTrackerScript It;
     public GameObject PhotonHit;
     float incrementer = 0;
+    private static TurnManager instance;
+
+    void Start()
+    {
+        instance = this;
+    } 
+
+    public static string GetCurrentAction()
+    {
+        return instance.currentAction;
+    }
     
     SortedList<float, TacticsMovement> Sorter = new SortedList<float, TacticsMovement>();  
     // Start is called before the first frame update
@@ -58,24 +69,12 @@ public class TurnManager : TurnActions
         {
             if(ActivePlayer.finishedMoving())
             {
-                if(!ActivePlayerStats.hasCondition("KnockDownBonus"))
-                {
-                    ActivePlayerStats.SetCondition("KnockDownBonus",1,false);
-                }
                 Cancel();
-                if(!ActivePlayerStats.ValidAction("Charge"))
-                {
-                    Combat();
-                }
             }
             CheckMouse();
             switch(currentAction)
             {
                 case "Move":
-                    if (ActivePlayer.moving)
-                    {
-                        ActivePlayer.Move();
-                    }
                 break;
                 case "ReloadPrimaryWeapon":
                     if(halfActions < 1)
@@ -194,6 +193,7 @@ public class TurnManager : TurnActions
         case "Move":
             if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving && currentAction != null)
             {
+                /*
                 Tile t = ServerHitObject.GetComponent<Tile>();
 
                 //player can reach 
@@ -227,6 +227,7 @@ public class TurnManager : TurnActions
                     ActivePlayerStats.RemoveCondition("Braced");
                     }
                 }
+                */
             }
             break;
         case "Run":
@@ -238,7 +239,7 @@ public class TurnManager : TurnActions
                 if (t.selectableRunning)
                 {
                     //make tile green
-                    ActivePlayer.moveToTile(t);
+                    //ActivePlayer.moveToTile(t);
                     AttackOfOppertunity();
                     halfActions-=2;
                     currentAction = "Move";
@@ -262,7 +263,7 @@ public class TurnManager : TurnActions
                 if (t.selectableRunning)
                 {
                     //make tile green
-                    ActivePlayer.moveToTile(t);
+                    //ActivePlayer.moveToTile(t);
                     if(ActivePlayerStats.AbilityCheck("Acrobatics",0).Passed())
                     {
                         CombatLog.Log(ActivePlayerStats.GetName() + "'s successful acrobatics check reduces the cost of disengaging to a half action");
@@ -292,7 +293,7 @@ public class TurnManager : TurnActions
                 if (t.selectableRunning)
                 {
                     //make tile green
-                    ActivePlayer.moveToTile(t);
+                    //ActivePlayer.moveToTile(t);
                     ActivePlayerStats.ApplyAdvanceBonus(TacticsAttack.SaveCoverBonus(ActivePlayerStats)); 
                     halfActions-=2;
 
@@ -313,7 +314,7 @@ public class TurnManager : TurnActions
                 if (t.selectableRunning)
                 {
                     //make tile green
-                    ActivePlayer.moveToTile(t);
+                    //ActivePlayer.moveToTile(t);
                     AttackOfOppertunity();
                     ActivePlayerStats.SetCondition("Charging",1,true);
                     ActivePlayerStats.SpendAction("Charge");
@@ -443,7 +444,7 @@ public class TurnManager : TurnActions
         {
             TacticsMovement tm = p.GetComponent<TacticsMovement>();
             tm.Init();
-            float initiative = p.GetComponent<PlayerStats>().RollInitaitve() + (float)p.GetComponent<PlayerStats>().GetStatScore("A")/10f;
+            float initiative = p.GetComponent<PlayerStats>().RollInitaitve() + (float)p.GetComponent<PlayerStats>().GetStat(AttributeKey.Agility)/10f;
             if(Sorter.ContainsKey(initiative))
             {
                 incrementer += 0.01f;
@@ -659,7 +660,7 @@ public class TurnManager : TurnActions
         if (result > 1)
         {
             CombatLog.Log(attacker.GetName() + " knock down attempt wins by 2 DOF and takes the wind out of " + target.GetName());
-            target.takeDamage(attacker.GetStatScore("S")-4,"Body");
+            target.takeDamage(attacker.GetStat(AttributeKey.Strength)-4,"Body");
             target.takeFatigue(1);
         }
         if (result > 0)
@@ -776,7 +777,7 @@ public class TurnManager : TurnActions
 
     public void AddPlayer(GameObject newPlayer)
     {
-        float initiative = newPlayer.GetComponent<PlayerStats>().RollInitaitve() + (float)newPlayer.GetComponent<PlayerStats>().GetStatScore("A")/10f;
+        float initiative = newPlayer.GetComponent<PlayerStats>().RollInitaitve() + (float)newPlayer.GetComponent<PlayerStats>().GetStat(AttributeKey.Agility)/10f;
         TacticsMovement tm = newPlayer.GetComponent<TacticsMovement>();
         Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
         if(Sorter.ContainsKey(initiative))
