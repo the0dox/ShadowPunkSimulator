@@ -42,7 +42,7 @@ public class SkillScript : MonoBehaviour
 
     public void UpdateValue()
     {
-        int total = myData.GetSkill(mySkill.name);
+        int total = myData.GetSkill(mySkill.name,true);
         int levels = myData.skills[mySkill.name];
         IF.text = "" + levels;
         ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.characterisitc + ")";

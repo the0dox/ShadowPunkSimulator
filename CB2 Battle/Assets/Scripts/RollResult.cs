@@ -20,6 +20,14 @@ public class RollResult
     // when an advanced roll is complete, command string is invoked for an attack sequence for example
     private string command;
     private RollResult opposingRoll;
+
+    // SR5 rules
+    private int[] dice; 
+    private string skillKey;
+    private string attributeKey; 
+    private string LimitKey;
+    private int failures;
+    private int successes;
     
     // advanced roll that requires manual entry before its data can be accessed
     public RollResult(PlayerStats owner, int Target, string type, string command)
@@ -39,6 +47,64 @@ public class RollResult
         {
             SetRoll(Random.Range(1,101));
         }
+    }
+
+    
+    public RollResult(PlayerStats owner, string skillKey, string attributeKey = "", string LimitKey = "")//,  PlayerStats other = null)
+    {
+        this.owner = owner;
+        this.skillKey = skillKey;
+        this.attributeKey = attributeKey;
+        this.LimitKey = LimitKey;
+        if(!SkillPromptBehavior.ManualRolls)
+        {
+            Roll();
+        }
+    }
+
+    // advanced roll that requires manual entry before its data can be accessed
+    public void Roll()
+    {
+        int Dicelimit = 99;
+        if(string.IsNullOrEmpty(attributeKey))
+        {
+            attributeKey = SkillReference.GetDerrivedAttribute(skillKey);
+        }
+        if(!string.IsNullOrEmpty(LimitKey))
+        {
+            Dicelimit = owner.myData.GetAttribute(LimitKey);
+        }
+
+        int pool = owner.myData.GetSkill(skillKey,false) + owner.myData.GetAttribute(attributeKey);
+
+        dice = new int[pool];
+        
+        failures = 0;
+        successes = 0;
+        for(int i = 0; i < dice.Length; i++)
+        {
+            int result = Random.Range(1,7);
+            dice[i] = result;
+            if(result > 4)
+            {
+                successes++;
+            }
+            else if(result == 1)
+            {
+                failures++;
+            }
+        }
+    }
+
+    public bool Glitched()
+    {
+        float percentageOnes = (float)failures/(float)dice.Length;
+        return percentageOnes >= 0.5f;
+    }
+
+    public int GetHits()
+    {
+        return successes;
     }
 
     public void OpposedRoll(RollResult other)
@@ -62,6 +128,7 @@ public class RollResult
         }
         return completed;
     }
+
 
     // Completes a die roll 
     public void SetRoll(int roll)

@@ -225,11 +225,13 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
     public RollResult AbilityCheck(string input, int modifiers,string command, PlayerStats other)
     {
+        throw new System.NotImplementedException();
+        /*
         int SkillTarget = 10;
         int ConditionalModifiers = modifiers;
         //Debug.Log("attempting " + input);
         //Skill convertedSkill = GetSkillReference(input);
-        /*for skills not characteristics
+        for skills not characteristics
         if (convertedSkill != null)
         {
             //modifier for skills
@@ -260,16 +262,15 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
         SkillTarget += ConditionalModifiers;  
         
-        */
         RollResult output;
         output = new RollResult(this,SkillTarget,input,command);
         if(other != null)
         {
             output.OpposedRoll(other.AbilityCheck(input,modifiers,command));
         }
-        return output;
+        */
     }
-    
+
     public float RollInitaitve()
     {
         return GetStat("A")/10f + Random.Range(1,11);

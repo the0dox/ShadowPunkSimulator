@@ -17,7 +17,7 @@ public class BoardBehavior : MonoBehaviour
                 Tiles.Add(t.transform.position, t);
             }
         }
-        ComputeAdjacencyLists(1);
+        //ComputeAdjacencyLists(1);
     }
 
     public static Tile GetTile(Vector3 pos)

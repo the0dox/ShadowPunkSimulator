@@ -159,13 +159,17 @@ public class CharacterSaveData
         return attribues[key];
     }
 
-    public int GetSkill(string key)
+    public int GetSkill(string key, bool derrived)
     {
         if(!skills.ContainsKey(key))
         {
             skills.Add(key, 0);
         }
         int levels = skills[key];
+        if(!derrived)
+        {
+            return levels;
+        }
         int bonus = GetAttribute(SkillReference.GetDerrivedAttribute(key));
         if(levels > 0)
         {
