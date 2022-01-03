@@ -303,9 +303,9 @@ public class ActivityGenerator : MonoBehaviour
         {
             int dieroll = Random.Range(1,11);
             string usedStat = SkillReference.GetSkill(input.GetSkillType()).characterisitc;
-            int statScoreBonus = input.getOwner().GetStat(usedStat);
+            int statScoreBonus = input.getOwner().GetAttribute(usedStat);
             extrahours = dieroll + statScoreBonus;
-            CombatLog.Log(input.getOwner().GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
+            CombatLog.Log(input.getOwner().playername + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
             extrahours += input.GetDOF();
             CombatLog.Log("Each degree of success (" + input.GetDOF() + ") counts for one more hour of progress!");
         }

@@ -93,6 +93,6 @@ public class SkillScript : MonoBehaviour
 
     public void SkillCheck()
     {
-        GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().AbilityCheck(mySkill.name);
+        myData.AbilityCheck(mySkill.name);
     }
 }

@@ -214,13 +214,19 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     {
         return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
     }
-    public RollResult AbilityCheck(string input,int modifiers)
+
+    public RollResult AbilityCheck(string skillKey, string attributeKey = "", string LimitKey = "", int threshold = 0, int modifier = 0)
     {
-        return AbilityCheck(input,modifiers, null);
+        return new RollResult(myData, skillKey, attributeKey, LimitKey, threshold, modifier);
+    }
+
+    public RollResult AbilityCheck(string skillKey,int modifiers)
+    {
+        throw new System.NotImplementedException();
     }
     public RollResult AbilityCheck(string input, int modifiers,string command)
     {
-        return AbilityCheck(input,modifiers,command,null);
+        throw new System.NotImplementedException();
     }
     //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
     public RollResult AbilityCheck(string input, int modifiers,string command, PlayerStats other)
@@ -273,7 +279,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public float RollInitaitve()
     {
-        return GetStat("A")/10f + Random.Range(1,11);
+        return myData.GetAttribute(AttributeKey.InitativeStandard) + Random.Range(1,7);
     }
 
     public string HealthToString()

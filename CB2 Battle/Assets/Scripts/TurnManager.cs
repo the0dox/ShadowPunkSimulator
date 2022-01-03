@@ -8,7 +8,6 @@ using Photon.Pun;
 public class TurnManager : TurnActions
 {
     //static means easily accessable reference for all moveable characters
-    static Queue<string> turnKey = new Queue<string>();
     private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
     [SerializeField] private GameObject DebugToolTipReference; 
     private bool gameStart = false;    
@@ -385,7 +384,7 @@ public class TurnManager : TurnActions
 
     public void StartTurn()
     {
-        if (InitativeOrder.Count != 0) 
+        if (InitativeOrder.Count > 0) 
         {
             ActivePlayer = InitativeOrder.Peek();
             ActivePlayerStats = ActivePlayer.GetComponent<PlayerStats>();
@@ -403,6 +402,10 @@ public class TurnManager : TurnActions
             {
                 w.OnTurnStart();
             }
+        }
+        else
+        {
+            CompletePass();
         }
     }
    public void StartTurn(TacticsMovement newPlayer)
@@ -430,6 +433,92 @@ public class TurnManager : TurnActions
             }
         }
     }
+
+    private void CompletePass()
+    {
+        SortedList<float, TacticsMovement> TempSorter = new SortedList<float, TacticsMovement>();  
+        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
+        
+        foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) 
+        {
+            float newInitative = kvp.Key - 10;
+            kvp.Value.initative = Mathf.FloorToInt(newInitative);
+            if(Mathf.FloorToInt(newInitative) > 0)
+            {
+                Debug.Log(newInitative);
+                TempSorter.Add(newInitative, kvp.Value);
+            }
+        }
+
+        Sorter = TempSorter;
+
+        foreach(float key in Sorter.Keys)
+        {
+            TempStack.Push(Sorter[key]);
+        }
+
+        //finally added to Queue in correct order
+        while(TempStack.Count != 0){
+            InitativeOrder.Enqueue(TempStack.Pop());
+        }
+        if(InitativeOrder.Count > 0)
+        {
+            StartTurn();
+        }
+        else
+        {
+            SortQueue();
+        }
+    }
+
+    public void SubtractIniative(TacticsMovement player, int initative)
+    {
+        TacticsMovement originalTurn = InitativeOrder.Peek();
+        TacticsMovement currentTurn = InitativeOrder.Peek();
+        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
+
+        
+        SortedList<float,TacticsMovement> tempSorter = new SortedList<float, TacticsMovement>();
+        foreach(KeyValuePair<float,TacticsMovement> kvp in Sorter)
+        {
+            if(kvp.Value == player)
+            {
+                float newInitative = kvp.Key - initative;
+                if(Mathf.FloorToInt(newInitative) > 0)
+                {
+                    kvp.Value.initative = Mathf.FloorToInt(newInitative);
+                    tempSorter.Add(newInitative, kvp.Value);
+                }
+                else
+                {
+                    kvp.Value.initative = 0;
+                    tempSorter.Add(0, kvp.Value);
+                }
+            }
+            else
+            {
+                tempSorter.Add(kvp.Key,kvp.Value);
+            }
+        }
+
+        Sorter = tempSorter;
+
+        foreach(KeyValuePair<float,TacticsMovement> kvp in Sorter)
+        {
+            TempStack.Push(kvp.Value);
+        }
+
+        while(TempStack.Count != 0){
+            InitativeOrder.Enqueue(TempStack.Pop());
+        }
+
+        while(InitativeOrder.Peek() != player)
+        {
+            InitativeOrder.Enqueue(InitativeOrder.Dequeue());
+        }
+    }
+
+
     //sorts initative order on beginning of game
     public void SortQueue()
     {
@@ -450,7 +539,7 @@ public class TurnManager : TurnActions
                 incrementer += 0.01f;
                 initiative += incrementer;
             }
-            tm.initative = initiative;
+            tm.initative = Mathf.FloorToInt(initiative);
             Sorter.Add(initiative,tm);
         }
 
@@ -467,7 +556,6 @@ public class TurnManager : TurnActions
         {
             StartTurn();
         }
-        PrintInitiative();
     }
 
     public GameObject GetActivePlayer()
@@ -497,17 +585,19 @@ public class TurnManager : TurnActions
 
     public void EndTurn(){
         ActivePlayerStats.UpdateConditions(false);
-        InitativeOrder.Enqueue(InitativeOrder.Dequeue());
+        InitativeOrder.Dequeue();
         ActivePlayerStats.ApplyAdvanceBonus(0);
         StartTurn();
     }
 
+    /*
     public void EndTurn(TacticsMovement newPlayer){
         ActivePlayerStats.UpdateConditions(false);
         //InitativeOrder.Enqueue(InitativeOrder.Dequeue());
         ActivePlayerStats.ApplyAdvanceBonus(0);
         StartTurn(newPlayer);
     }
+    */
 
     public void PrintInitiative()
     {

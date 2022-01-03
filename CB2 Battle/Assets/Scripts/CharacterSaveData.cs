@@ -185,6 +185,11 @@ public class CharacterSaveData
         }
     }
 
+    public RollResult AbilityCheck(string skillKey, string attributeKey = "", string LimitKey = "", int threshold = 0, int modifier = 0)
+    {
+        return new RollResult(this, skillKey, attributeKey, LimitKey, threshold, modifier);
+    }
+
     // Converts SkillNames and Skill Levels into a list of skill objects that playerstats can read
     public Dictionary<string,int> GetSkills()
     {
@@ -214,6 +219,7 @@ public class CharacterSaveData
         // Physical Limit = [(Strength x 2) + Body + Reaction] / 3 (round up)
         float PhysicalLimit = (float)(GetAttribute(AttributeKey.Strength) * 2 + GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Reaction));
         PhysicalLimit /= 3f;
+        Debug.Log("phslim= " + PhysicalLimit);
         SetAttribute(AttributeKey.PhysicalLimit, Mathf.CeilToInt(PhysicalLimit),false);
         // Social Limit = [(Charisma x 2) + Willpower + Essence] / 3 (round up) 
         float SocialLimit = (float)(GetAttribute(AttributeKey.Charisma) * 2 + GetAttribute(AttributeKey.Willpower) + GetAttribute(AttributeKey.Essense));

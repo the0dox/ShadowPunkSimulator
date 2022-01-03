@@ -14,7 +14,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
    Tile currentTile;
 
    public bool moving = false!;
-   public float initative = 0;
+   public int initative = 0;
    public bool finishedMove = false;
    public float jumpHeight = 2;
    public float moveSpeed = 4; 

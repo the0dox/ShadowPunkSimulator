@@ -18,10 +18,22 @@ public class SkillPromptBehavior : MonoBehaviour
 
     // Reference to the visual popup, set inactive when there are no queued rolls
     [SerializeField] private GameObject display; 
-    // Reference to the input field the player uses to enter the roll
-    [SerializeField] private InputField inputText;
+    // Skill used in the current roll
+    [SerializeField] private Dropdown SkillDD;
+    // Attribute used in the current roll
+    [SerializeField] private Dropdown AttributeDD;
+    // Max number of successes possible
+    [SerializeField] private Dropdown LimitDD;
+
+    // Reference to the input field the player uses to determine the modifier to the pool
+    [SerializeField] private InputField ModifierIF;
+    // Reference to the input field the player uses to determine the hits required for a successes
+    [SerializeField] private InputField ThresholdIF;
     // References to the text explaining what the roll is for
     [SerializeField] private Text displayText;
+    [SerializeField] private Text CalculationText;
+
+    private List<string> Limits = new List<string>{"PHY", "SOC", "MEN"};
 
     // Called on the first frame
     void Start()
@@ -56,24 +68,137 @@ public class SkillPromptBehavior : MonoBehaviour
     {
         if(currentRoll != null)
         {
+            UpdateSkillDropDown();
+            UpdateAttributeDropDown();
+            UpdateLimitDropDown();
+            ModifierIF.text = "" + currentRoll.modifiers;
+            ThresholdIF.text = "" + currentRoll.threshold;
             CameraButtons.UIFreeze(true);
             display.SetActive(true); 
-            displayText.text = currentRoll.getOwner().GetName() + " is attempting a " + currentRoll.GetSkillType() + " check\n Target: " + currentRoll.GetTarget() + "\n Input Result:";
-            inputText.text = "";
+            displayText.text = currentRoll.getOwner().playername + " is attempting a " + currentRoll.GetSkillType() + " check";
+            OnValueChange();
         }
-       
     }
 
+    private void UpdateSkillDropDown()
+    {
+        SkillDD.ClearOptions();
+        List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
+        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
+        baseResponse.text = currentRoll.skillKey;
+        results.Add(baseResponse);
+        foreach(string Key in currentRoll.getOwner().skills.Keys)
+        {
+            if(!Key.Equals(currentRoll.skillKey))
+            {
+                Dropdown.OptionData NewData = new Dropdown.OptionData();
+                NewData.text = Key;
+                results.Add(NewData);
+            }
+        }
+        SkillDD.AddOptions(results);
+    }
+
+    private void UpdateAttributeDropDown()
+    {
+        AttributeDD.ClearOptions();
+        List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
+        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
+        baseResponse.text = currentRoll.attributeKey;
+        results.Add(baseResponse);
+        foreach(string Key in currentRoll.getOwner().attribues.Keys)
+        {
+            if(!Key.Equals(currentRoll.attributeKey))
+            {
+                Dropdown.OptionData NewData = new Dropdown.OptionData();
+                NewData.text = Key;
+                results.Add(NewData);
+            }
+        }
+        AttributeDD.AddOptions(results);
+    }
+
+    private void UpdateLimitDropDown()
+    {
+        LimitDD.ClearOptions();
+        List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
+        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
+        baseResponse.text = currentRoll.LimitKey;
+        results.Add(baseResponse);
+        foreach(string Key in Limits)
+        {
+            if(!Key.Equals(currentRoll.LimitKey))
+            {
+                Dropdown.OptionData NewData = new Dropdown.OptionData();
+                NewData.text = Key;
+                results.Add(NewData);
+            }
+        }
+        LimitDD.AddOptions(results);
+    }
+
+    public void OnSkillChanged()
+    {
+        currentRoll.skillKey = SkillDD.captionText.text;
+        OnValueChange();
+    }
+
+    public void OnAttributeChanged()
+    {
+        currentRoll.attributeKey = AttributeDD.captionText.text;
+        OnValueChange();
+    }
+    public void OnLimitChanged()
+    {
+        currentRoll.LimitKey = LimitDD.captionText.text;
+        OnValueChange();
+    }
+
+    public void OnModifierChanged()
+    {
+        int value;
+        if (int.TryParse(ModifierIF.text, out value))
+        {
+            currentRoll.modifiers = value;
+        }
+        else
+        {
+            currentRoll.modifiers = 0;
+        }
+        OnValueChange();
+    }  
+
+    public void OnThresholdChanged()
+    {
+        int value;
+        if (int.TryParse(ThresholdIF.text, out value))
+        {
+            currentRoll.threshold = value;
+        }
+        else
+        {
+            currentRoll.threshold = 0;
+        }
+        OnValueChange();
+    }  
+
+    public void OnValueChange()
+    {
+        int pool = currentRoll.GetPool();
+        //int limit = currentRoll.getOwner().GetAttribute(currentRoll.LimitKey);
+        string limitText = "";
+        if(!string.IsNullOrEmpty(currentRoll.LimitKey))
+        {
+            limitText = "[" + currentRoll.LimitKey + "] ";
+        }
+        CalculationText.text = currentRoll.skillKey + " + " + currentRoll.attributeKey + " " + limitText + "(" + currentRoll.threshold +") TEST";
+        CalculationText.text += "\n Dice Pool: " + pool;
+    } 
+    
     // Called when the display button is pressed, passes the entry in inputText back to CurrentRoll and marks it as complete 
     public void OnButtonPressed()
     {
-        int value;
-        //if a numerical value cannot be found, substitute a random roll
-        if (!int.TryParse(inputText.text, out value))
-        {
-            value = Random.Range(1,101);
-        }
-        currentRoll.SetRoll(value);
+        currentRoll.Roll();
         currentRoll = null;
         CameraButtons.UIFreeze(false);
         display.SetActive(false);

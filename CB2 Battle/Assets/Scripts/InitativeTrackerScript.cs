@@ -16,10 +16,27 @@ public class InitativeTrackerScript : MonoBehaviour
     // displays the iniative order with the current player on top
     public void UpdateList(string[] initative)
     {
-        if(initative.Length > 1)
+        if(initative.Length == 1)
+        {
+            pv.RPC("RPC_List_Single",RpcTarget.All,initative);
+        }
+        else
         {
             pv.RPC("RPC_List",RpcTarget.All,initative);
         }
+    }
+
+    // Sends l to all clients
+    [PunRPC]
+    void RPC_List_Single(string initative)
+    {
+        ClearList();
+        int verticalDisplacement = 0;
+        verticalDisplacement -= 50;
+        GameObject newEntry = Instantiate(TextEntry) as GameObject;
+        newEntry.transform.SetParent(gameObject.transform, false);
+        newEntry.transform.localPosition = new Vector3(0,verticalDisplacement,0);
+        newEntry.GetComponent<Text>().text = initative;
     }
 
     // Sends l to all clients

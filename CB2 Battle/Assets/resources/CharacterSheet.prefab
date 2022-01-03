@@ -9140,7 +9140,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8225659303201318211, guid: 6e511d7aef76c464497f29106dc34964, type: 3}
       propertyPath: stat
-      value: Strength
+      value: STR
       objectReference: {fileID: 0}
     - target: {fileID: 8225659303201318211, guid: 6e511d7aef76c464497f29106dc34964, type: 3}
       propertyPath: baseDescription
