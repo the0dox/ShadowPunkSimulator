@@ -33,6 +33,9 @@ MonoBehaviour:
   single: 1
   semi: 0
   auto: 0
+  WeaponSkill: Pistols
+  WeaponSpecialization: Semi-Automatics
+  accuracy: 0
   clipMax: 30
   damageType: I
   blast: 0

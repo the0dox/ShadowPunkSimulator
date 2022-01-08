@@ -91,7 +91,7 @@ public class AttackSequence
     public void ReactionRollComplete()
     {
         reactionRolled = true;
-
+        /*
         if (reactionRoll.Passed())
         {
             if(reactionRoll.GetSkillType().Equals("Dodge"))
@@ -109,7 +109,7 @@ public class AttackSequence
                     PopUpText.CreateText(ActiveWeapon.GetName() + " Shattered!", Color.red, attacker.gameObject);
                     CombatLog.Log(target.GetName() + "'s power field shatters the attackers weapon!");
                     attacker.Unequip(ActiveWeapon);
-                    attacker.equipment.Remove(ActiveWeapon);
+                    attacker.myData.equipmentObjects.Remove(ActiveWeapon);
                 }
             }
         }
@@ -117,5 +117,6 @@ public class AttackSequence
         {
             CombatLog.Log(target.GetName() + " fails to avoid the incoming attack!");
         }
+        */
     }
 }

@@ -2,8 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-//[CreateAssetMenu(fileName = "Weapons", menuName = "ScriptableObjects/Weapons")]
-public class Weapon : Item
+//Depreciated object type for darkheresy weapons
+public class WeaponDH : Item
 { 
     //attributes are keywords a weapon would possess, should really be called "Special"
     [SerializeField] private List<string> Attributes = new List<string>();
@@ -41,8 +41,7 @@ public class Weapon : Item
     private string Class;
     // Special weapons with the recharge abilitiy use this to determine if they can fire this turn or not
     private int Recharging;
-    new public WeaponTemplate Template;
-    public Weapon(WeaponTemplate template)
+    public WeaponDH(WeaponTemplate template)
     {
         Template = template;
         this.name = template.name;
@@ -544,7 +543,7 @@ public class Weapon : Item
     public void ThrowWeapon(PlayerStats owner)
     {
         clip = clipMax;
-        owner.Unequip(this);
+        //owner.Unequip(this);
         this.SubtractStack();
         if(this.IsConsumed())
         {
@@ -576,8 +575,6 @@ public class Weapon : Item
         {
             tooltip += "\nRange: " + range + "m";
         }
-        tooltip += "\nRequired Skill: " + Template.WeaponSkill;
-        tooltip += "\nSpecialization: " + Template.WeaponSpecialization;
         tooltip += "\nArmor Penetration: " + pen;
         tooltip += "\nReload: " + reloadToString();
         tooltip += "\nRate of Fire: " + ROFtoString(); 

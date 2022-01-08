@@ -53,10 +53,11 @@ public class RollResult
     }
     */
 
-    public RollResult(CharacterSaveData owner, string skillKey, string attributeKey = "", string LimitKey = "", int threshold = 0, int modifiers = 0)//,  PlayerStats other = null)
+    public RollResult(CharacterSaveData owner, string skillKey = "", string attributeKey = "", string LimitKey = "", int threshold = 0, int modifiers = 0)//,  PlayerStats other = null)
     {
         this.owner = owner;
         this.skillKey = skillKey;
+        this.modifiers = modifiers;
         if(string.IsNullOrEmpty(attributeKey))
         {
             this.attributeKey = SkillReference.GetSkill(skillKey).characterisitc;
@@ -111,13 +112,14 @@ public class RollResult
     // Given skills and attributes, creates the dice pool to be rolled
     public int GetPool()
     {
-        if(string.IsNullOrEmpty(attributeKey))
+        pool = 0;
+        if(!string.IsNullOrEmpty(skillKey))
         {
-            pool = owner.GetSkill(skillKey,true);
+            pool += owner.GetSkill(skillKey,false);
         }
-        else
+        if(!string.IsNullOrEmpty(attributeKey))
         {
-            pool = owner.GetSkill(skillKey,false) + owner.GetAttribute(attributeKey);
+            pool += owner.GetAttribute(attributeKey);
         }
         pool += modifiers;
         //Debug.Log("Die Pool: " + pool);

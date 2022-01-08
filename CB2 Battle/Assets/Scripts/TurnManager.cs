@@ -5,7 +5,7 @@ using UnityEngine.EventSystems;
 using Photon.Pun;
 
 // This is the big one, the game master for active play. This script manages all the logic required for playing CB2 combat
-public class TurnManager : TurnActions
+public class TurnManager : TurnActionsSR
 {
     //static means easily accessable reference for all moveable characters
     private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();

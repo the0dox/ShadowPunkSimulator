@@ -31,7 +31,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     // Used for overworld only, true if a player is occupied with a job
     private bool Occupied = false;
     // Every item, weapon and piece of armor this character holds
-    public List<Item> equipment = new List<Item>();
+    //public List<Item> equipment = new List<Item>();
     // Reference to the weapon in the player secondary hand
     public Weapon SecondaryWeapon;
     // Reference to the weapon in the player primary hand
@@ -42,6 +42,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     private PhotonView pv;
     public int NPCHealth;
     private int moveMax;
+    private int defensePenality;
 
     [SerializeField] private HealthBar HealthBar;
     [SerializeField] private FatigueBar FatigueBar;
@@ -102,7 +103,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     void RPC_SetMove(int agility)
     {
         moveMax = agility * 2;
-        Debug.Log(moveMax);
     }
 
     [PunRPC]
@@ -448,7 +448,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public int GetAP(string HitLocation, Weapon w)
     {
         int bestAP = 0;
-        foreach(Item i in equipment)
+        foreach(Item i in myData.equipmentObjects)
         {
             //only check armor
             if(i.GetType() == typeof(Armor))
@@ -467,6 +467,10 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
     public void UpdateConditions(bool startTurn)
     {
+        if(startTurn)
+        {
+            defensePenality = 0;
+        }
         List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
         List<ConditionTemplate> IncrementKeys = new List<ConditionTemplate>();
         foreach (ConditionTemplate Key in Conditions.Keys)
@@ -519,6 +523,13 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             Debug.Log(Key.name + " condition removed");
             Conditions.Remove(Key);
         }
+    }
+
+    public int GetDefensePenality()
+    {
+        int output = defensePenality;
+        defensePenality++;
+        return output;
     }
 
     public void PaintTarget(bool painted)
@@ -582,7 +593,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public List<Weapon> GetWeaponsForEquipment()
     {
         List<Weapon> output = new List<Weapon>();
-        foreach(Item i in equipment)
+        foreach(Item i in myData.equipmentObjects)
         {
             if(i.GetType() == typeof(Weapon))
             {

@@ -241,6 +241,8 @@ public class CharacterSaveData
         SetAttribute(AttributeKey.LiftCarry, GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Strength),false);
         // MEMORY (LOG + WIL)
         SetAttribute(AttributeKey.Memory, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Willpower),false);
+        // DEFENSE (REF + INT)
+        SetAttribute(AttributeKey.Defense, GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
     }
 
     public void setSpecialization(string skillKey, int SpecializationIndex)

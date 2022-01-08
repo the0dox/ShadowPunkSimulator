@@ -26,6 +26,12 @@ public class WeaponTemplate : ItemTemplate
     [SerializeField] public int semi;
     //number of shots fired in full auto
     [SerializeField] public int auto;
+    //Skill used to fire the weapon
+    [SerializeField] public string WeaponSkill;
+    //subtype of weapon that can be specialized in
+    [SerializeField] public string WeaponSpecialization;
+    //limit for hits with this weapon
+    [SerializeField] public int accuracy;
     //clip capacity
     [SerializeField] public int clipMax;
     //damage type for determining critical table

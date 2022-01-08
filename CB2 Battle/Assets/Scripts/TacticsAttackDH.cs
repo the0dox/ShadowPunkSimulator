@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.UI;
 
 // static class used to calculate attack rolls
-public static class TacticsAttack
+public static class TacticsAttackDH
 {
     // target: stats of the defender
     // mystats: stats of the attacker
@@ -125,11 +125,8 @@ public static class TacticsAttack
         return output;
     }
 
-    public static void DealDamage(PlayerStats target, PlayerStats myStats, int netHits, Weapon w)
+    public static void DealDamage(PlayerStats target, PlayerStats myStats, int attackRoll, Weapon w)
     {
-        int totalDamage = w.Template.damageBonus + netHits;
-        //int soakModifier = target.GetArmor() - w.GetAP();
-
         string hitBodyPart = "";
         DealDamage(target, myStats, hitBodyPart, w);
     }

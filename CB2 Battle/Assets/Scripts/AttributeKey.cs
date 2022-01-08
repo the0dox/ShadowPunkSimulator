@@ -32,4 +32,5 @@ public static class AttributeKey
     public static string StunHealth = "SP";
     public static string MoveWalk = "MoveWalk";
     public static string MoveRun = "MoveRun";
+    public static string Defense = "D";
 }
