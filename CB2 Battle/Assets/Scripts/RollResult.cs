@@ -31,6 +31,9 @@ public class RollResult
     private int failures;
     private int successes;
     public int modifiers;
+    public string customName;
+    public int WeaponAccuracy;
+    public bool useWeapon = false;
     
     /* Depreciated dH system
     public RollResult(CharacterSaveData owner, int Target, string type, string command)
@@ -53,20 +56,70 @@ public class RollResult
     }
     */
 
+    public RollResult(CharacterSaveData owner, Weapon weapon, int modifiers)
+    {
+        this.useWeapon = true;
+        this.WeaponAccuracy = weapon.Template.accuracy;
+        this.owner = owner; 
+        this.skillKey = weapon.Template.WeaponSkill.name;
+        this.attributeKey = SkillReference.GetSkill(skillKey).characterisitc;
+        this.threshold = 0;
+        if(owner.hasSpecialization(skillKey, weapon.Template.WeaponSpecialization))
+        {
+            this.modifiers = 2 + modifiers;
+        }
+        else
+        {
+            this.modifiers = modifiers; 
+        }
+
+        if(SkillPromptBehavior.ManualRolls)
+        {
+            completed = false;
+            SkillPromptBehavior.NewRoll(this);
+        }
+        else
+        {
+            Roll();
+        }
+    }
+
     public RollResult(CharacterSaveData owner, string skillKey = "", string attributeKey = "", string LimitKey = "", int threshold = 0, int modifiers = 0)//,  PlayerStats other = null)
     {
         this.owner = owner;
         this.skillKey = skillKey;
         this.modifiers = modifiers;
+        
         if(string.IsNullOrEmpty(attributeKey))
         {
-            this.attributeKey = SkillReference.GetSkill(skillKey).characterisitc;
+            if(!string.IsNullOrEmpty(skillKey))
+            {
+                this.attributeKey = SkillReference.GetSkill(skillKey).characterisitc;
+            }
+            else
+            {
+                this.attributeKey = "";
+            }
         }
         else
         {
             this.attributeKey = attributeKey;
         }
-        this.LimitKey = LimitKey;
+        if(string.IsNullOrEmpty(LimitKey))
+        {
+            if(!string.IsNullOrEmpty(skillKey))
+            {
+                this.LimitKey = SkillReference.GetSkill(skillKey).limit;
+            }
+            else
+            {
+                this.LimitKey = "";
+            }
+        }
+        else
+        {
+            this.LimitKey = LimitKey;
+        }
         if(SkillPromptBehavior.ManualRolls)
         {
             completed = false;
@@ -123,7 +176,10 @@ public class RollResult
         }
         pool += modifiers;
         //Debug.Log("Die Pool: " + pool);
-
+        if(pool < 0)
+        {
+            pool = 0;
+        }
         dice = new int[pool];
         return pool;
     }
@@ -131,7 +187,15 @@ public class RollResult
     // Total successes cannot exceede limit, do not execute if Limit does not Exist 
     private void LimitSuccesses()
     {
-        if(!string.IsNullOrEmpty(LimitKey))
+        if(useWeapon)
+        {
+            int Dicelimit = WeaponAccuracy;
+            if(successes > Dicelimit)
+            {
+                successes = Dicelimit;
+            }
+        }
+        else if(!string.IsNullOrEmpty(LimitKey))
         {
             int Dicelimit = owner.GetAttribute(LimitKey);
             if(successes > Dicelimit)
@@ -202,8 +266,17 @@ public class RollResult
 
     private void PrintResult()
     {
+        string displayName = "";
+        if(!string.IsNullOrEmpty(customName))
+        {
+            displayName = customName;
+        }
+        else
+        {
+            displayName = GetSkillType();
+        }
 
-        string clstring = owner.playername + ": "  + skillKey + " check: \n ";
+        string clstring = owner.playername + ": "  + customName + " check: \n ";
         
         int printableSuccesses = successes;
         int printableFailures = failures;
@@ -249,8 +322,10 @@ public class RollResult
         {
             additionalText = "Glitch!";
         }
-
-        clstring += "\n " + additionalText;
+        if(!string.IsNullOrEmpty(additionalText))
+        {
+            clstring += "\n " + additionalText;
+        }
 
         CombatLog.Log(clstring);
         //PopUpText.CreateText(Print(), GetColor(), owner.gameObject);

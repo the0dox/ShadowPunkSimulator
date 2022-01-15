@@ -43,6 +43,9 @@ public class WeaponDH : Item
     private int Recharging;
     public WeaponDH(WeaponTemplate template)
     {
+    }
+    }
+        /*
         Template = template;
         this.name = template.name;
         this.weight = template.weight;
@@ -54,8 +57,6 @@ public class WeaponDH : Item
         this.unique = template.unique;
 
         this.Attributes = template.Attributes;
-        this.numDice = template.numDice;
-        this.sizeDice = template.sizeDice;
         this.damageBonus = template.damageBonus;
         this.range = template.range;
         this.pen = template.pen;
@@ -596,3 +597,4 @@ public class WeaponDH : Item
         tooltip += "\n\n\"" + description + "\"";
     }
 }
+    */

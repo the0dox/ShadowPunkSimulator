@@ -105,7 +105,11 @@ public class TurnActionsSR : UIButtonManager
 
     public void GetWeaponActions()
     {
-        Dictionary<string,string> d = new Dictionary<string, string>();
+        Dictionary<string,string> d = ActiveWeapon.GetWeaponActions(halfActions > 1);
+        d.Add("Switch Fire Rate", "ChangeFireRate");
+        d.Add("Cancel","Combat");
+        ConstructActions(d);
+        /*
         //only melee weapons can be used on charge 
         if(!ActivePlayerStats.ValidAction("Charge"))
         {
@@ -189,8 +193,7 @@ public class TurnActionsSR : UIButtonManager
                 }
             }
         }
-        d.Add("Cancel","Combat");
-        ConstructActions(d);
+        */
     }
 
     public void Brace()
@@ -417,31 +420,11 @@ public class TurnActionsSR : UIButtonManager
         halfActions -= 2;
         Cancel();
     }
-    public void Run()
-    {
-        currentAction = "Run";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Run"),ActivePlayerStats.GetTeam());     
-        ConstructActions(new List<string>{"Cancel"});
-    }
-
-    public void Advance()
-    {
-        currentAction = "Advance";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Walk"),ActivePlayerStats.GetTeam());  
-        ConstructActions(new List<string>{"Cancel"});
-    }
 
     public void Move()
     {
-        currentAction = "Move";
-        ActivePlayer.FindSelectableTiles(0,0,ActivePlayerStats.GetTeam());     
-    }
-
-    public void Disengage()
-    {
-        currentAction = "Disengage";
-        ActivePlayer.FindSelectableTiles(0,ActivePlayerStats.GetMovement("Walk"),ActivePlayerStats.GetTeam()); 
-        ConstructActions(new List<string>{"Cancel"});
+        currentAction = "Move"; 
+        ActivePlayer.GetCurrentTile();
     }
 
     public void Stand()
@@ -491,7 +474,7 @@ public class TurnActionsSR : UIButtonManager
         Weapon lw = ActivePlayerStats.SecondaryWeapon;
         if(rw != null && rw.CanReload(ActivePlayerStats))
         {
-            d.Add(rw.GetName() + " (" + rw.GetReloads() + " half actions)", "ReloadPrimaryWeapon");
+            d.Add(rw.GetName() + " " +  rw.ReloadString(), "ReloadPrimaryWeapon");
         }
         if(lw != null && lw != rw && lw.CanReload(ActivePlayerStats))
         {
@@ -500,7 +483,7 @@ public class TurnActionsSR : UIButtonManager
             {
                 addition = " (off hand)";
             }
-           d.Add(lw.GetName()  + addition + " (" + lw.GetReloads() + " half actions)","ReloadSecondaryWeapon");
+           d.Add(lw.GetName() + addition + " " + lw.ReloadString(),"ReloadSecondaryWeapon");
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
@@ -508,12 +491,12 @@ public class TurnActionsSR : UIButtonManager
 
     public void ReloadPrimaryWeapon()
     {
-        ActivePlayerStats.SetRepeatingAction("ReloadPrimaryWeapon");
+        halfActions -= ActivePlayerStats.PrimaryWeapon.ReloadWeapon(ActivePlayerStats, true);
         Cancel();
     }
     public void ReloadSecondaryWeapon()
     {
-        ActivePlayerStats.SetRepeatingAction("ReloadSecondaryWeapon");
+        halfActions -= ActivePlayerStats.SecondaryWeapon.ReloadWeapon(ActivePlayerStats, true);
         Cancel();
     }
 
@@ -597,15 +580,6 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
-    public void StandardAttack()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        List<string> l = new List<string>{"Cancel"};
-        ConstructActions(l);
-    }
     public void ChargeAttack()
     {
         currentAction ="Attack";
@@ -716,24 +690,6 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
     
-    public void SemiAuto()
-    {
-        currentAction = "Attack";
-        FireRate = "Semi";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        List<string> l = new List<string>{"Cancel"};
-        ConstructActions(l);
-    }
-    public void FullAuto()
-    {
-        currentAction = "Attack";
-        FireRate = "Auto";
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        List<string> l = new List<string>{"Cancel"};
-        ConstructActions(l);
-    }
     public void BlastAttack()
     {
         currentAction = "ThreatRange";
@@ -742,6 +698,111 @@ public class TurnActionsSR : UIButtonManager
         Dictionary<string, string> d = new Dictionary<string, string>();
         d.Add("Cancel", "RemoveRange");
         ConstructActions(d);
+    }
+
+    public void ChangeFireRate()
+    {
+        Dictionary<string,string> d = ActiveWeapon.GetSelectableFireRates();
+        d.Add("Cancel","Cancel");
+        ConstructActions(d);
+    }
+
+    public void fireSS()
+    {
+        currentAction = "Attack";
+        FireRate = "SS";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    }
+
+    public void fireSA()
+    {
+        currentAction = "Attack";
+        FireRate = "SA";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    }
+    public void fireSAB()
+    {
+        currentAction = "Attack";
+        FireRate = "SAB";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    }
+
+    public void fireBF()
+    {
+        currentAction = "Attack";
+        FireRate = "BF";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    }
+    public void fireLB()
+    {
+        currentAction = "Attack";
+        FireRate = "LB";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    } 
+    public void fireFA()
+    {
+        currentAction = "Attack";
+        FireRate = "FA";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    }
+
+    public void fireFAB()
+    {
+        currentAction = "Attack";
+        FireRate = "FAB";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    } 
+
+    public void setSS()
+    {
+        CombatLog.Log(ActivePlayerStats.GetName() + " sets their " + ActiveWeapon.GetName() + " to single shot mode!");
+        ActiveWeapon.setFireRate("SS");
+        halfActions--;
+        Cancel();
+    }
+
+    public void setSA()
+    {
+        CombatLog.Log(ActivePlayerStats.GetName() + " sets their " + ActiveWeapon.GetName() + " to semi-auto mode!");
+        ActiveWeapon.setFireRate("SA");
+        halfActions--;
+        Cancel();
+    }
+
+    public void setBF()
+    {
+        CombatLog.Log(ActivePlayerStats.GetName() + " sets their " + ActiveWeapon.GetName() + " to burst-fire mode!");
+        ActiveWeapon.setFireRate("BF");
+        halfActions--;
+        Cancel();
+    }
+    public void setFA()
+    {
+        CombatLog.Log(ActivePlayerStats.GetName() + " sets their " + ActiveWeapon.GetName() + " to full-auto mode!");
+        ActiveWeapon.setFireRate("FA");
+        halfActions--;
+        Cancel();
     }
 
     public void BlastAttack(List<Transform> targets)
@@ -963,9 +1024,9 @@ public class TurnActionsSR : UIButtonManager
     {
         //CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
         CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("current");
-        if(CurrentAttack.attackRoll.GetHits() > 0)
+        if(!CurrentAttack.AttackMissed)
         {
-            CombatLog.Log(CurrentAttack.target.GetName() + " has an oppertunity to react to " + CurrentAttack.attacks + " incoming attack(s)");
+            CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
             List<string> l = new List<string>();
             l.Add("TotalDefense");
             if(CurrentAttack.ActiveWeapon.IsWeaponClass("Melee") && !CurrentAttack.ActiveWeapon.HasWeaponAttribute("Flexible"))
@@ -983,47 +1044,6 @@ public class TurnActionsSR : UIButtonManager
             l.Add("NoReaction");
             ConstructActions(l);
         }
-        else
-        {
-            CombatLog.Log(CurrentAttack.target.GetName() + " cannot react and takes " + CurrentAttack.attacks + " incoming attack(s)");
-            ResolveHit();
-        }
-    }
-
-    public void TotalDefense()
-    {
-        int willpowerBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Willpower);
-        Debug.Log(willpowerBonus +" = wP bonus");
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(null, AttributeKey.Defense, AttributeKey.PhysicalLimit,0, willpowerBonus + target.GetDefensePenality());
-        RemoveRange(target);
-        ClearActions();
-    }
-
-    public void Dodge()
-    {
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Gymnastics", AttributeKey.Defense, AttributeKey.PhysicalLimit,0, target.GetDefensePenality());
-        RemoveRange(target);
-        ClearActions();
-    }
-
-    public void Block()
-    {
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("unarmed", AttributeKey.Defense, AttributeKey.PhysicalLimit,0, target.GetDefensePenality());
-        RemoveRange(target);
-        ClearActions();
-    }
-
-    public void Parry()
-    { 
-        //string weaponName = get weapon used by defender
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Gymnastics", AttributeKey.Defense, AttributeKey.PhysicalLimit,0, target.GetDefensePenality());
-        RemoveRange(target);
-        ClearActions();
-    }
-    public void NoReaction()
-    {
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(null, AttributeKey.Defense, AttributeKey.PhysicalLimit,0, 0);
-        ClearActions();
     }
 
     public void ResolveHit()
@@ -1068,35 +1088,9 @@ public class TurnActionsSR : UIButtonManager
         }
         else
         {    
-            /*if(AttackQueue.Peek().FireRate != "Free" && target != ActivePlayerStats)
-            {
-            ActivePlayerStats.SpendAction("Attack");  
-            }
-            */
-            //Debug.Log("Hits " + attacks);
-            int netHits = CurrentAttack.attackRoll.GetHits();
-            if (CurrentAttack.reactionRoll != null)
-            {
-                netHits -= CurrentAttack.reactionRoll.GetHits();
-            } 
-            if(netHits > 0)
-            {
-                TacticsAttack.DealDamage(CurrentAttack.target, CurrentAttack.attacker, CurrentAttack.HitLocation, CurrentAttack.ActiveWeapon);
-                CurrentAttack = null;
-            }
-            else
-            {
-                CombatLog.Log(CurrentAttack.target + " avoids the attack!");
-                PopUpText.CreateText("Missed", Color.yellow, CurrentAttack.target.gameObject);
-                CurrentAttack = null;
-            }
+            TacticsAttack.DealDamage(CurrentAttack);
+            CurrentAttack = null;
             Cancel();
-            /*
-            else
-            {
-                StartCoroutine(AttackCoroutine());
-            }
-            */
         }
 
     }

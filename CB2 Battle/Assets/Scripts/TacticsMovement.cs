@@ -13,8 +13,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
    Stack<Vector3> path = new Stack<Vector3>();
    Tile currentTile;
 
-   public bool moving = false!;
-   public int initative = 0;
+   public bool moving = false;
    public bool finishedMove = false;
    public float jumpHeight = 2;
    public float moveSpeed = 4; 
@@ -60,6 +59,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
 
    public void GetCurrentTile()
    {
+      
       currentTile = GetTargetTile(gameObject);
       if(currentTile != null)
       {
@@ -86,55 +86,10 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
       }
    }
 
-   public void FindSelectableTiles(int move, int doubleMove, int team)
-   {
-      pv.RPC("RPC_Walk", RpcTarget.All ,move,doubleMove, team);
-   }
-   [PunRPC]
-   void RPC_Walk(int move, int doubleMove, int team)
-   {
-      ComputeAdjacencyLists();
-      GetCurrentTile();
-
-      Queue<Tile> process = new Queue<Tile>();
-
-      process.Enqueue(currentTile);
-      currentTile.visited = true;
-
-      while (process.Count > 0) 
-      {
-         Tile t = process.Dequeue();
-
-         selectableTiles.Add(t);
-         PlayerStats occupant = t.GetOccupant();
-         if(occupant == null || occupant.GetTeam() == team)
-         { 
-            if (t.distance < doubleMove) {     
-
-               foreach (Tile tile in t.adjacencyList)
-               {
-                  
-                  if (!tile.visited)
-                  {
-                     tile.parent = t;
-                     tile.visited = true;
-                     float distanceCost = 1;
-                     if(t.diagonalList.Contains(tile))
-                     {
-                        distanceCost = 1.5f;
-                     }
-                     tile.distance = distanceCost + t.distance;
-                     process.Enqueue(tile);
-                  }
-               }
-            }
-         }
-      }
-   }
    public void FindTiles()
    {
       PlayerStats myStats = GetComponent<PlayerStats>();
-      float distance = (float)myStats.GetMovement("walk");
+      float distance = (float)myStats.GetMovement();
       int team = myStats.GetTeam();
       ComputeAdjacencyLists();
       GetCurrentTile();
@@ -204,7 +159,6 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
          Move();
          yield return new WaitForEndOfFrame(); 
       }
-      finishedMoving();
    }
 
    public void Move()
@@ -277,7 +231,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
          }
 
          //signal to turn manager that actions need to be spent
-         //finishedMoving();
+         finishedMove = true;
       }
    }
 
@@ -391,6 +345,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
             t.reset();
          }
          selectableTiles.Clear();
+         finishedMove = false;
          return true;
       }
       return false;

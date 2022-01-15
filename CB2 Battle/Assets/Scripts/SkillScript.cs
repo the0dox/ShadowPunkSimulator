@@ -5,7 +5,7 @@ using UnityEngine.UI;
 
 public class SkillScript : MonoBehaviour
 {
-    [SerializeField] private SkillTemplate mySkill;
+    [SerializeField] public SkillTemplate mySkill;
     [SerializeField] private InputField IF;
     [SerializeField] private Text Level;
     [SerializeField] private Text FinalResult;

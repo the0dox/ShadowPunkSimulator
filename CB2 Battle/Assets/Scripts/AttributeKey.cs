@@ -33,4 +33,5 @@ public static class AttributeKey
     public static string MoveWalk = "MoveWalk";
     public static string MoveRun = "MoveRun";
     public static string Defense = "D";
+    public static string RecoilComp = "RC";
 }

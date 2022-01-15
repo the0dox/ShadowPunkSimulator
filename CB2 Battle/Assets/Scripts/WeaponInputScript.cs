@@ -42,7 +42,7 @@ public class WeaponInputScript : MonoBehaviour
             ROF.text = input.ROFtoString();
             Pen.text = "" + input.GetAP();
             Clip.text = "" + input.getClip();
-            Reload.text = "" + input.reloadToString();
+            Reload.text = "" + input.ReloadString();
         }
         Damage.text = input.DisplayDamageRange();
 

@@ -18,6 +18,7 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     public GameObject WeaponTwo;
     // Photonview used to communicate with other clients 
     [SerializeField] private PhotonView pv;
+    [SerializeField] private Text Moves;
     
     // ps: the active player whos turn it is
     // actions: the remaining actions in this turn
@@ -25,8 +26,9 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     public void UpdateDisplay(PlayerStats ps, int actions)
     {
         string Pname = ps.GetName();
-        string WoundsText = "Wounds: " + ps.HealthToString();
+        string WoundsText = ps.HealthToString();
         string ActionsText = "Half Actions: " + actions +"/2";
+        string MoveText = ps.MoveToString();
         string WeaponOneText = "---";
         string WeaponTwoText = "---";
         if(ps.PrimaryWeapon != null)
@@ -37,16 +39,17 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         {
             WeaponTwoText = ps.SecondaryWeapon.ToString();
         }
-        pv.RPC("RPC_UpdateDisplay",RpcTarget.All,Pname,WoundsText,ActionsText,WeaponOneText,WeaponTwoText);
+        pv.RPC("RPC_UpdateDisplay",RpcTarget.All,Pname,WoundsText,ActionsText, MoveText,WeaponOneText,WeaponTwoText);
     }
 
     // used to change the display on all clients 
     [PunRPC]
-    void RPC_UpdateDisplay(string Pname, string WoundsText, string ActionsText, string WeaponOneText, string WeaponTwoText)
+    void RPC_UpdateDisplay(string Pname, string WoundsText, string ActionsText, string MoveText, string WeaponOneText, string WeaponTwoText)
     {
         PlayerName.GetComponent<Text>().text = Pname;
         Health.GetComponent<Text>().text = WoundsText;
         Actions.GetComponent<Text>().text = ActionsText;
+        Moves.text = MoveText;
         Text wpOne = WeaponOne.GetComponent<Text>();
         Text wpTwo = WeaponTwo.GetComponent<Text>();
         wpOne.text = WeaponOneText;

@@ -541,6 +541,7 @@ MonoBehaviour:
     equipmentCode: []
   ID: 0
   NPCHealth: 0
+  NPCStun: 0
   HealthBar: {fileID: 6603432655955601903}
   FatigueBar: {fileID: 3007176325725020465}
 --- !u!114 &3973098909683050136
@@ -556,7 +557,6 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   moving: 0
-  initative: 0
   finishedMove: 0
   jumpHeight: 2
   moveSpeed: 4

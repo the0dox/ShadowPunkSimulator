@@ -90,8 +90,12 @@ public class CharacterSaveData
                 int clip = int.Parse(codeDecompiled[3]);
                 Weapon castItem = (Weapon) newItem;
                 castItem.SetClip(clip);
-            } 
-            AddItem(newItem);
+                AddItem(castItem);
+            }
+            else
+            {
+                AddItem(newItem);
+            }
         }
     }  
 
@@ -219,7 +223,6 @@ public class CharacterSaveData
         // Physical Limit = [(Strength x 2) + Body + Reaction] / 3 (round up)
         float PhysicalLimit = (float)(GetAttribute(AttributeKey.Strength) * 2 + GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Reaction));
         PhysicalLimit /= 3f;
-        Debug.Log("phslim= " + PhysicalLimit);
         SetAttribute(AttributeKey.PhysicalLimit, Mathf.CeilToInt(PhysicalLimit),false);
         // Social Limit = [(Charisma x 2) + Willpower + Essence] / 3 (round up) 
         float SocialLimit = (float)(GetAttribute(AttributeKey.Charisma) * 2 + GetAttribute(AttributeKey.Willpower) + GetAttribute(AttributeKey.Essense));
@@ -243,6 +246,8 @@ public class CharacterSaveData
         SetAttribute(AttributeKey.Memory, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Willpower),false);
         // DEFENSE (REF + INT)
         SetAttribute(AttributeKey.Defense, GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
+        // RECOILCOMP = 1 + S/3
+        SetAttribute(AttributeKey.RecoilComp, 1 + Mathf.CeilToInt(GetAttribute(AttributeKey.Strength)/3),false);
     }
 
     public void setSpecialization(string skillKey, int SpecializationIndex)
@@ -254,7 +259,15 @@ public class CharacterSaveData
         skillSpecialization[skillKey] = SpecializationIndex;
     }
 
-
+    public bool hasSpecialization(string skillKey, int SpecializationIndex)
+    {
+        if(!skillSpecialization.ContainsKey(skillKey))
+        {
+            skillSpecialization.Add(skillKey,0);
+        }
+        Debug.Log("my index: " + skillSpecialization[skillKey] + " desired index " + SpecializationIndex);
+        return skillSpecialization[skillKey] == SpecializationIndex+1;
+    }
 
     // Converts Equipment and EquipmentSize into a readable list of Item objects
     public Dictionary<string,int> GetEquipment()

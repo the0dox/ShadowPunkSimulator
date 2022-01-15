@@ -5,6 +5,10 @@ using Photon.Pun;
 
 public class TurnActions : UIButtonManager
 {
+
+}
+
+    /*
     public TacticsMovement ActivePlayer; 
     public List<string> DefaultActions;
     public PlayerStats ActivePlayerStats;
@@ -1062,7 +1066,6 @@ public class TurnActions : UIButtonManager
             {
             ActivePlayerStats.SpendAction("Attack");  
             }
-            */
             //Debug.Log("Hits " + attacks);
             if(CurrentAttack.HitLocation != null && CurrentAttack.attacks > 0)
             {
@@ -1255,3 +1258,4 @@ public class TurnActions : UIButtonManager
         PushToolTips();
     }
 }
+*/

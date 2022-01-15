@@ -9,7 +9,7 @@ public class FatigueBar : MonoBehaviour
 
     void Start()
     {
-        Bar.fillAmount = 0;
+        Bar.fillAmount = 1;
     }
 
     // Update is called once per frame
@@ -24,13 +24,6 @@ public class FatigueBar : MonoBehaviour
         {
             fill = 0;
         }
-        if(fill == 0)
-        {
-            Bar.fillAmount = 0;
-        }
-        else
-        {
-            Bar.fillAmount = fill;
-        }
+        Bar.fillAmount = fill;
     }
 }

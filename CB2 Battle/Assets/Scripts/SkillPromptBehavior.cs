@@ -75,7 +75,16 @@ public class SkillPromptBehavior : MonoBehaviour
             ThresholdIF.text = "" + currentRoll.threshold;
             CameraButtons.UIFreeze(true);
             display.SetActive(true); 
-            displayText.text = currentRoll.getOwner().playername + " is attempting a " + currentRoll.GetSkillType() + " check";
+            string displayName = "";
+            if(!string.IsNullOrEmpty(currentRoll.customName))
+            {
+                displayName = currentRoll.customName;
+            }
+            else
+            {
+                displayName = currentRoll.GetSkillType();
+            }
+            displayText.text = currentRoll.getOwner().playername + " is attempting a " + displayName + " check";
             OnValueChange();
         }
     }
@@ -123,15 +132,23 @@ public class SkillPromptBehavior : MonoBehaviour
         LimitDD.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
         Dropdown.OptionData baseResponse = new Dropdown.OptionData();
-        baseResponse.text = currentRoll.LimitKey;
-        results.Add(baseResponse);
-        foreach(string Key in Limits)
+        if(currentRoll.useWeapon)
         {
-            if(!Key.Equals(currentRoll.LimitKey))
+            baseResponse.text = "Weapon Accuracy";
+            LimitDD.interactable = false;
+        }
+        else
+        {
+            baseResponse.text = currentRoll.LimitKey;
+            results.Add(baseResponse);
+            foreach(string Key in Limits)
             {
-                Dropdown.OptionData NewData = new Dropdown.OptionData();
-                NewData.text = Key;
-                results.Add(NewData);
+                if(!Key.Equals(currentRoll.LimitKey))
+                {
+                    Dropdown.OptionData NewData = new Dropdown.OptionData();
+                    NewData.text = Key;
+                    results.Add(NewData);
+                }
             }
         }
         LimitDD.AddOptions(results);
@@ -185,13 +202,31 @@ public class SkillPromptBehavior : MonoBehaviour
     public void OnValueChange()
     {
         int pool = currentRoll.GetPool();
-        //int limit = currentRoll.getOwner().GetAttribute(currentRoll.LimitKey);
-        string limitText = "";
-        if(!string.IsNullOrEmpty(currentRoll.LimitKey))
+        
+        CalculationText.text = "";
+        if(!string.IsNullOrEmpty(currentRoll.skillKey))
         {
-            limitText = "[" + currentRoll.LimitKey + "] ";
+            CalculationText.text += currentRoll.skillKey + " + ";
         }
-        CalculationText.text = currentRoll.skillKey + " + " + currentRoll.attributeKey + " " + limitText + "(" + currentRoll.threshold +") TEST";
+        if(!string.IsNullOrEmpty(currentRoll.attributeKey))
+        {
+            CalculationText.text += currentRoll.attributeKey + " ";
+        }
+        if(currentRoll.useWeapon)
+        {
+            int limitVal = currentRoll.WeaponAccuracy;
+            CalculationText.text += "[" + limitVal + "] ";
+        }
+        else if(!string.IsNullOrEmpty(currentRoll.LimitKey))
+        {
+            int limitVal = currentRoll.getOwner().GetAttribute(currentRoll.LimitKey);
+            CalculationText.text += "[" + limitVal + "] ";
+        }
+        if(currentRoll.threshold > 0)
+        {
+            CalculationText.text += "(" + currentRoll.threshold + ") ";
+        }
+        CalculationText.text += "TEST";
         CalculationText.text += "\n Dice Pool: " + pool;
     } 
     

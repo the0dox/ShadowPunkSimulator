@@ -41,8 +41,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public int ID;
     private PhotonView pv;
     public int NPCHealth;
+    public int NPCStun;
     private int moveMax;
-    private int defensePenality;
+    private int remainingMove;
+    private int defensePenality = 0;
+    private int TotalBulletsFired;
 
     [SerializeField] private HealthBar HealthBar;
     [SerializeField] private FatigueBar FatigueBar;
@@ -53,10 +56,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         this.myData = myData;
         this.playername = myData.playername;
         this.team = myData.team;    
-        if(team != 0)
-        {
-            NPCHealth = 0;
-        }
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
         Init(id);
     }
@@ -76,6 +75,8 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_Init(int team, string model, int ID)
     {
+        NPCHealth = 0;
+        NPCStun = 0;
         SetID(ID);
         this.team = team;
         pv = GetComponent<PhotonView>();
@@ -95,7 +96,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public void OnDownload()
     {
         pv.RPC("RPC_SetHP", RpcTarget.All, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
-        pv.RPC("RPC_SetSP", RpcTarget.All, myData.GetAttribute(AttributeKey.SDamage), myData.GetAttribute(AttributeKey.StunHealth));   
+        pv.RPC("RPC_SetSP", RpcTarget.All, getStun(), myData.GetAttribute(AttributeKey.StunHealth));   
         pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.Agility));
     }
 
@@ -119,16 +120,26 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public int getWounds()
     {
-        int currentHP; 
         if(team != 0)
         {
-            currentHP = NPCHealth;
+            return NPCHealth;
         }
         else
         {
-            currentHP = myData.GetAttribute(AttributeKey.PDamage);
+            return myData.GetAttribute(AttributeKey.PDamage);
         }
-        return currentHP;
+    }
+
+    public int getStun()
+    {
+        if(team != 0)
+        {
+            return NPCStun;
+        }
+        else
+        {
+            return myData.GetAttribute(AttributeKey.SDamage);
+        }
     }
 
     public int GetTeam()
@@ -150,6 +161,36 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         takeDamage(damage,location, "I");
     }
 
+    public void takeDamage(int damage)
+    {
+        if(team != 0)
+        {
+            NPCHealth += damage;
+        }
+        else
+        {
+            int newHealth = myData.GetAttribute(AttributeKey.PDamage) + damage;
+            myData.SetAttribute(AttributeKey.PDamage, newHealth, true);
+        }
+        pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
+    }
+
+    public void takeStun(int damage)
+    {
+        if(team != 0)
+        {
+            NPCStun += damage;
+        }
+        else
+        {
+            int newStun = myData.GetAttribute(AttributeKey.SDamage) + damage;
+            myData.SetAttribute(AttributeKey.SDamage, newStun, true);
+        }
+        pv.RPC("RPC_SetSP", RpcTarget.AllBuffered, getStun(), myData.GetAttribute(AttributeKey.StunHealth));  
+    }
+
+
+
     public void takeDamage(int damage, string location,string damageType)
     {
         int currentHealth = getWounds();
@@ -169,19 +210,19 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return myData.GetAttribute(key);
     }
 
-    public int GetMovement(string Key)
+    public int GetMovement()
     {
-        return moveMax;
-        /*
-        if(IsHelpless() || Grappling() || hasCondition("Stunned"))
+        return remainingMove;
+    }
+
+    public void SpendMovement(float distance)
+    {
+        int roundedDistance = Mathf.CeilToInt(distance);
+        remainingMove -= roundedDistance;
+        if(remainingMove < 0)
         {
-            return 0;
+            remainingMove = 0;
         }
-        if(hasCondition("Prone"))
-        {
-            return moveMax/2;
-        }
-        */
     }
 
     public void Unequip(Weapon w)
@@ -215,9 +256,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
     }
 
-    public RollResult AbilityCheck(string skillKey, string attributeKey = "", string LimitKey = "", int threshold = 0, int modifier = 0)
+    public RollResult AbilityCheck(string skillKey, string attributeKey = "", string LimitKey = "", string customName = "", int threshold = 0, int modifier = 0)
     {
-        return new RollResult(myData, skillKey, attributeKey, LimitKey, threshold, modifier);
+        RollResult newRoll = new RollResult(myData, skillKey, attributeKey, LimitKey, threshold, modifier);
+        newRoll.customName = customName;
+        return newRoll;
     }
 
     public RollResult AbilityCheck(string skillKey,int modifiers)
@@ -284,8 +327,24 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public string HealthToString()
     {
-        return GetStat("Wounds") + "/" + GetStat("MaxWounds");
+        int wounds;
+        int maxWounds = myData.GetAttribute(AttributeKey.PhysicalHealth);
+        if(team != 0)
+        {
+            wounds = NPCHealth;
+        }
+        else
+        {
+            wounds = myData.GetAttribute(AttributeKey.PDamage);
+        }
+        return "Physical CM:" + (maxWounds - wounds) + "/" + maxWounds;
     }
+
+    public string MoveToString()
+    {
+        return "Remaining Moves: " + remainingMove + "/" + moveMax;
+    }
+
     public bool ValidAction(string actionName)
     {
       return (!CompletedActions.Contains(actionName));
@@ -443,9 +502,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         }
         return outputStack;
     }
-
-    //given a hitlocation and if the damage source is primitive, returns if the player has any armor covering that point 
-    public int GetAP(string HitLocation, Weapon w)
+    public int GetAP()
     {
         int bestAP = 0;
         foreach(Item i in myData.equipmentObjects)
@@ -454,7 +511,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             if(i.GetType() == typeof(Armor))
             {
                 Armor a = (Armor)i;
-                int currentAP = a.GetAP(HitLocation, w);
+                int currentAP = a.GetAP();
                 if(currentAP > bestAP)
                 {
                     bestAP = currentAP;
@@ -464,55 +521,40 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return bestAP;
     }
 
-    //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
-    public void UpdateConditions(bool startTurn)
+    public int CalculateRecoilPenalty(int bulletsFired, bool apply)
     {
-        if(startTurn)
+        int newTotalBulletsFired = TotalBulletsFired + bulletsFired;
+        int totalPenalty = myData.GetAttribute(AttributeKey.RecoilComp) - newTotalBulletsFired;
+        if(totalPenalty < 0)
         {
-            defensePenality = 0;
+            if(apply)
+            {
+                CombatLog.Log(GetName() + " [" + myData.GetAttribute(AttributeKey.RecoilComp) +" recoil comp] has fired " + newTotalBulletsFired + " this turn and suffers a " + totalPenalty + " recoil penalty");
+                TotalBulletsFired = newTotalBulletsFired;
+            }
+            return totalPenalty;
         }
+        return 0;
+    }
+
+    //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
+    public void StartRound()
+    {
+        defensePenality = 0;
+        remainingMove = moveMax;
         List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
         List<ConditionTemplate> IncrementKeys = new List<ConditionTemplate>();
         foreach (ConditionTemplate Key in Conditions.Keys)
         {
             //decay conditions at the end of turns, conditions with 0 as their length do not decay
-            if(Conditions[Key] > 1 && !startTurn)
+            if(Conditions[Key] > 1)
             {
                 IncrementKeys.Add(Key); 
             }
-            else if(Conditions[Key] == 1 && !startTurn)
+            else if(Conditions[Key] == 1)
             {
                 removedKeys.Add(Key);
             }
-            else if(startTurn && Key.clearOnStart)
-            {
-                removedKeys.Add(Key);
-            }
-            //Conditional update on turn starts here
-            else if(Key.isCondition("Pinned") && !startTurn)
-            {
-                if(GetComponent<TacticsMovement>().GetAdjacentEnemies(GetTeam()) > 0)
-                {
-                    CombatLog.Log(GetName() + " is in melee, and thus loses the pinned condition");
-                    PopUpText.CreateText("Unpinned!",Color.green, gameObject);
-                    //removes at the end
-                    removedKeys.Add(Key);
-                }
-                else
-                {
-                    int modifiers = 0;
-                    if(!hasCondition("Under Fire"))
-                    {  
-                        modifiers += 30;
-                    }
-                    else
-                    {
-                        removedKeys.Add(ConditionsReference.Condition("Under Fire"));
-                    }
-                    AbilityCheck("WP",modifiers,"Suppression");
-                }   
-            }
-            
         }
         foreach(ConditionTemplate Key in IncrementKeys)
         {
@@ -527,9 +569,8 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public int GetDefensePenality()
     {
-        int output = defensePenality;
         defensePenality++;
-        return output;
+        return -(defensePenality - 1);
     }
 
     public void PaintTarget(bool painted)

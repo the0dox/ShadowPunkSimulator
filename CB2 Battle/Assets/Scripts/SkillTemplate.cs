@@ -15,6 +15,9 @@ public class SkillTemplate : ScriptableObject
     [SerializeField] public List<string> Descriptor;
     //Text displayed When the Skill is Rolled
     [SerializeField] public string displayText;
+    //the usual type of limit to this skill
+    [SerializeField] public string limit;
     [SerializeField] public List<string> Specializations;
 
 }
+

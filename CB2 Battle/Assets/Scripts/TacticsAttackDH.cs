@@ -6,7 +6,7 @@ using UnityEngine.UI;
 // static class used to calculate attack rolls
 public static class TacticsAttackDH
 {
-    // target: stats of the defender
+    /* target: stats of the defender
     // mystats: stats of the attacker
     // w: weapon used in the attack
     // type: the fire rate of w
@@ -103,7 +103,7 @@ public static class TacticsAttackDH
         {
             attackModifiers += ROFBonus(w, type);
         }
-        RollResult attackRoll = myStats.AbilityCheck(w.Template.WeaponSkill, "", "", attackModifiers);
+        RollResult attackRoll = myStats.AbilityCheck(w.Template.WeaponSkill, "", "", "", attackModifiers);
         //attackRoll.OpposedRoll();
         output.attackRoll = attackRoll;
         /*
@@ -121,7 +121,7 @@ public static class TacticsAttackDH
         {
             return output;
         }
-        */
+        
         return output;
     }
 
@@ -134,7 +134,7 @@ public static class TacticsAttackDH
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
     {
         Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
-        int damageRoll = w.rollDamage(myStats,target, hitBodyPart);
+        int damageRoll = w.GetDamage();
         int AP = target.GetAP(hitBodyPart, w);
         if(w.HasWeaponAttribute("Scatter") && w.RangeBonus(target.transform, myStats) < 0)
         {

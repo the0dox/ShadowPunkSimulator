@@ -25,6 +25,10 @@ public class ItemReference : MonoBehaviour
         {
             return new Weapon((WeaponTemplate)template);
         }
+        else if (template.GetType().Equals(typeof(ArmorTemplate)))
+        {
+            return new Armor((ArmorTemplate)template);
+        }
         return new Item(GetTemplate(name));
     }
     
@@ -41,6 +45,11 @@ public class ItemReference : MonoBehaviour
 
     public static ItemTemplate GetTemplate(string name)
     {
+        if(!Library.ContainsKey(name))
+        {
+            Debug.Log("item " + name + " doesn't exisit");
+            return null;
+        }
         return Library[name];
     }
 

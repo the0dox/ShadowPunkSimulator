@@ -6,6 +6,9 @@ using UnityEngine.UI;
 // static class used to calculate attack rolls
 public static class TacticsAttack
 {
+    private static Dictionary<string, int> AmmoExpenditure = new Dictionary<string, int>(){
+        {"SS",1},{"SA",1},{"SAB", 3},{"BF",3},{"LB",6},{"FA",6},{"FAB",10}
+    };
     // target: stats of the defender
     // mystats: stats of the attacker
     // w: weapon used in the attack
@@ -13,116 +16,47 @@ public static class TacticsAttack
     // creates an attacksequence objects that contains a single attack sequence between an attacker and a target
     public static AttackSequence Attack(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
-        int modifiers = 0;
         AttackSequence output = new AttackSequence(target,myStats,w,type,0,false);
-        // Melee modifiers
-        if (w.IsWeaponClass("Melee"))
-        {
-            // Only melee weps can have the two handed attribute as there is only one class for melee weps unlike ranged weps
-            if(w.HasWeaponAttribute("Two Handed") && myStats.IsDualWielding())
-            {
-                modifiers -= 20;
-            }
-            if(w.HasWeaponAttribute("Defensive"))
-            {
-                modifiers -= 10;
-            }
-            if(target.hasCondition("Defensive Stance"))
-            {
-                modifiers -= 20;
-            }
-            if(target.hasCondition("Grappled"))
-            {
-                modifiers += 20;
-            }
-            if(target.hasCondition("Running"))
-            {
-                modifiers += 20;
-            }
-            if(w.GetName().Equals("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.PrimaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee"))))
-            {
-                modifiers -= 20;
-            }
-            if(target.hasCondition("Prone"))
-            {
-                modifiers += 10;
-            }
-            // unless stated otherwise, melee doesn't use type, and always makes one attack
-        }
-        // Ranged Modifiers
-        else
-        {
-            if(w.IsWeaponClass("Basic") && myStats.IsDualWielding())
-            {
-                modifiers -= 20;
-            }
-            if(w.IsWeaponClass("Heavy") && !myStats.hasCondition("Braced"))
-            {
-                modifiers -= 30;
-            }
-            if(target.hasCondition("Running"))
-            {
-                modifiers -= 20;
-            }
-            if(target.hasCondition("Prone"))
-            {
-                modifiers -= 10;
-            }
-        }
-        // universal modifiers that melee and ranged weapons can use
-        if(w.HasWeaponAttribute("Accurate") && (myStats.hasCondition("Half Aiming") || myStats.hasCondition("Full Aiming")))
-        {
-            Debug.Log("Accurate");
-            modifiers += 10;  
-        }
-        if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Half Aiming")))
-        {
-            modifiers -= 10;  
-        }
-        if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Full Aiming")))
-        {
-            modifiers -= 20;  
-        }
-        if(myStats.OffHandPenalty(w))
-        {
-            modifiers -= 20;
-        }
-        if(target.hasCondition("Stunned"))
-        {
-            modifiers += 20;
-        }
-        if(target.hasCondition("Obscured"))
-        {
-            modifiers -= 20;
-        }
-        modifiers += adjacencyBonus(target,myStats, w);
-        modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
+        //add modiifers;
+        //modifiers += adjacencyBonus(target,myStats, w);
+        //modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
         // ranged weps get a bonus depending on distance to target
-        int attackModifiers = w.RangeBonus(target.transform, myStats) + modifiers;
-        if(!myStats.hasCondition("Called"))
+        //int attackModifiers = w.RangeBonus(target.transform, myStats) + modifiers;
+        int modifiers = 0;
+        if(!type.Equals("SS"))
         {
-            attackModifiers += ROFBonus(w, type);
+            modifiers += myStats.CalculateRecoilPenalty(AmmoExpenditure[type], true);
         }
-        RollResult attackRoll = myStats.AbilityCheck(w.Template.WeaponSkill, "", "", attackModifiers);
-        //attackRoll.OpposedRoll();
+        int distance = Mathf.RoundToInt(Vector3.Distance(myStats.transform.position, target.transform.position));
+        modifiers += w.Template.rangeClass.GetRangePenalty(distance);
+
+        w.ExpendAmmo(AmmoExpenditure[type]);
+        RollResult attackRoll = new RollResult(myStats.myData, w, modifiers);
         output.attackRoll = attackRoll;
-        /*
-        if(TacticsAttack.Jammed(AttackResult.GetRoll(), w, type, myStats))
+        return output;
+    }
+
+    public static void DealDamage(AttackSequence currentAttack)
+    {
+        int damageBonus = currentAttack.attackRoll.GetHits() - currentAttack.reactionRoll.GetHits() - currentAttack.soakRoll.GetHits();
+        int weaponDamage = currentAttack.ActiveWeapon.GetDamage();
+        int totalDamage = damageBonus + weaponDamage;
+        if(totalDamage < 0)
         {
-            return output;
+            totalDamage = 0;
         }
-        if (AttackResult.Passed() || target.IsHelpless())
+        if(currentAttack.ActiveWeapon.Template.Lethal)
         {
-            bool scatterDistance = Vector3.Distance(myStats.gameObject.transform.position, target.gameObject.transform.position) <= 3;
-            output.attacks = w.GetAdditionalHits(type, AttackResult.GetDOF(),shotsFired, scatterDistance);
-            return output;
+            currentAttack.target.takeDamage(totalDamage);
+            PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.red, currentAttack.target.gameObject); 
         }
         else
         {
-            return output;
+            currentAttack.target.takeStun(totalDamage);
+            PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.cyan, currentAttack.target.gameObject); 
         }
-        */
-        return output;
+        CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + (currentAttack.attackRoll.GetHits() - currentAttack.reactionRoll.GetHits()) + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
+        
     }
 
     public static void DealDamage(PlayerStats target, PlayerStats myStats, int netHits, Weapon w)
@@ -134,12 +68,17 @@ public static class TacticsAttack
         DealDamage(target, myStats, hitBodyPart, w);
     }
 
+    public static int ROFDefensePenalty(AttackSequence thisAttack)
+    {
+        return 1-AmmoExpenditure[thisAttack.FireRate];
+    } 
+
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
     {
         Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
-        int damageRoll = w.rollDamage(myStats,target, hitBodyPart);
-        int AP = target.GetAP(hitBodyPart, w);
-        if(w.HasWeaponAttribute("Scatter") && w.RangeBonus(target.transform, myStats) < 0)
+        int damageRoll = w.GetDamage();
+        int AP = target.GetAP();
+        if(w.HasWeaponAttribute("Scatter"))
         {
             CombatLog.Log(w.GetName() + "'s scatter attribute makes armor twice as effective at long range!");
             AP *= 2;
@@ -527,171 +466,53 @@ public static class TacticsAttack
     public static List<string> GenerateTooltip(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
         List<string> output = new List<string>();
-            if(target.GetTeam() == myStats.GetTeam())
+        if(target.GetTeam() == myStats.GetTeam())
+        {
+            output.Add("Invalid Target: Ally");
+        }
+        else
+        {
+            Stack<string> outputStack = new Stack<string>();
+            int attackDice = 0;
+            // penalty from range 
+            int distance = Mathf.RoundToInt(Vector3.Distance(myStats.transform.position, target.transform.position));
+            int rangePenalty = w.Template.rangeClass.GetRangePenalty(distance);
+            if(rangePenalty < 0)
             {
-                output.Add("Invalid Target: Ally");
+                attackDice += rangePenalty;
+                outputStack.Push(rangePenalty + " from range");
             }
-            else
+            // penalty from recoil 
+            int recoilPenalty = myStats.CalculateRecoilPenalty(AmmoExpenditure[type],false);
+            if(recoilPenalty < 0)
             {
-                Stack<string> outputStack = new Stack<string>();
-                Stack<string> conditionStack;
-                int chanceToHit = 0;
-                if (w.IsWeaponClass("Melee"))
-                {
-                    chanceToHit = myStats.GetStat("WS") + myStats.CalculateStatModifiers("WS");// + myStats.CalculateStatModifiers("WS");
-                    conditionStack = myStats.DisplayStatModifiers("WS");
-                    if(w.HasWeaponAttribute("Two Handed") && myStats.IsDualWielding())
-                    {
-                        outputStack.Push(" -20%: One Handing");
-                        chanceToHit -= 20;
-                    }        
-                    if(w.HasWeaponAttribute("Defensive"))
-                    {
-                        outputStack.Push("- -10%: Shield Bashing");
-                        chanceToHit -= 10;
-                    }
-                    if(target.hasCondition("Defensive Stance"))
-                    {
-                        outputStack.Push(" -20%: Target Defending");
-                        chanceToHit -= 20;
-                    }
-                    if(target.hasCondition("Grappled"))
-                    {
-                        outputStack.Push(" +20%: Target Grappled");
-                        chanceToHit += 20;
-                    }
-                    if(target.hasCondition("Running"))
-                    {
-                        outputStack.Push(" +20%: Target Running");
-                        chanceToHit += 20;
-                    }
-                    if(target.hasCondition("Prone"))
-                    {
-                        outputStack.Push(" +10%: Target Prone");
-                        chanceToHit += 10;
-                    }
-                    if(w.GetName().Equals("Unarmed") && ((target.SecondaryWeapon != null && target.SecondaryWeapon.IsWeaponClass("Melee")) || (target.PrimaryWeapon != null && target.PrimaryWeapon.IsWeaponClass("Melee"))))
-                    {
-                        outputStack.Push(" -20%: Unarmed");
-                        chanceToHit -= 20;
-                    }
-                    int GangupBonus = TacticsAttack.adjacencyBonus(target,myStats, w);
-                    if(GangupBonus != 0)
-                    {
-                        chanceToHit += GangupBonus;
-                        outputStack.Push(" +" + GangupBonus +"%: Outnumbering");
-                    }
-                }
-                else
-                {
-                    chanceToHit = myStats.GetStat("BS") + myStats.CalculateStatModifiers("BS");
-                    conditionStack = myStats.DisplayStatModifiers("BS");
-                    if(w.IsWeaponClass("Basic") && myStats.IsDualWielding())
-                    {
-                        outputStack.Push(" -20%: One Handing");
-                        chanceToHit -= 20;
-                    }
-                    if(w.IsWeaponClass("Heavy") && !myStats.hasCondition("Braced"))
-                    {
-                        outputStack.Push(" -30%: Not Bracing");
-                        chanceToHit -= 30;
-                    }
-                    if(target.hasCondition("Running"))
-                    {
-                        outputStack.Push(" -20%: Target Running");
-                        chanceToHit -= 20;
-                    }
-                    if(target.hasCondition("Prone"))
-                    {
-                        outputStack.Push(" -10%: Target Prone");
-                        chanceToHit -= 10;
-                    }
-                    int rangemodifier = w.RangeBonus(target.transform, myStats);
-                    chanceToHit += rangemodifier;
-                    if(rangemodifier != 0)
-                    {
-                        outputStack.Push(" +" + rangemodifier +"%: range");
-                    }
-                    else
-                    {
-                        outputStack.Push(" " + rangemodifier +"%: range");
-                    }
-                    int firebonus = ROFBonus(w, type);
-                    if(firebonus != 0 && !myStats.hasCondition("Called"))
-                    {
-                        chanceToHit += firebonus;
-                        string addition = " ";
-                        if(firebonus > 0)
-                        {
-                            addition = " +";
-                        }
-                        outputStack.Push(addition + firebonus +": " + type);
-                    }
-                    int GangupBonus = TacticsAttack.adjacencyBonus(target, myStats,w);
-                    if(GangupBonus != 0)
-                    {
-                        chanceToHit += GangupBonus;
-                        outputStack.Push(" " + GangupBonus +"%: Allies in Melee");
-                    }
-                    int heightbonus = TacticsAttack.CalculateHeightAdvantage(target,myStats);
-                    if(heightbonus > 0)
-                    {
-                        chanceToHit += heightbonus;
-                        outputStack.Push(" +" + heightbonus +"%: Height");    
-                    }
-                }
-                if(w.HasWeaponAttribute("Accurate") && (myStats.hasCondition("Half Aiming") || myStats.hasCondition("Full Aiming")))
-                {
-                    outputStack.Push(" +10%: Accurate");
-                    chanceToHit += 10;    
-                }
-                if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Half Aiming")))
-                {
-                    outputStack.Push(" -10%: Inaccurate");
-                    chanceToHit -= 10;  
-                }
-                if(w.HasWeaponAttribute("Inaccurate") && (myStats.hasCondition("Full Aiming")))
-                {
-                    outputStack.Push(" -20%: Inaccurate");
-                    chanceToHit -= 20;  
-                }
-                if(myStats.OffHandPenalty(w))
-                { 
-                    outputStack.Push(" -20%: Using Off Hand");
-                    chanceToHit -= 20;
-                }
-                if(target.hasCondition("Stunned"))
-                {
-                    outputStack.Push(" +20%: Target Stunned");
-                    chanceToHit += 20;
-                }
-                if(target.hasCondition("Obscured"))
-                {
-                    outputStack.Push(" -20%: Target Obscured");
-                    chanceToHit -= 20;
-                }
+                attackDice += recoilPenalty;
+                outputStack.Push(recoilPenalty + " from recoil");
+            }
+            // bonus from specialization
+            if(myStats.myData.hasSpecialization(w.Template.WeaponSkill.name,w.Template.WeaponSpecialization))
+            {
+                outputStack.Push("+2 from skill specialization");
+                attackDice += 2;
+            }
+            // bonus from attribute
+            int attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.characterisitc);
+            outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.characterisitc + " skill");
+            attackDice += attributeDice;
+            // bonus from skill
+            int skillDice = myStats.myData.GetSkill(w.Template.WeaponSkill.name, false);
+            outputStack.Push("+" + skillDice + " from " + w.Template.WeaponSkill.name + " skill");
+            attackDice += skillDice;
 
-                output.Add("Attacking: " + target.GetName());
-                output.Add("To Hit: " + chanceToHit + "%");
-                while (conditionStack.Count > 0)
-                {
-                    output.Add(conditionStack.Pop());
-                }
-                while (outputStack.Count > 0)
-                {
-                    output.Add(outputStack.Pop());
-                }
-                output.Add(w.DisplayDamageRange());
-                //output.Add(target.GetAverageSoak());
-                if(!w.IsWeaponClass("Melee") && !myStats.hasCondition("Called"))
-                {
-                    Tile cover = CalculateCover(myStats.gameObject,target.gameObject,"Left Leg");
-                    if(cover != null)
-                    {    
-                        output.Add("70% chance to hit cover");
-                    }
-                }
-            }
+            outputStack.Push("Accuracy Limit: " + w.Template.accuracy);
+
+            outputStack.Push("Total Attack Dice: " + attackDice);
+
+            while(outputStack.Count > 0)
+            {
+                output.Add(outputStack.Pop());
+            }    
+        }
         return output;
     }
 

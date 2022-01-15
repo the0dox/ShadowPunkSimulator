@@ -8,27 +8,14 @@ using Photon.Pun;
 public class TurnManager : TurnActionsSR
 {
     //static means easily accessable reference for all moveable characters
-    private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
+    //private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
     [SerializeField] private GameObject DebugToolTipReference; 
-    private bool gameStart = false;    
-    public GameObject CharacterSheet;
-    public GameObject SkillModifierScript;
+    private bool gameStart = false;
     public InitativeTrackerScript It;
-    public GameObject PhotonHit;
     float incrementer = 0;
-    private static TurnManager instance;
-
-    void Start()
-    {
-        instance = this;
-    } 
-
-    public static string GetCurrentAction()
-    {
-        return instance.currentAction;
-    }
     
-    SortedList<float, TacticsMovement> Sorter = new SortedList<float, TacticsMovement>();  
+    SortedList<float, PlayerStats> IntiativeActiveActors = new SortedList<float, PlayerStats>(); 
+    SortedList<float, PlayerStats> IntiativeFinishedActors = new SortedList<float, PlayerStats>(); 
     // Start is called before the first frame update
 
     void Update ()
@@ -41,31 +28,38 @@ public class TurnManager : TurnActionsSR
         // If server, game logic is ok
         else
         {
-            
-        if(CurrentAttack == null)
-        {
-            if(AttackQueue.Count > 0)
+            if(CurrentAttack == null)
             {
-                CurrentAttack = AttackQueue.Dequeue();
+                if(AttackQueue.Count > 0)
+                {
+                    CurrentAttack = AttackQueue.Dequeue();
+                }
             }
-        }
-        else
-        {
-            if(CurrentAttack.attackRoll != null && CurrentAttack.attackRoll.Completed() && !CurrentAttack.attackRolled)
+            else if(CurrentAttack.AttackMissed)
             {
-                Debug.Log("finished roll");
-                CurrentAttack.AttackRollComplete();
-                TryReaction();
-            }
-            if(CurrentAttack.reactionRoll != null && CurrentAttack.reactionRoll.Completed()&& !CurrentAttack.reactionRolled)
+                CurrentAttack = null;
+                Cancel();
+            }      
+            else
             {
-                CurrentAttack.ReactionRollComplete();
-                ResolveHit();
+                if(CurrentAttack.attackRoll != null && CurrentAttack.attackRoll.Completed() && !CurrentAttack.attackRolled)
+                {
+                    CurrentAttack.AttackRollComplete();
+                    TryReaction();
+                }
+                if(CurrentAttack.reactionRoll != null && CurrentAttack.reactionRoll.Completed()&& !CurrentAttack.reactionRolled)
+                {
+                    CurrentAttack.ReactionRollComplete();
+                }
+                if(CurrentAttack.soakRoll != null && CurrentAttack.soakRoll.Completed() && !CurrentAttack.soakRolled)
+                {
+                    CurrentAttack.SoakRollComplete();
+                    ResolveHit();
+                }
             }
-        }
-        //Where all possible actions take place
-        if (ActivePlayer != null && CurrentAttack == null && !CameraButtons.UIActive()) 
-        {
+            //Where all possible actions take place
+            if (ActivePlayer != null && CurrentAttack == null && !CameraButtons.UIActive()) 
+            {
             if(ActivePlayer.finishedMoving())
             {
                 Cancel();
@@ -74,46 +68,6 @@ public class TurnManager : TurnActionsSR
             switch(currentAction)
             {
                 case "Move":
-                break;
-                case "ReloadPrimaryWeapon":
-                    if(halfActions < 1)
-                    {
-                        EndTurn();
-                    }
-                    else
-                    {
-                        if(ActivePlayerStats.PrimaryWeapon.Reload(ActivePlayerStats))
-                        {
-                            ActivePlayerStats.CompleteRepeatingAction();
-                            PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
-                        }
-                        else
-                        {
-                            PopUpText.CreateText(ActivePlayerStats.PrimaryWeapon.ReloadString(), Color.yellow, ActivePlayer.gameObject);
-                        }
-                        halfActions--;
-                        Cancel();
-                    }
-                break;
-                case "ReloadSecondaryWeapon":
-                    if(halfActions < 1)
-                    {
-                        EndTurn();
-                    }
-                    else
-                    {
-                        if(ActivePlayerStats.SecondaryWeapon.Reload(ActivePlayerStats))
-                        {
-                            ActivePlayerStats.CompleteRepeatingAction();
-                            PopUpText.CreateText("Reloaded!", Color.green, ActivePlayer.gameObject);
-                        }
-                        else
-                        {
-                            PopUpText.CreateText(ActivePlayerStats.SecondaryWeapon.ReloadString(), Color.yellow, ActivePlayer.gameObject);
-                        }
-                        halfActions--;
-                        Cancel();
-                    }
                 break;
                 case "Stand":
                     AttackOfOppertunity();
@@ -384,10 +338,10 @@ public class TurnManager : TurnActionsSR
 
     public void StartTurn()
     {
-        if (InitativeOrder.Count > 0) 
+        if (IntiativeActiveActors.Count > 0) 
         {
-            ActivePlayer = InitativeOrder.Peek();
-            ActivePlayerStats = ActivePlayer.GetComponent<PlayerStats>();
+            ActivePlayerStats = IntiativeActiveActors[IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1]];
+            ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
             //CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
             halfActions = 2;
             ActivePlayerStats.ResetActions();
@@ -396,7 +350,6 @@ public class TurnManager : TurnActionsSR
             Cancel();
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
-            ActivePlayerStats.UpdateConditions(true);
             CameraButtons.SetFocus(ActivePlayer.transform.position);
             foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
             {
@@ -410,149 +363,109 @@ public class TurnManager : TurnActionsSR
     }
    public void StartTurn(TacticsMovement newPlayer)
     {
-        if (InitativeOrder.Count != 0) 
+        if (IntiativeActiveActors.Count > 0) 
         {
-            while (InitativeOrder.Peek() != newPlayer)
-            {
-                InitativeOrder.Enqueue(InitativeOrder.Dequeue());    
-            }
-            ActivePlayer = newPlayer;
-            ActivePlayerStats = ActivePlayer.GetComponent<PlayerStats>();
-            //CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
-            halfActions = 2;
-            ActivePlayerStats.ResetActions();
-            ActivePlayer.ResetMove();
-            ApplyConditions();
-            Cancel();
-            PrintInitiative();
-            RemoveRange(ActivePlayerStats);
-            ActivePlayerStats.UpdateConditions(true);
-            foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
-            {
-                w.OnTurnStart();
-            }
+            StartTurn();
         }
     }
 
     private void CompletePass()
     {
-        SortedList<float, TacticsMovement> TempSorter = new SortedList<float, TacticsMovement>();  
-        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
-        
-        foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) 
+        Debug.Log("passcomplete");
+        SortedList<float, PlayerStats> TempSorter = new SortedList<float, PlayerStats>(); 
+
+        foreach (KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors) 
         {
             float newInitative = kvp.Key - 10;
-            kvp.Value.initative = Mathf.FloorToInt(newInitative);
-            if(Mathf.FloorToInt(newInitative) > 0)
+            if(Mathf.FloorToInt(newInitative) >= 1)
             {
-                Debug.Log(newInitative);
-                TempSorter.Add(newInitative, kvp.Value);
+                Debug.Log("keep initiative "+ newInitative + " for " + kvp.Value.GetComponent<PlayerStats>().GetName());
+                IntiativeActiveActors.Add(newInitative, kvp.Value);
+            }
+            else{
+                Debug.Log("remove initative less than 0 for " + kvp.Value.GetComponent<PlayerStats>().GetName());
+                float emptyInitativeScore = 0;
+                while(TempSorter.ContainsKey(emptyInitativeScore))
+                {
+                    emptyInitativeScore += 0.001f;
+                }
+                TempSorter.Add(emptyInitativeScore,kvp.Value);
             }
         }
 
-        Sorter = TempSorter;
+        IntiativeFinishedActors = TempSorter;
 
-        foreach(float key in Sorter.Keys)
-        {
-            TempStack.Push(Sorter[key]);
-        }
-
-        //finally added to Queue in correct order
-        while(TempStack.Count != 0){
-            InitativeOrder.Enqueue(TempStack.Pop());
-        }
-        if(InitativeOrder.Count > 0)
+        if(IntiativeActiveActors.Count > 0)
         {
             StartTurn();
         }
         else
         {
-            SortQueue();
+            StartNewRound();
         }
     }
 
-    public void SubtractIniative(TacticsMovement player, int initative)
+    public void SubtractIniative(PlayerStats player, int initative)
     {
-        TacticsMovement originalTurn = InitativeOrder.Peek();
-        TacticsMovement currentTurn = InitativeOrder.Peek();
-        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
-
-        
-        SortedList<float,TacticsMovement> tempSorter = new SortedList<float, TacticsMovement>();
-        foreach(KeyValuePair<float,TacticsMovement> kvp in Sorter)
+        if(IntiativeActiveActors.ContainsValue(player))
         {
-            if(kvp.Value == player)
+            int indexOf = IntiativeActiveActors.IndexOfValue(player);
+            float newInitative = IntiativeActiveActors.Keys[indexOf] - initative;
+            IntiativeActiveActors.RemoveAt(indexOf);
+            if(newInitative < 1)
             {
-                float newInitative = kvp.Key - initative;
-                if(Mathf.FloorToInt(newInitative) > 0)
-                {
-                    kvp.Value.initative = Mathf.FloorToInt(newInitative);
-                    tempSorter.Add(newInitative, kvp.Value);
-                }
-                else
-                {
-                    kvp.Value.initative = 0;
-                    tempSorter.Add(0, kvp.Value);
-                }
-            }
+                IntiativeFinishedActors.Add(0, player);
+            } 
             else
+            {   
+                IntiativeActiveActors.Add(newInitative, player);
+            }   
+        }
+        else if(IntiativeFinishedActors.ContainsValue(player))
+        {
+            int indexOf = IntiativeFinishedActors.IndexOfValue(player);
+            float newInitative = IntiativeFinishedActors.Keys[indexOf] - initative;
+            IntiativeFinishedActors.RemoveAt(indexOf);
+            if(newInitative < 1)
             {
-                tempSorter.Add(kvp.Key,kvp.Value);
+                newInitative = 0;
             }
+            IntiativeFinishedActors.Add(newInitative,player);
         }
-
-        Sorter = tempSorter;
-
-        foreach(KeyValuePair<float,TacticsMovement> kvp in Sorter)
+        else
         {
-            TempStack.Push(kvp.Value);
+            Debug.LogError("Error: player not present in initative order!");
         }
-
-        while(TempStack.Count != 0){
-            InitativeOrder.Enqueue(TempStack.Pop());
-        }
-
-        while(InitativeOrder.Peek() != player)
-        {
-            InitativeOrder.Enqueue(InitativeOrder.Dequeue());
-        }
+        PrintInitiative();   
     }
 
 
-    //sorts initative order on beginning of game
-    public void SortQueue()
+    //sorts initative order at the start of the new round. Rounds are larger than passes 
+    public void StartNewRound()
     {
+        CombatLog.Log("New Round");
         gameStart = true;
-        InitativeOrder.Clear();
-        Sorter.Clear(); 
+        //InitativeOrder.Clear();
+        IntiativeActiveActors.Clear(); 
+        IntiativeFinishedActors.Clear();
+
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
         
         //adds all values in to sorted list in descending order
         foreach (GameObject p in players)
         {
-            TacticsMovement tm = p.GetComponent<TacticsMovement>();
-            tm.Init();
-            float initiative = p.GetComponent<PlayerStats>().RollInitaitve() + (float)p.GetComponent<PlayerStats>().GetStat(AttributeKey.Agility)/10f;
-            if(Sorter.ContainsKey(initiative))
+            PlayerStats ps = p.GetComponent<PlayerStats>();
+            ps.StartRound();
+            float initiative = ps.RollInitaitve() + (float)ps.GetStat(AttributeKey.Agility)/10f;
+            if(IntiativeActiveActors.ContainsKey(initiative))
             {
                 incrementer += 0.01f;
                 initiative += incrementer;
             }
-            tm.initative = Mathf.FloorToInt(initiative);
-            Sorter.Add(initiative,tm);
+            IntiativeActiveActors.Add(initiative,ps);
         }
 
-        //moved to a stack to reverse order 
-        foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) {
-            TempStack.Push(kvp.Value);
-        }
-
-        //finally added to Queue in correct order
-        while(TempStack.Count != 0){
-            InitativeOrder.Enqueue(TempStack.Pop());
-        }
-        if(InitativeOrder.Count > 0)
+        if(IntiativeActiveActors.Count > 0)
         {
             StartTurn();
         }
@@ -584,9 +497,8 @@ public class TurnManager : TurnActionsSR
     }
 
     public void EndTurn(){
-        ActivePlayerStats.UpdateConditions(false);
-        InitativeOrder.Dequeue();
-        ActivePlayerStats.ApplyAdvanceBonus(0);
+        IntiativeFinishedActors.Add(IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1],ActivePlayerStats);
+        IntiativeActiveActors.RemoveAt(IntiativeActiveActors.Count-1);
         StartTurn();
     }
 
@@ -603,16 +515,24 @@ public class TurnManager : TurnActionsSR
     {
         if(gameStart)
         {
-            int iterations = InitativeOrder.Count;
+            Stack<string> outputStack = new Stack<string>();
             List<string> entries = new List<string>();
-            while (iterations > 0)
+            foreach(KeyValuePair<float, PlayerStats> kvp in IntiativeActiveActors)
+            {  
+                outputStack.Push(kvp.Value.GetName() + ": " + Mathf.FloorToInt(kvp.Key));
+            }
+            while(outputStack.Count > 0)
             {
-                TacticsMovement tm = InitativeOrder.Dequeue();
-                InitativeOrder.Enqueue(tm);
-                string name = tm.GetComponent<PlayerStats>().GetName();
-                string value = "" + tm.initative;
-                entries.Add(name + ": " + value);
-                iterations--;
+                entries.Add(outputStack.Pop());
+            }
+            entries.Add("-----inactive-----");
+            foreach(KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors)
+            {  
+                outputStack.Push(kvp.Value.GetName() + ": " + Mathf.FloorToInt(kvp.Key));
+            }
+            while(outputStack.Count > 0)
+            {
+                entries.Add(outputStack.Pop());
             }
             It.UpdateList(entries.ToArray());
         }
@@ -682,7 +602,6 @@ public class TurnManager : TurnActionsSR
         //only a valid target if on diferent teams
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
-            target.SetCondition("Under Fire", 1,false);
             AttackSequence newAttack = TacticsAttack.Attack(target, attacker, ActiveWeapon, ROF);
             if(HitLocation != null)
             {
@@ -694,6 +613,10 @@ public class TurnManager : TurnActionsSR
             if(ActivePlayerStats == attacker)
             {
                 halfActions--;
+                if(ROF.Equals("SAB") || ROF.Equals("LB") || ROF.Equals("FAB"))
+                {
+                    halfActions--;
+                }
             }
         }
     }
@@ -867,49 +790,30 @@ public class TurnManager : TurnActionsSR
 
     public void AddPlayer(GameObject newPlayer)
     {
-        float initiative = newPlayer.GetComponent<PlayerStats>().RollInitaitve() + (float)newPlayer.GetComponent<PlayerStats>().GetStat(AttributeKey.Agility)/10f;
-        TacticsMovement tm = newPlayer.GetComponent<TacticsMovement>();
+        PlayerStats newps = newPlayer.GetComponent<PlayerStats>();
+        float initiative = newps.RollInitaitve() + (float)newps.GetStat(AttributeKey.Agility)/10f;
         Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
-        if(Sorter.ContainsKey(initiative))
+        if(IntiativeActiveActors.ContainsKey(initiative))
         {
             incrementer += 0.01f;
             initiative += incrementer;
         }
-        Sorter.Add(initiative,tm);
-        if(InitativeOrder.Count > 0)
-        {
-            TacticsMovement SavedPostion = InitativeOrder.Dequeue();
-            InitativeOrder.Clear();
-            //moved to a stack to reverse order 
-            foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) {
-                TempStack.Push(kvp.Value);
-            }
-
-            //finally added to Queue in correct order
-            while(TempStack.Count != 0){
-                InitativeOrder.Enqueue(TempStack.Pop());
-            }
-
-            while(InitativeOrder.Peek() != SavedPostion)
-            {
-                InitativeOrder.Enqueue(InitativeOrder.Dequeue());
-            }
-        }
-        else
-        {
-            InitativeOrder.Enqueue(tm);
-            StartTurn(tm);
-        }
+        IntiativeFinishedActors.Add(initiative, newps);
+        StartTurn();
     }
 
     public void RemovePlayer(GameObject Player)
     {
         Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
         TacticsMovement tm = Player.GetComponent<TacticsMovement>();
+        
+        /*
         if(InitativeOrder.Peek() == tm)
         {
             EndTurn();
         }
+        */
+        /*
         Sorter.Remove(tm.initative);
         if(InitativeOrder.Count > 1)
         {
@@ -937,7 +841,62 @@ public class TurnManager : TurnActionsSR
             ActivePlayer = null;
             InitativeOrder.Clear();
         }
+        */
         PhotonNetwork.Destroy(Player);
         PrintInitiative();
     }
+
+    public void TotalDefense()
+    {
+        int willpowerBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Willpower);
+        int defensePenalty = CurrentAttack.target.GetDefensePenality();
+        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
+        int modifier = willpowerBonus + defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(null, AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        SubtractIniative(CurrentAttack.target,10);
+        RemoveRange(target);
+        ClearActions();
+    }
+
+    public void Dodge()
+    {
+        int defensePenalty = CurrentAttack.target.GetDefensePenality();
+        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
+        int modifier = defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Gymnastics", AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        SubtractIniative(CurrentAttack.target,5);
+        RemoveRange(target);
+        ClearActions();
+    }
+
+    public void Block()
+    {
+        int defensePenalty = CurrentAttack.target.GetDefensePenality();
+        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
+        int modifier = defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("unarmed", AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        SubtractIniative(CurrentAttack.target,5);
+        RemoveRange(target);
+        ClearActions();
+    }
+
+    public void Parry()
+    { 
+        int defensePenalty = CurrentAttack.target.GetDefensePenality();
+        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
+        int modifier = defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Gymnastics", AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        SubtractIniative(CurrentAttack.target,5);
+        RemoveRange(target);
+        ClearActions();
+    }
+    public void NoReaction()
+    {
+        int defensePenalty = CurrentAttack.target.GetDefensePenality();
+        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
+        int modifier = defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(null, AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense",0, modifier);
+        ClearActions();
+    }
+
 }

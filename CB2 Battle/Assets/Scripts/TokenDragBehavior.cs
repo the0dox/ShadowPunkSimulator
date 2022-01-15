@@ -16,6 +16,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
     private TacticsMovement myToken;
     // A reference to the previous mouse position
     private Vector3 previousPosition = new Vector3();
+    private float distance;
 
     // Update is called once per frame
     void Update()
@@ -78,7 +79,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
             
             if(next.parent != null)
             {
-                int distance = Mathf.CeilToInt(next.distance);
+                distance = Mathf.CeilToInt(next.distance);
                 TooltipSystem.show("     " + distance + " MP", "");
                 while (next != null)
                 {
@@ -90,6 +91,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
             }   
             else
             {
+                distance = 0;
                 TooltipSystem.show("Invalid move!", "");
             }         
         }
@@ -103,15 +105,16 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         {
             PlayerStats myStats = myToken.GetComponent<PlayerStats>();
             int id = myStats.GetID();
-            pv.RPC("RPC_PlaceToken", RpcTarget.All, id, myPath.ToArray());
+            pv.RPC("RPC_PlaceToken", RpcTarget.All, id, myPath.ToArray(), distance);
         }
     }
 
     // Places the token in all clients
     [PunRPC]
-    void RPC_PlaceToken(int tokenID, Vector3[] Path)
+    void RPC_PlaceToken(int tokenID, Vector3[] Path, float distance)
     {
         myToken = PlayerSpawner.IDtoPlayer(tokenID).GetComponent<TacticsMovement>();
+        myToken.GetComponent<PlayerStats>().SpendMovement(distance);
         myToken.moveToTile(Path);
         ClearToken();
     }

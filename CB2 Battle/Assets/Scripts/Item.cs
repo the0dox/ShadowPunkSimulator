@@ -152,6 +152,16 @@ public class Item
         UpdateTooltip();
     }
 
+    public bool hasUpgrade(string key)
+    {
+        ItemTemplate template = ItemReference.GetTemplate(key);
+        if(!upgrades.ContainsKey(template))
+        {
+            return false;
+        }
+        return upgrades[template];
+    }
+
     public virtual void UpdateTooltip()
     {
         tooltip = "Rating " + rating + " item";

@@ -1,0 +1,40 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Defiance EX Shocker
+  m_EditorClassIdentifier: 
+  weight: 0
+  cost: 180
+  availablity: 
+  description: 
+  unique: 1
+  rating: 0
+  icon: {fileID: 0}
+  upgrades: []
+  Attributes: []
+  damageBonus: 7
+  rangeClass: {fileID: 11400000, guid: 30e4754382f8a0240899ab534b97e922, type: 2}
+  pen: 5
+  SingleShot: 1
+  SemiAuto: 0
+  BurstFire: 0
+  FullAuto: 0
+  WeaponSkill: {fileID: 11400000, guid: ad37561d6fb94f34d806288ac8864dd5, type: 2}
+  WeaponSpecialization: 3
+  accuracy: 4
+  clipMax: 4
+  damageType: 
+  blast: 0
+  AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}
+  clipType: 0
+  Lethal: 0
+  debugAddAllUpgrades: 0
