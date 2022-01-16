@@ -205,7 +205,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
     }
 
-    public int GetStat(string key)
+    public int GetStat(AttributeKey key)
     {
         return myData.GetAttribute(key);
     }
@@ -256,7 +256,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
     }
 
-    public RollResult AbilityCheck(string skillKey, string attributeKey = "", string LimitKey = "", string customName = "", int threshold = 0, int modifier = 0)
+    public RollResult AbilityCheck(AttributeKey skillKey, AttributeKey attributeKey = AttributeKey.Empty, AttributeKey LimitKey = AttributeKey.Empty, string customName = "", int threshold = 0, int modifier = 0)
     {
         RollResult newRoll = new RollResult(myData, skillKey, attributeKey, LimitKey, threshold, modifier);
         newRoll.customName = customName;
@@ -285,7 +285,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {
             //modifier for skills
             ConditionalModifiers += CalculateStatModifiers(input);
-            type = convertedSkill.characterisitc;
+            type = convertedSkill.derrivedAttribute;
             int LevelsTrained = convertedSkill.levels;
             SkillTarget = GetStat(type);
             if (LevelsTrained < 1)
@@ -682,25 +682,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public void ApplySpecialEffects(string hitBodyPart, Weapon w, int result)
     {
-        if(result > 0 && w.HasWeaponAttribute("Shocking"))
-        {
-            int shockModifier = GetStat(hitBodyPart) * 10;
-            StartCoroutine(ShockEffect(shockModifier,result));            
-        }
-        if(result > 0 && w.HasWeaponAttribute("Toxic"))
-        {
-            int toxicModifier = result * -5;
-            StartCoroutine(ToxicEffect(toxicModifier, result));
-        }
-        if(w.HasWeaponAttribute("Snare"))
-        {
-            AbilityCheck("A",0,"Snare");
-        }
-        if(w.HasWeaponAttribute("Smoke"))
-        {
-            CombatLog.Log("Target is covered by smoke!");
-            SetCondition("Obscured",3,true);
-        }
+        throw new System.NotImplementedException();
     }
 
     IEnumerator ShockEffect(int modifier, int damage)

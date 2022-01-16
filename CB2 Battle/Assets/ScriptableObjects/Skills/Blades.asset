@@ -13,9 +13,11 @@ MonoBehaviour:
   m_Name: Blades
   m_EditorClassIdentifier: 
   defaultable: 1
-  characterisitc: AGI
+  skillKey: 43
+  derrivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: Blades is your proficiency with edged weapons.
+  limit: 0
   Specializations:
   - 

@@ -25,9 +25,9 @@ public class RollResult
     int pool;
     public int threshold;
     private int[] dice; 
-    public string skillKey;
-    public string attributeKey; 
-    public string LimitKey;
+    public AttributeKey firstField;
+    public AttributeKey secondField; 
+    public AttributeKey LimitKey;
     private int failures;
     private int successes;
     public int modifiers;
@@ -61,10 +61,10 @@ public class RollResult
         this.useWeapon = true;
         this.WeaponAccuracy = weapon.Template.accuracy;
         this.owner = owner; 
-        this.skillKey = weapon.Template.WeaponSkill.name;
-        this.attributeKey = SkillReference.GetSkill(skillKey).characterisitc;
+        this.firstField = weapon.Template.WeaponSkill.skillKey;
+        this.secondField = weapon.Template.WeaponSkill.derrivedAttribute;
         this.threshold = 0;
-        if(owner.hasSpecialization(skillKey, weapon.Template.WeaponSpecialization))
+        if(owner.hasSpecialization(weapon.Template.WeaponSkill.name, weapon.Template.WeaponSpecialization))
         {
             this.modifiers = 2 + modifiers;
         }
@@ -84,42 +84,34 @@ public class RollResult
         }
     }
 
-    public RollResult(CharacterSaveData owner, string skillKey = "", string attributeKey = "", string LimitKey = "", int threshold = 0, int modifiers = 0)//,  PlayerStats other = null)
+    public RollResult(CharacterSaveData owner, AttributeKey skillKey, int threshold = 0, int modifiers = 0)
     {
         this.owner = owner;
-        this.skillKey = skillKey;
         this.modifiers = modifiers;
-        
-        if(string.IsNullOrEmpty(attributeKey))
+        this.threshold = threshold;
+        SkillTemplate testedSkill = SkillReference.GetSkill(skillKey);
+        firstField = skillKey;
+        secondField = testedSkill.derrivedAttribute;
+        LimitKey = testedSkill.limit;
+        if(SkillPromptBehavior.ManualRolls)
         {
-            if(!string.IsNullOrEmpty(skillKey))
-            {
-                this.attributeKey = SkillReference.GetSkill(skillKey).characterisitc;
-            }
-            else
-            {
-                this.attributeKey = "";
-            }
+            completed = false;
+            SkillPromptBehavior.NewRoll(this);
         }
         else
         {
-            this.attributeKey = attributeKey;
+            Roll();
         }
-        if(string.IsNullOrEmpty(LimitKey))
-        {
-            if(!string.IsNullOrEmpty(skillKey))
-            {
-                this.LimitKey = SkillReference.GetSkill(skillKey).limit;
-            }
-            else
-            {
-                this.LimitKey = "";
-            }
-        }
-        else
-        {
-            this.LimitKey = LimitKey;
-        }
+    }
+
+    public RollResult(CharacterSaveData owner, AttributeKey firstField = AttributeKey.Empty, AttributeKey secondField = AttributeKey.Empty, AttributeKey LimitKey = AttributeKey.Empty, int threshold = 0, int modifiers = 0)//,  PlayerStats other = null)
+    {
+        this.owner = owner;
+        this.firstField = firstField;
+        this.secondField = secondField;
+        this.LimitKey = LimitKey;
+        this.modifiers = modifiers;
+        this.threshold = threshold;
         if(SkillPromptBehavior.ManualRolls)
         {
             completed = false;
@@ -166,13 +158,13 @@ public class RollResult
     public int GetPool()
     {
         pool = 0;
-        if(!string.IsNullOrEmpty(skillKey))
+        if(firstField != AttributeKey.Empty)
         {
-            pool += owner.GetSkill(skillKey,false);
+            pool += owner.GetAttribute(firstField);
         }
-        if(!string.IsNullOrEmpty(attributeKey))
+        if(secondField != AttributeKey.Empty)
         {
-            pool += owner.GetAttribute(attributeKey);
+            pool += owner.GetAttribute(secondField);
         }
         pool += modifiers;
         //Debug.Log("Die Pool: " + pool);
@@ -195,7 +187,7 @@ public class RollResult
                 successes = Dicelimit;
             }
         }
-        else if(!string.IsNullOrEmpty(LimitKey))
+        else if(LimitKey != AttributeKey.Empty)
         {
             int Dicelimit = owner.GetAttribute(LimitKey);
             if(successes > Dicelimit)
@@ -266,17 +258,7 @@ public class RollResult
 
     private void PrintResult()
     {
-        string displayName = "";
-        if(!string.IsNullOrEmpty(customName))
-        {
-            displayName = customName;
-        }
-        else
-        {
-            displayName = GetSkillType();
-        }
-
-        string clstring = owner.playername + ": "  + customName + " check: \n ";
+        string clstring = owner.playername + ": "  + displayName() + " check: \n ";
         
         int printableSuccesses = successes;
         int printableFailures = failures;
@@ -366,9 +348,21 @@ public class RollResult
         return Target;
     }
 
-    public string GetSkillType()
+    public string displayName()
     {
-        return skillKey;
+        if(!string.IsNullOrEmpty(customName))
+        {
+            return customName;
+        }
+        if(firstField != AttributeKey.Empty)
+        {
+            return firstField.ToString();
+        }
+        if(secondField != AttributeKey.Empty)
+        {
+            return secondField.ToString();
+        } 
+        return "skill";
     }
 
     public string GetCommand()

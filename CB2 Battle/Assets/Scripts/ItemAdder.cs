@@ -62,7 +62,7 @@ public class ItemAdder : MonoBehaviour
         }
     }
 
-    // Destroys the corresponding Skillinput and removes the skill from the player
+    /* Depreciated Destroys the corresponding Skillinput and removes the skill from the player
     public static void RemoveSkill(string skillName)
     {
         owner.skills.Remove(skillName);
@@ -70,6 +70,7 @@ public class ItemAdder : MonoBehaviour
         SkillScript removedSkill = null;
         Destroy(removedSkill.gameObject);
     }
+    */
 
     // If one of my buttons was clicked, check if I already own that skill
     // If I don't own it, create it

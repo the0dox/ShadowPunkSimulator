@@ -40,22 +40,22 @@ public class SkillAdder : MonoBehaviour
     { 
         owner = newonwer;
         Skills = new List<SkillScript>();
-        foreach(string s in owner.GetSkills().Keys)
+        Dictionary<string, SkillTemplate> allSkills = SkillReference.SkillsTemplates();
+        foreach(string key in allSkills.Keys)  
         {
-            AddSkill(s,false);
+            AttributeKey currentSkillkey = allSkills[key].skillKey;
+            if(newonwer.GetAttribute(currentSkillkey) > 0)
+            {
+                AddSkill(allSkills[key],false);
+            }
         } 
         UpdateAdderContent();
     }
     
     // Adds a skill from skillreferences that matches a given name
     // if add, add the skill to the owner
-    public static void AddSkill(string skillName, bool add)
+    public static void AddSkill(SkillTemplate newSkill, bool add)
     {
-        if(add)
-        {
-            owner.SetSkill(skillName,0);
-        }
-        SkillTemplate newSkill = SkillReference.GetSkill(skillName);
         SkillScript indicator = Instantiate(SkillInput as GameObject).GetComponent<SkillScript>();
         indicator.DownloadCharacter(owner, newSkill);
         Skills.Add(indicator);
@@ -63,14 +63,14 @@ public class SkillAdder : MonoBehaviour
     }
 
     // Destroys the corresponding Skillinput and removes the skill from the player
-    public static void RemoveSkill(string skillName)
+    public static void RemoveSkill(SkillTemplate skill)
     {
-        owner.skills.Remove(skillName);
-        owner.skillSpecialization.Remove(skillName);
+        owner.SetAttribute(skill.skillKey, 0,false);
+        owner.skillSpecialization.Remove(skill.name);
         SkillScript removedSkill = null;
         foreach(SkillScript sc in Skills)
         {
-            if(sc.GetSkill().Equals(skillName))
+            if(sc.GetSkill().Equals(skill))
             {
                 removedSkill = sc;
             }
@@ -85,13 +85,14 @@ public class SkillAdder : MonoBehaviour
     public void OnClicked()
     {
         string name = EventSystem.current.currentSelectedGameObject.name;
-        if(validSkill(name))
+        SkillTemplate newSkill = SkillReference.GetSkill(name);
+        if(validSkill(newSkill))
         {
-            AddSkill(name,true);
+            AddSkill(newSkill,true);
         }
         else
         {
-            RemoveSkill(name);
+            RemoveSkill(newSkill);
         }
     }
 
@@ -106,11 +107,11 @@ public class SkillAdder : MonoBehaviour
 
     // Given a skill name see if this player already owns it or not
     // returns true if I already own it
-    private static bool validSkill(string newSkill)
+    private static bool validSkill(SkillTemplate newSkill)
     {
-        foreach(string ownedSkill in owner.skills.Keys)
+        foreach(SkillScript scripts in Skills)
         {
-            if(ownedSkill.Equals(newSkill))
+            if(scripts.GetSkill().Equals(newSkill))
             {
                 return false;
             }

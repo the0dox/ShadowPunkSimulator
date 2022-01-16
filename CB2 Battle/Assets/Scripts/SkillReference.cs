@@ -24,14 +24,17 @@ public class SkillReference : MonoBehaviour
         return Library[name];
     }
 
-    public static bool Defaultable(string name)
+    public static SkillTemplate GetSkill(AttributeKey skillKey)
     {
-        return Library[name].defaultable;
-    }
-
-    public static string GetDerrivedAttribute(string name)
-    {
-        return Library[name].characterisitc;
+        foreach(string key in Library.Keys)
+        {
+            SkillTemplate template = Library[key];
+            if(template.skillKey.Equals(skillKey))
+            {
+                return template;
+            }
+        }
+        throw new System.NullReferenceException();
     }
 
     public static Dictionary<string, SkillTemplate> SkillsTemplates()

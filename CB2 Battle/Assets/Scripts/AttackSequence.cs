@@ -89,7 +89,7 @@ public class AttackSequence
             {
                 armorMod = 0;
             }
-            soakRoll = target.AbilityCheck(null, AttributeKey.Body, null, "Armor", 0, armorMod);
+            soakRoll = target.AbilityCheck(AttributeKey.Body, AttributeKey.Empty, AttributeKey.Empty, "Armor", 0, armorMod);
         }
     }
     

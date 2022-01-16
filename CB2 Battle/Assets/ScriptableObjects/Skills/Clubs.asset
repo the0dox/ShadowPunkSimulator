@@ -13,11 +13,13 @@ MonoBehaviour:
   m_Name: Clubs
   m_EditorClassIdentifier: 
   defaultable: 1
-  characterisitc: AGI
+  skillKey: 45
+  derrivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: Clubs is your proficiency with blunt weaponry. The skill can be used
     to attack or defend with anything ranging from deadly hammers to improvised weapons.
+  limit: 0
   Specializations:
   - Batons
   - Hammers

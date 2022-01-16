@@ -5,7 +5,6 @@ using UnityEngine.UI;
 
 public class InputFieldScript : MonoBehaviour
 {
-    public string stat;
     public int value;
     public GameObject TextObject; 
 
@@ -13,17 +12,13 @@ public class InputFieldScript : MonoBehaviour
     private CharacterSheet mySheet;
 
     public InputField IF;
+    [SerializeField] private AttributeKey stat;
 
     [SerializeField] private TooltipTrigger tooltipTrigger;
     
     [TextArea(5,5)]
     [SerializeField] private string baseDescription;
-
-    public string GetStat()
-    {
-        return stat;
-    }
-
+    
     public int GetValue()
     {
         return value;
@@ -37,10 +32,10 @@ public class InputFieldScript : MonoBehaviour
         mySheet.UpdatedAttribute(stat, value);
     }
 
-    public void UpdateValue(int value, CharacterSheet mySheet)
+    public void UpdateValue(CharacterSaveData myData,  CharacterSheet mySheet)
     {
         this.mySheet = mySheet;
-        this.value = value;
+        this.value = myData.GetAttribute(stat);
         IF.text = "" + value;
         TextObject.GetComponent<Text>().text = "" + value; 
         Placeholder.GetComponent<Text>().text = "" + value;  
@@ -63,6 +58,6 @@ public class InputFieldScript : MonoBehaviour
 
     public void CharacteristicTest()
     {
-        GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().AbilityCheck(stat);
+        //GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().AbilityCheck(stat);
     }
 }

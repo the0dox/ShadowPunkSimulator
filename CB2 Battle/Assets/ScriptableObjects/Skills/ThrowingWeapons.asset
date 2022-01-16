@@ -10,11 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
-  m_Name: Free-Fall
+  m_Name: ThrowingWeapons
   m_EditorClassIdentifier: 
   defaultable: 1
-  characterisitc: BOD
+  skillKey: 88
+  derrivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: 
+  limit: 0
   Specializations: []

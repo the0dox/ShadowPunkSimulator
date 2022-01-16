@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Biotechnology
   m_EditorClassIdentifier: 
   defaultable: 0
-  characterisitc: LOG
+  skillKey: 42
+  derrivedAttribute: 10
   visible: 1
   Descriptor: []
   displayText: 
+  limit: 0
   Specializations: []

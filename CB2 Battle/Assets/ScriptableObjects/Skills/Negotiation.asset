@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Negotiation
   m_EditorClassIdentifier: 
   defaultable: 1
-  characterisitc: CHA
+  skillKey: 75
+  derrivedAttribute: 12
   visible: 1
   Descriptor: []
   displayText: 
+  limit: 0
   Specializations: []

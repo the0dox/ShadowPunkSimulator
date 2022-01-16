@@ -33,8 +33,6 @@ public class SkillPromptBehavior : MonoBehaviour
     [SerializeField] private Text displayText;
     [SerializeField] private Text CalculationText;
 
-    private List<string> Limits = new List<string>{"PHY", "SOC", "MEN"};
-
     // Called on the first frame
     void Start()
     {
@@ -75,16 +73,7 @@ public class SkillPromptBehavior : MonoBehaviour
             ThresholdIF.text = "" + currentRoll.threshold;
             CameraButtons.UIFreeze(true);
             display.SetActive(true); 
-            string displayName = "";
-            if(!string.IsNullOrEmpty(currentRoll.customName))
-            {
-                displayName = currentRoll.customName;
-            }
-            else
-            {
-                displayName = currentRoll.GetSkillType();
-            }
-            displayText.text = currentRoll.getOwner().playername + " is attempting a " + displayName + " check";
+            displayText.text = currentRoll.getOwner().playername + " is attempting a " + currentRoll.displayName() + " check";
             OnValueChange();
         }
     }
@@ -93,42 +82,33 @@ public class SkillPromptBehavior : MonoBehaviour
     {
         SkillDD.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
-        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
-        baseResponse.text = currentRoll.skillKey;
-        results.Add(baseResponse);
-        foreach(string Key in currentRoll.getOwner().skills.Keys)
+        foreach(AttributeKey Key in AttribueReference.keys)
         {
-            if(!Key.Equals(currentRoll.skillKey))
-            {
-                Dropdown.OptionData NewData = new Dropdown.OptionData();
-                NewData.text = Key;
-                results.Add(NewData);
-            }
+            Dropdown.OptionData NewData = new Dropdown.OptionData();
+            NewData.text = Key.ToString();
+            results.Add(NewData);
         }
         SkillDD.AddOptions(results);
+        SkillDD.value = (int)currentRoll.firstField;
     }
 
     private void UpdateAttributeDropDown()
     {
         AttributeDD.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
-        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
-        baseResponse.text = currentRoll.attributeKey;
-        results.Add(baseResponse);
-        foreach(string Key in currentRoll.getOwner().attribues.Keys)
+        foreach(AttributeKey Key in AttribueReference.keys)
         {
-            if(!Key.Equals(currentRoll.attributeKey))
-            {
-                Dropdown.OptionData NewData = new Dropdown.OptionData();
-                NewData.text = Key;
-                results.Add(NewData);
-            }
+            Dropdown.OptionData NewData = new Dropdown.OptionData();
+            NewData.text = Key.ToString();
+            results.Add(NewData);
         }
         AttributeDD.AddOptions(results);
+        AttributeDD.value = (int)currentRoll.secondField;
     }
 
     private void UpdateLimitDropDown()
     {
+        
         LimitDD.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
         Dropdown.OptionData baseResponse = new Dropdown.OptionData();
@@ -139,35 +119,32 @@ public class SkillPromptBehavior : MonoBehaviour
         }
         else
         {
-            baseResponse.text = currentRoll.LimitKey;
-            results.Add(baseResponse);
-            foreach(string Key in Limits)
+            foreach(AttributeKey Key in AttribueReference.keys)
             {
-                if(!Key.Equals(currentRoll.LimitKey))
-                {
-                    Dropdown.OptionData NewData = new Dropdown.OptionData();
-                    NewData.text = Key;
-                    results.Add(NewData);
-                }
+                Dropdown.OptionData NewData = new Dropdown.OptionData();
+                NewData.text = Key.ToString();
+                results.Add(NewData);
             }
+            AttributeDD.AddOptions(results);
+            AttributeDD.value = (int)currentRoll.secondField;
         }
         LimitDD.AddOptions(results);
     }
 
     public void OnSkillChanged()
     {
-        currentRoll.skillKey = SkillDD.captionText.text;
+        currentRoll.firstField = (AttributeKey)SkillDD.value;
         OnValueChange();
     }
 
     public void OnAttributeChanged()
     {
-        currentRoll.attributeKey = AttributeDD.captionText.text;
+        currentRoll.secondField = (AttributeKey)AttributeDD.value;
         OnValueChange();
     }
     public void OnLimitChanged()
     {
-        currentRoll.LimitKey = LimitDD.captionText.text;
+        currentRoll.LimitKey = (AttributeKey)LimitDD.value;
         OnValueChange();
     }
 
@@ -204,23 +181,25 @@ public class SkillPromptBehavior : MonoBehaviour
         int pool = currentRoll.GetPool();
         
         CalculationText.text = "";
-        if(!string.IsNullOrEmpty(currentRoll.skillKey))
+        if(currentRoll.firstField != AttributeKey.Empty)
         {
-            CalculationText.text += currentRoll.skillKey + " + ";
+            CalculationText.text += currentRoll.firstField.ToString() + " + ";
         }
-        if(!string.IsNullOrEmpty(currentRoll.attributeKey))
+        if(currentRoll.secondField != AttributeKey.Empty)
         {
-            CalculationText.text += currentRoll.attributeKey + " ";
+            CalculationText.text += currentRoll.secondField.ToString() + " ";
         }
+        string endText = "no limit";
         if(currentRoll.useWeapon)
         {
-            int limitVal = currentRoll.WeaponAccuracy;
-            CalculationText.text += "[" + limitVal + "] ";
+            CalculationText.text += "[Accuracy] ";
+            endText = "limit: " + currentRoll.WeaponAccuracy;
         }
-        else if(!string.IsNullOrEmpty(currentRoll.LimitKey))
+        else if(currentRoll.LimitKey != AttributeKey.Empty)
         {
-            int limitVal = currentRoll.getOwner().GetAttribute(currentRoll.LimitKey);
-            CalculationText.text += "[" + limitVal + "] ";
+            string limitText = currentRoll.LimitKey.ToString(); 
+            CalculationText.text += "[" + limitText + "] ";
+            endText = "limit: " + currentRoll.getOwner().GetAttribute(currentRoll.LimitKey);
         }
         if(currentRoll.threshold > 0)
         {
@@ -228,6 +207,7 @@ public class SkillPromptBehavior : MonoBehaviour
         }
         CalculationText.text += "TEST";
         CalculationText.text += "\n Dice Pool: " + pool;
+        CalculationText.text += "\n " + endText;
     } 
     
     // Called when the display button is pressed, passes the entry in inputText back to CurrentRoll and marks it as complete 

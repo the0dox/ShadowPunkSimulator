@@ -8,10 +8,7 @@ using UnityEngine;
 public class CharacterSaveData
 {
     // Basic character stats Shadowrunner
-    public Dictionary<string, int> attribues = new Dictionary<string, int>(); 
-
-    // Skills Shadowrunner
-    public Dictionary<string, int> skills = new Dictionary<string, int>();
+    public int[] attribues = new int[100]; 
     
     // Skills Shadowrunner
     public Dictionary<string, int> skillSpecialization = new Dictionary<string, int>();
@@ -44,18 +41,21 @@ public class CharacterSaveData
             Model = "Renegade";
             team = 1;
         }
-        SetAttribute(AttributeKey.PDamage, 0,false);
-        SetAttribute(AttributeKey.SDamage, 0,false);
-        SetAttribute(AttributeKey.CurrentEdge, 0, false);
-        SetAttribute(AttributeKey.Overflow, 0, false);
+        foreach(AttributeKey key in AttribueReference.keys)
+        {
+            SetAttribute(key, 0, false);
+        }
+        foreach(string skillKey in SkillReference.SkillsTemplates().Keys)
+        {
+            setSpecialization(skillKey,-1);
+        }
         CalculateCharacteristics();
     }
 
-    public CharacterSaveData(string playername, Dictionary<string,int> attribues, Dictionary<string,int> skills, Dictionary<string,int> specalizations, List<string> newequipment)
+    public CharacterSaveData(string playername, int[] attribues, Dictionary<string,int> specalizations, List<string> newequipment)
     {
         this.playername = playername;
         this.attribues = attribues;
-        this.skills = skills;
         this.skillSpecialization = specalizations;
         decompileEquipment(newequipment);
     }
@@ -123,7 +123,7 @@ public class CharacterSaveData
 
     // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
     // a dictionary when the player is created 
-    public Dictionary<string,int> GetStats()
+    public int[] GetStats()
     {
         return attribues;
     }
@@ -131,80 +131,34 @@ public class CharacterSaveData
     // Key: Specific stat being modified
     // Value: New value of modified stat
     // updates a stat's value 
-    public void SetAttribute(string key, int value, bool calculate)
+    public void SetAttribute(AttributeKey key, int value, bool calculate)
     {
-        if(!attribues.ContainsKey(key))
-        {
-            attribues.Add(key,0);
-        }
-        attribues[key] = value;
+        attribues[(int)key] = value;
         if(calculate)
         {
             CalculateCharacteristics();
         }
     }
 
-    public void SetSkill(string key, int value)
+    public int GetAttribute(AttributeKey key)
     {
-        if(!skills.ContainsKey(key))
-        {
-            skills.Add(key,0);
-        }
-        skills[key] = value;
-        setSpecialization(key, 0);
+        return attribues[(int)key];
     }
 
-    public int GetAttribute(string key)
+    public int GetAttribute(SkillTemplate skill)
     {
-        if(!attribues.ContainsKey(key))
+        int index = (int)skill.derrivedAttribute;
+        int levels = attribues[index];
+        if(levels < 1 && skill.defaultable)
         {
-            attribues.Add(key,0);
+            return -1;
         }
-        return attribues[key];
+        return levels;
     }
 
-    public int GetSkill(string key, bool derrived)
+    public RollResult AbilityCheck(AttributeKey skillKey, int threshold = 0, int modifier = 0)
     {
-        if(!skills.ContainsKey(key))
-        {
-            skills.Add(key, 0);
-        }
-        int levels = skills[key];
-        if(!derrived)
-        {
-            return levels;
-        }
-        int bonus = GetAttribute(SkillReference.GetDerrivedAttribute(key));
-        if(levels > 0)
-        {
-            return levels + bonus;
-        }
-        else if(SkillReference.Defaultable(key))
-        {
-            return bonus - 1;
-        }
-        else
-        {
-            return 0;
-        }
-    }
-
-    public RollResult AbilityCheck(string skillKey, string attributeKey = "", string LimitKey = "", int threshold = 0, int modifier = 0)
-    {
-        return new RollResult(this, skillKey, attributeKey, LimitKey, threshold, modifier);
-    }
-
-    // Converts SkillNames and Skill Levels into a list of skill objects that playerstats can read
-    public Dictionary<string,int> GetSkills()
-    {
-        return skills;
-    }
-
-    // Resets all Skills, used when charactersheet is editing skills
-    public void ClearSkills()
-    {
-        skills.Clear();
-        skillSpecialization.Clear();
+        return new RollResult(this, skillKey, threshold, modifier);
     }
 
     // whenever characteristics are set, updates all abilities/stats that are dependent on those conditions

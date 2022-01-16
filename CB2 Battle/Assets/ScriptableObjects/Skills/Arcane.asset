@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Arcane
   m_EditorClassIdentifier: 
   defaultable: 0
-  characterisitc: LOG
+  skillKey: 35
+  derrivedAttribute: 10
   visible: 1
   Descriptor: []
   displayText: 
+  limit: 0
   Specializations: []

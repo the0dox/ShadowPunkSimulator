@@ -202,7 +202,8 @@ public class ActivityGenerator : MonoBehaviour
             Dropdown.OptionData baseResponse = new Dropdown.OptionData();
             baseResponse.text = "None";
             results.Add(baseResponse);
-            foreach(string s in PlayerSelection[0].myData.skills.Keys)
+            /*
+            foreach(string s in PlayerSelection[0].myData.attribues)
             {
                 SkillTemplate currentSkill = SkillReference.GetSkill(s);
                 if(currentSkill.Descriptor.Equals("Investigation"))
@@ -212,6 +213,7 @@ public class ActivityGenerator : MonoBehaviour
                     results.Add(newData);
                 }
             }
+            */
             SkillField.GetComponent<Dropdown>().AddOptions(results);
         }
         else
@@ -302,8 +304,8 @@ public class ActivityGenerator : MonoBehaviour
         if(input.Passed())
         {
             int dieroll = Random.Range(1,11);
-            string usedStat = SkillReference.GetSkill(input.GetSkillType()).characterisitc;
-            int statScoreBonus = input.getOwner().GetAttribute(usedStat);
+            string usedStat = "";//SkillReference.GetSkill(input.GetSkillType()).derrivedAttribute;
+            int statScoreBonus = 0; // input.getOwner().GetAttribute(usedStat);
             extrahours = dieroll + statScoreBonus;
             CombatLog.Log(input.getOwner().playername + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
             extrahours += input.GetDOF();

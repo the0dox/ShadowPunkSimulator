@@ -42,14 +42,15 @@ public class SkillScript : MonoBehaviour
 
     public void UpdateValue()
     {
-        int total = myData.GetSkill(mySkill.name,true);
-        int levels = myData.skills[mySkill.name];
+        int derrivedValue = myData.GetAttribute(mySkill.derrivedAttribute);
+        int levels = myData.GetAttribute(mySkill.skillKey);
+        int total = derrivedValue + levels; 
         IF.text = "" + levels;
-        ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.characterisitc + ")";
+        ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.derrivedAttribute + ")";
         FinalResult.text = "[" + total +"]";
 
         string description = mySkill.displayText;
-        description += "\n\n Derrived Attribute: " + mySkill.characterisitc;
+        description += "\n\n Derrived Attribute: " + mySkill.derrivedAttribute;
         description += "\n Defaultable: " + mySkill.defaultable;
         if(levels < 1 && !mySkill.defaultable)
         {
@@ -63,7 +64,7 @@ public class SkillScript : MonoBehaviour
             {
                 description += "\n -1 from defaulting";
             }
-            description += " \n +" + myData.GetAttribute(mySkill.characterisitc) + " from " + mySkill.characterisitc + " attribute";  
+            description += " \n +" + derrivedValue + " from " + mySkill.derrivedAttribute + " attribute";  
             // space for modifiers
         }
         tooltipTrigger.header = mySkill.name;
@@ -82,7 +83,7 @@ public class SkillScript : MonoBehaviour
         {
             value = 0;
         }
-        myData.SetSkill(mySkill.name, value);
+        myData.SetAttribute(mySkill.skillKey, value, false);
         UpdateValue();
     }
 
@@ -93,6 +94,6 @@ public class SkillScript : MonoBehaviour
 
     public void SkillCheck()
     {
-        myData.AbilityCheck(mySkill.name);
+        myData.AbilityCheck(mySkill.skillKey);
     }
 }

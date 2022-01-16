@@ -13,8 +13,10 @@ MonoBehaviour:
   m_Name: Assensing
   m_EditorClassIdentifier: 
   defaultable: 0
-  characterisitc: INT
+  skillKey: 39
+  derrivedAttribute: 11
   visible: 1
   Descriptor: []
   displayText: 
+  limit: 0
   Specializations: []

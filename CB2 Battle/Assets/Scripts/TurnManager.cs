@@ -804,44 +804,15 @@ public class TurnManager : TurnActionsSR
 
     public void RemovePlayer(GameObject Player)
     {
-        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
-        TacticsMovement tm = Player.GetComponent<TacticsMovement>();
-        
-        /*
-        if(InitativeOrder.Peek() == tm)
+        PlayerStats removedPlayer = Player.GetComponent<PlayerStats>();
+        if(IntiativeActiveActors.ContainsValue(removedPlayer))
         {
-            EndTurn();
+            IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(removedPlayer));
         }
-        */
-        /*
-        Sorter.Remove(tm.initative);
-        if(InitativeOrder.Count > 1)
+        if(IntiativeFinishedActors.ContainsValue(removedPlayer))
         {
-            TacticsMovement SavedPostion = InitativeOrder.Dequeue();
-            InitativeOrder.Clear();
-            //moved to a stack to reverse order 
-            foreach (KeyValuePair<float, TacticsMovement> kvp in Sorter) {
-                TempStack.Push(kvp.Value);
-            }
-
-            //finally added to Queue in correct order
-            while(TempStack.Count != 0){
-                InitativeOrder.Enqueue(TempStack.Pop());
-            }
-
-            while(InitativeOrder.Peek() != SavedPostion)
-            {
-                InitativeOrder.Enqueue(InitativeOrder.Dequeue());
-            }
+            IntiativeFinishedActors.RemoveAt(IntiativeFinishedActors.IndexOfValue(removedPlayer));
         }
-        else
-        {
-            Player.GetComponent<TacticsMovement>().RemoveSelectableTiles();
-            ActivePlayerStats = null;
-            ActivePlayer = null;
-            InitativeOrder.Clear();
-        }
-        */
         PhotonNetwork.Destroy(Player);
         PrintInitiative();
     }
@@ -852,7 +823,7 @@ public class TurnManager : TurnActionsSR
         int defensePenalty = CurrentAttack.target.GetDefensePenality();
         int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
         int modifier = willpowerBonus + defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(null, AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"Defense", 0, modifier);
         SubtractIniative(CurrentAttack.target,10);
         RemoveRange(target);
         ClearActions();
@@ -860,10 +831,11 @@ public class TurnManager : TurnActionsSR
 
     public void Dodge()
     {
+        int gymnasticsBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Gymnastics);
         int defensePenalty = CurrentAttack.target.GetDefensePenality();
         int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Gymnastics", AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        int modifier = gymnasticsBonus + defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"Dodge", 0, modifier);
         SubtractIniative(CurrentAttack.target,5);
         RemoveRange(target);
         ClearActions();
@@ -871,10 +843,11 @@ public class TurnManager : TurnActionsSR
 
     public void Block()
     {
+        int unarmedBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.UnarmedCombat);
         int defensePenalty = CurrentAttack.target.GetDefensePenality();
         int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("unarmed", AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        int modifier = unarmedBonus + defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense", 0, modifier);
         SubtractIniative(CurrentAttack.target,5);
         RemoveRange(target);
         ClearActions();
@@ -882,10 +855,11 @@ public class TurnManager : TurnActionsSR
 
     public void Parry()
     { 
+        int parryBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Blades);
         int defensePenalty = CurrentAttack.target.GetDefensePenality();
         int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck("Gymnastics", AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        int modifier = parryBonus + defensePenalty + BulletPenalty;
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense", 0, modifier);
         SubtractIniative(CurrentAttack.target,5);
         RemoveRange(target);
         ClearActions();
@@ -895,7 +869,7 @@ public class TurnManager : TurnActionsSR
         int defensePenalty = CurrentAttack.target.GetDefensePenality();
         int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
         int modifier = defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(null, AttributeKey.Defense, AttributeKey.PhysicalLimit,"defense",0, modifier);
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense",0, modifier);
         ClearActions();
     }
 

@@ -10,17 +10,14 @@ public class Skill
     public string name;
     //level of training a player has in this skill
     public int levels;
-    //indicates which characterisitc is referenced when this skill is attempted
-    public string characterisitc;
     public bool visible;
     private List<string> Descriptor;
     private string displayText;
 
-    public Skill(string name, int levels, string characterisitc, bool basic)
+    public Skill(string name, int levels, string derrivedAttribute, bool basic)
     {
         this.name = name;
         this.levels = levels;
-        this.characterisitc = characterisitc;
         this.basic = basic;
         if(name.Equals("Parry"))
         {
@@ -36,7 +33,6 @@ public class Skill
     {
         this.name = template.name;
         this.levels = levels;
-        this.characterisitc = template.characterisitc;
         this.basic = template.defaultable;
         this.visible = template.visible;
         if(!this.visible)

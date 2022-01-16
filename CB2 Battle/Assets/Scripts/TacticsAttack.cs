@@ -442,7 +442,7 @@ public static class TacticsAttack
                         int energyDamage = Random.Range(1,11) + 2;
                         int rounds = Random.Range(1,11);
                         owner.Unequip(w);
-                        owner.takeDamage(energyDamage - owner.GetStat("RightArm") - owner.GetStat("T"), "RightArm");
+                        //owner.takeDamage(energyDamage - owner.GetStat("RightArm") - owner.GetStat("T"), "RightArm");
                         CombatLog.Log("The " + w.GetName() + " burns the hands of " + owner.GetName() + " dealing 1d10 + 2 = " + energyDamage + "Energy Damage" + "and cannot be used for " + rounds + " rounds");
                     }
                     else
@@ -496,11 +496,11 @@ public static class TacticsAttack
                 attackDice += 2;
             }
             // bonus from attribute
-            int attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.characterisitc);
-            outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.characterisitc + " skill");
+            int attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derrivedAttribute);
+            outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.derrivedAttribute + " skill");
             attackDice += attributeDice;
             // bonus from skill
-            int skillDice = myStats.myData.GetSkill(w.Template.WeaponSkill.name, false);
+            int skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill);
             outputStack.Push("+" + skillDice + " from " + w.Template.WeaponSkill.name + " skill");
             attackDice += skillDice;
 

@@ -34,10 +34,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         transform.localPosition = new Vector3();
         transform.localScale = new Vector3(1,1,1);
         TextEntries = new Dictionary<string, InputFieldScript>();
-        foreach (InputFieldScript t in EntryList)
-        {
-            TextEntries.Add(t.GetStat(), t);
-        }
     }
 
     // Uploading data is different depending on if we are editing save data of a map token
@@ -47,7 +43,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         CameraButtons.UIFreeze(false);
         if(!pv.IsMine)
         {
-            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, ActivePlayer.attribues, ActivePlayer.skills, ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, ActivePlayer.attribues, ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
         }
         else if(CurrentToken != null && CurrentToken.team != 0)
         {
@@ -97,7 +93,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         // client side edit, transfer charactershetet
         else
         { 
-            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.GetStats(), input.GetSkills(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.GetStats(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth);
         }
     }
     // Generic info that both kinds of download needs to know
@@ -139,10 +135,10 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         }
         else
         {
-            if(ActivePlayer.attribues[AttributeKey.PDamage] < 18)
+            if(ActivePlayer.attribues[(int)AttributeKey.PDamage] < 18)
             {
                 HealthMonitor.IncrementValue();
-                ActivePlayer.attribues[AttributeKey.PDamage]++;
+                ActivePlayer.attribues[(int)AttributeKey.PDamage]++;
             }
         }
     }
@@ -159,47 +155,47 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         }
         else
         {
-            if(ActivePlayer.attribues[AttributeKey.PDamage] > 0)
+            if(ActivePlayer.attribues[(int)AttributeKey.PDamage] > 0)
             {
                 HealthMonitor.SubtractValue();
-                ActivePlayer.attribues[AttributeKey.PDamage]--;
+                ActivePlayer.attribues[(int)AttributeKey.PDamage]--;
             }
         }
     }
 
     public void AddStun()
     {
-        if(ActivePlayer.attribues[AttributeKey.SDamage] < 12)
+        if(ActivePlayer.attribues[(int)AttributeKey.SDamage] < 12)
         {
             StunMonitor.IncrementValue();
-            ActivePlayer.attribues[AttributeKey.SDamage]++;
+            ActivePlayer.attribues[(int)AttributeKey.SDamage]++;
         }
     }
 
     public void DecreaseStun()
     {
-        if(ActivePlayer.attribues[AttributeKey.SDamage] > 0)
+        if(ActivePlayer.attribues[(int)AttributeKey.SDamage] > 0)
         {
             StunMonitor.SubtractValue();
-            ActivePlayer.attribues[AttributeKey.SDamage]--;
+            ActivePlayer.attribues[(int)AttributeKey.SDamage]--;
         }
     }
 
     public void AddEdge()
     {
-        if(ActivePlayer.attribues[AttributeKey.CurrentEdge] < 7)
+        if(ActivePlayer.attribues[(int)AttributeKey.CurrentEdge] < 7)
         {
             EdgeMonitor.IncrementValue();
-            ActivePlayer.attribues[AttributeKey.CurrentEdge]++;
+            ActivePlayer.attribues[(int)AttributeKey.CurrentEdge]++;
         }
     }
 
     public void DecreaseEdge()
     {
-        if(ActivePlayer.attribues[AttributeKey.CurrentEdge] > 0)
+        if(ActivePlayer.attribues[(int)AttributeKey.CurrentEdge] > 0)
         {
             EdgeMonitor.SubtractValue();
-            ActivePlayer.attribues[AttributeKey.CurrentEdge]--;
+            ActivePlayer.attribues[(int)AttributeKey.CurrentEdge]--;
         }
     }
 
@@ -208,7 +204,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         ActivePlayer.playername = NameField.text;
     }
 
-    public void UpdatedAttribute(string key, int value)
+    public void UpdatedAttribute(AttributeKey key, int value)
     {
         ActivePlayer.SetAttribute(key,value,true);
         UpdateInputFields();
@@ -217,9 +213,9 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     private void UpdateInputFields()
     {
-        foreach (KeyValuePair<string, InputFieldScript> kvp in TextEntries)
+        foreach (InputFieldScript t in EntryList)
         {
-            kvp.Value.UpdateValue(ActivePlayer.GetAttribute(kvp.Key), this);   
+            t.UpdateValue(ActivePlayer,this);
         }
         HealthMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.PhysicalHealth));
         StunMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.StunHealth));
@@ -247,14 +243,14 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Master sends this to the client to be edited
     [PunRPC]
-    void RPC_SyncStats(string name, Dictionary<string,int> characteristics, Dictionary<string, int> skills, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth)
+    void RPC_SyncStats(string name, int[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth)
     {
         List<string> convertedArray = new List<string>();
         for(int i = 0; i < equipment.Length; i++)
         {
             convertedArray.Add(equipment[i]);
         }
-        ActivePlayer = new CharacterSaveData(name, characteristics, skills, specalizations, convertedArray);
+        ActivePlayer = new CharacterSaveData(name, characteristics, specalizations, convertedArray);
         if(newNPCHealth >= 0)
         {
             Debug.Log("Unique npc health" + newNPCHealth);
@@ -265,11 +261,10 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Client sends this to the master to be saved 
     [PunRPC]
-    void RPC_SyncStatsOut(string newName,  Dictionary<string, int> newCharacteristics, Dictionary<string,int> newskills, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
+    void RPC_SyncStatsOut(string newName,  int[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
     {
         ActivePlayer.playername = newName;
         ActivePlayer.attribues = newCharacteristics;
-        ActivePlayer.skills = newskills;
         ActivePlayer.skillSpecialization = newSpecalizations;
         List<string> convertedArray = new List<string>();
         for(int i = 0; i < newequipment.Length; i++)

@@ -533,6 +533,7 @@ MonoBehaviour:
   grappleTarget: {fileID: 0}
   SelectedColor: {fileID: 2100000, guid: 86fef40dfa990714096f696cac569c3f, type: 2}
   myData:
+    attribues: 
     team: 0
     playername: 
     Model: 
