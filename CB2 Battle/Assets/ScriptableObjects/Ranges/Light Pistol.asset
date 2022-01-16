@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dcf3022e7f4eac74a9ee5eb674fd8069, type: 3}
   m_Name: Light Pistol
   m_EditorClassIdentifier: 
-  shortRange: 0
-  mediumRange: 0
-  longRange: 0
-  extremeRange: 0
+  shortRange: 5
+  mediumRange: 15
+  longRange: 30
+  extremeRange: 50

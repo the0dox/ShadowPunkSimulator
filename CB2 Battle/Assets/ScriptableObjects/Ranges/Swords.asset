@@ -10,9 +10,9 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: dcf3022e7f4eac74a9ee5eb674fd8069, type: 3}
-  m_Name: Machine Pistol
+  m_Name: Swords
   m_EditorClassIdentifier: 
-  shortRange: 5
-  mediumRange: 15
-  longRange: 30
-  extremeRange: 50
+  shortRange: 2
+  mediumRange: 2
+  longRange: 2
+  extremeRange: 2

@@ -6,7 +6,7 @@ using UnityEngine.UI;
 // static class used to calculate attack rolls
 public static class TacticsAttack
 {
-    private static Dictionary<string, int> AmmoExpenditure = new Dictionary<string, int>(){
+    public static Dictionary<string, int> AmmoExpenditure = new Dictionary<string, int>(){
         {"SS",1},{"SA",1},{"SAB", 3},{"BF",3},{"LB",6},{"FA",6},{"FAB",10}
     };
     // target: stats of the defender
@@ -22,24 +22,44 @@ public static class TacticsAttack
         //modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
         // ranged weps get a bonus depending on distance to target
         //int attackModifiers = w.RangeBonus(target.transform, myStats) + modifiers;
-        int modifiers = 0;
-        if(!type.Equals("SS"))
+        int totalModifiers = 0;
+        Dictionary<string,int> modifiers = ApplyModifiers(output,true);
+        
+        foreach(string key in modifiers.Keys)
         {
-            modifiers += myStats.CalculateRecoilPenalty(AmmoExpenditure[type], true);
+            totalModifiers += modifiers[key];
         }
-        int distance = Mathf.RoundToInt(Vector3.Distance(myStats.transform.position, target.transform.position));
-        modifiers += w.Template.rangeClass.GetRangePenalty(distance);
 
+        // expend ammo & increase recoil
         w.ExpendAmmo(AmmoExpenditure[type]);
-        RollResult attackRoll = new RollResult(myStats.myData, w, modifiers);
+        myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+
+        RollResult attackRoll = new RollResult(myStats.myData, w, totalModifiers);
         output.attackRoll = attackRoll;
         return output;
+    }
+
+    public static void Defend(AttackSequence CurrentAttack, int modifiers = 0)
+    {
+        int totalModifiers = modifiers;
+        Dictionary<string, int> conditionalModifiers = ApplyModifiers(CurrentAttack,false);
+        foreach(string key in conditionalModifiers.Keys)
+        {
+            totalModifiers += conditionalModifiers[key];
+        }
+        //apply extra defense penalties to target
+        CurrentAttack.target.IncreaseDefensePenality();
+        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense",0, totalModifiers);
     }
 
     public static void DealDamage(AttackSequence currentAttack)
     {
         int damageBonus = currentAttack.attackRoll.GetHits() - currentAttack.reactionRoll.GetHits() - currentAttack.soakRoll.GetHits();
         int weaponDamage = currentAttack.ActiveWeapon.GetDamage();
+        if(currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            weaponDamage += currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
+        }
         int totalDamage = damageBonus + weaponDamage;
         if(totalDamage < 0)
         {
@@ -59,55 +79,9 @@ public static class TacticsAttack
         
     }
 
-    public static void DealDamage(PlayerStats target, PlayerStats myStats, int netHits, Weapon w)
-    {
-        int totalDamage = w.Template.damageBonus + netHits;
-        //int soakModifier = target.GetArmor() - w.GetAP();
-
-        string hitBodyPart = "";
-        DealDamage(target, myStats, hitBodyPart, w);
-    }
-
-    public static int ROFDefensePenalty(AttackSequence thisAttack)
-    {
-        return 1-AmmoExpenditure[thisAttack.FireRate];
-    } 
-
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
     {
-        Tile cover = CalculateCover(myStats.gameObject, target.gameObject, hitBodyPart);
-        int damageRoll = w.GetDamage();
-        int AP = target.GetAP();
-        if(w.HasWeaponAttribute("Scatter"))
-        {
-            CombatLog.Log(w.GetName() + "'s scatter attribute makes armor twice as effective at long range!");
-            AP *= 2;
-        } 
-        AP += myStats.GetAdvanceBonus(hitBodyPart);
-        int soak = target.GetStat(AttributeKey.Body);
-        if(cover != null && !w.HasWeaponAttribute("Flame") && !w.HasWeaponAttribute("Blast"))
-        {
-            AP += cover.CoverReduction(damageRoll, w.GetAP());
-        } 
-        AP -= w.GetAP();
-        if(AP < 0)
-        {
-            AP = 0;
-        }
-        int result = damageRoll - AP - soak;
-        if (result < 0)
-        {
-            result = 0;
-        }
-        if(w.HasWeaponAttribute("Unarmed"))
-        {
-            target.takeFatigue(1);
-        }
-        CombatLog.Log("Incoming damage is reduced by " + AP + " from armor/cover and " + soak + " Toughness for a total of " + result);
-        PopUpText.CreateText("Hit " + hitBodyPart + "!: (-" + result + ")", Color.red, target.gameObject); 
-        target.takeDamage(result, hitBodyPart,w.GetDamageType());
-        
-        target.ApplySpecialEffects(hitBodyPart,w,result);
+        throw new System.NotImplementedException();
     }
 
     public static bool HasValidTarget(PlayerStats target, PlayerStats myStats, Weapon w)
@@ -117,27 +91,14 @@ public static class TacticsAttack
             //CombatLog.Log(myStats.GetName() + " (team " + myStats.GetTeam() + ": But thats my friend!"); 
             return false;
         }
-        float distance = Vector3.Distance(myStats.transform.position, target.transform.position);
+        int distance = Mathf.CeilToInt(Vector3.Distance(myStats.transform.position, target.transform.position));
 
-        List<PlayerStats> meleeCombatants = myStats.gameObject.GetComponent<TacticsMovement>().AdjacentPlayers();
-        bool inCombat = (myStats.gameObject.GetComponent<TacticsMovement>().GetAdjacentEnemies(myStats.GetTeam()) > 0);
-
-        if(w.IsWeaponClass("Melee") || (inCombat && w.IsWeaponClass("Pistol")))
-        {    
-            return meleeCombatants.Contains(target);
-        }
-        else
+        if(!w.Template.rangeClass.withinRange(distance))
         {
-            //ranged weapons other than pistols can't be fired into melee 
-            if (inCombat)
-            {
-                //CombatLog.Log(target.GetName() + " is too close to shoot!");
-                return false;
-            }
-
-            //ranged weapons require line of sight 
-            return HasLOS(target.gameObject, myStats.gameObject);
+            return false;
         }
+        
+        return HasLOS(target.gameObject, myStats.gameObject);
     }
 
     public static bool HasLOS(GameObject target, GameObject attacker)
@@ -338,22 +299,6 @@ public static class TacticsAttack
         return 0;
     }
 
-    public static int ROFBonus(Weapon w, string type)
-    {
-        if(w.IsWeaponClass("Thrown") || w.IsWeaponClass("Melee"))
-        {
-            return 0;
-        }
-        switch(type)
-            {
-                case "S":
-                return 10;
-                case "Auto":
-                return -10;
-            }
-        return 0;
-    }
-
     public static int CalculateHeightAdvantage(PlayerStats target, PlayerStats attacker)
    {
         Vector3 difference = attacker.transform.position - target.transform.position;
@@ -371,7 +316,7 @@ public static class TacticsAttack
     //true stops attack sequence, false continues it
    public static bool Jammed(int rollResult, Weapon w, string type, PlayerStats owner)
    {
-       if(w.IsWeaponClass("Melee"))
+       if(w.IsWeaponClass(WeaponClass.melee))
        {
            return false;
        } 
@@ -465,6 +410,7 @@ public static class TacticsAttack
    }   
     public static List<string> GenerateTooltip(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
+        AttackSequence tempAttackSequence = new AttackSequence(target,myStats, w, type, 0, false);
         List<string> output = new List<string>();
         if(target.GetTeam() == myStats.GetTeam())
         {
@@ -474,30 +420,25 @@ public static class TacticsAttack
         {
             Stack<string> outputStack = new Stack<string>();
             int attackDice = 0;
-            // penalty from range 
-            int distance = Mathf.RoundToInt(Vector3.Distance(myStats.transform.position, target.transform.position));
-            int rangePenalty = w.Template.rangeClass.GetRangePenalty(distance);
-            if(rangePenalty < 0)
+            Dictionary<string, int> modifiers = ApplyModifiers(tempAttackSequence,true);
+            foreach(string key in modifiers.Keys)
             {
-                attackDice += rangePenalty;
-                outputStack.Push(rangePenalty + " from range");
-            }
-            // penalty from recoil 
-            int recoilPenalty = myStats.CalculateRecoilPenalty(AmmoExpenditure[type],false);
-            if(recoilPenalty < 0)
-            {
-                attackDice += recoilPenalty;
-                outputStack.Push(recoilPenalty + " from recoil");
-            }
-            // bonus from specialization
-            if(myStats.myData.hasSpecialization(w.Template.WeaponSkill.name,w.Template.WeaponSpecialization))
-            {
-                outputStack.Push("+2 from skill specialization");
-                attackDice += 2;
+                Debug.Log(key + " being checked");
+                int modifier = modifiers[key];
+                string addition = "";
+                if(modifier > 0)
+                {
+                    addition = "+";
+                }
+                if(modifier != 0)
+                {
+                    outputStack.Push(addition + modifier + " from " + key);
+                    attackDice += modifier;
+                }
             }
             // bonus from attribute
             int attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derrivedAttribute);
-            outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.derrivedAttribute + " skill");
+            outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.derrivedAttribute + " attribute");
             attackDice += attributeDice;
             // bonus from skill
             int skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill);
@@ -527,7 +468,7 @@ public static class TacticsAttack
                 adjacentEnemies++;
             }
         }
-        if(w.IsWeaponClass("Melee"))
+        if(w.IsWeaponClass(WeaponClass.melee))
         {
             if(adjacentEnemies > 2)
             {
@@ -540,7 +481,7 @@ public static class TacticsAttack
         }   
         else if(adjacentEnemies > 0)
         {
-            if(adjacentPlayers.Contains(attacker) && w.IsWeaponClass("Pistol"))
+            if(adjacentPlayers.Contains(attacker))
             {
                 return 0;
             }
@@ -552,39 +493,71 @@ public static class TacticsAttack
         return 0;
     }
 
-    /* Depreciated 
-    public static int Critical(PlayerStats attacker, Weapon w, bool confirmed)
+    private static Dictionary<string,int> ApplyModifiers(AttackSequence thisAttack, bool type)
     {
-        //only players can get fury
-        if(attacker.GetTeam() != 0)
-        {
-            return 0;
-        }
-        string attackSkill;
-        if(w.IsWeaponClass("Melee"))
-        {
-            attackSkill = "WS";
-        }
-        else
-        {
-            attackSkill = "BS";
-        }
-        RollResult critConfirm = attacker.AbilityCheck(attackSkill, 0);
-        if(critConfirm.Passed() || confirmed)
-        {
-            PopUpText.CreateText("Righteous Fury!", Color.green, attacker.gameObject);
-            int damageRoll = Random.Range(1,10);
-            CombatLog.Log(attacker.GetName() + " confirms righteous fury and deals an additional " + damageRoll + " damage!");
-            if(damageRoll == 10)
-            {
-                damageRoll += Critical(attacker, w, true);
-            }
-            return damageRoll;
-        }
-        else
-        {
-            return 0;
-        }
+        Dictionary<string,int> modifiers = new Dictionary<string, int>();
+        modifiers.Add(" from enemy fire rate", ROFDefensePenalty(thisAttack,type));
+        modifiers.Add(" from recoil", recoilPenalty(thisAttack,type));
+        modifiers.Add(" from specialization", fromSpecialization(thisAttack,type));
+        modifiers.Add(" from defense penalty", GetDefensePenality(thisAttack,type));
+        modifiers.Add(" from range", rangePenalty(thisAttack,type));
+        modifiers.Add(" from aiming", fromAiming(thisAttack,type));
+        return modifiers;
     }
-    */
+
+    private static int rangePenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(!attack)
+        {
+            return 0;
+        }
+        int distance = Mathf.RoundToInt(Vector3.Distance(thisAttack.attacker.transform.position, thisAttack.target.transform.position));
+        Debug.Log("distance " + distance);
+        return thisAttack.ActiveWeapon.Template.rangeClass.GetRangePenalty(distance);
+    }
+
+    private static int fromSpecialization(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.myData.hasSpecialization(thisAttack.ActiveWeapon.Template.WeaponSkill.name,thisAttack.ActiveWeapon.Template.WeaponSpecialization))
+        {
+            return 2;
+        }
+        return 0;
+    }
+
+    private static int fromAiming(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.hasCondition("Aiming"))
+        {
+            return 1;
+        }
+        return 0;
+    }
+
+    private static int recoilPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(!attack)
+        {
+            return 0;
+        }
+        return thisAttack.attacker.CalculateRecoilPenalty(AmmoExpenditure[thisAttack.FireRate]);
+    }
+
+    public static int ROFDefensePenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack)
+        {
+            return 0;
+        }
+        return 1-AmmoExpenditure[thisAttack.FireRate];
+    } 
+
+    private static int GetDefensePenality(AttackSequence thisAttack, bool attack)
+    {
+        if(attack)
+        {
+            return 0;
+        }
+        return thisAttack.target.GetDefensePenality();
+    }
 }

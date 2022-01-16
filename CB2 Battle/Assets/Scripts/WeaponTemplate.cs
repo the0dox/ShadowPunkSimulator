@@ -33,8 +33,10 @@ public class WeaponTemplate : ItemTemplate
     [SerializeField] public int blast;
     [SerializeField] public ItemTemplate AmmoSource;
     [SerializeField] public reloadingMethod clipType; 
+    [SerializeField] public WeaponClass weaponClass;
     [SerializeField] public bool Lethal;
     [SerializeField] public bool debugAddAllUpgrades = false;
+
 }
 public enum reloadingMethod
 {
@@ -54,4 +56,11 @@ public enum reloadingMethod
     drum,
     // simple action to knock an arrow 
     bow
+}
+
+public enum WeaponClass
+{
+    melee,
+    ranged,
+    thrown,
 }

@@ -23,12 +23,12 @@ public class WeaponInputScript : MonoBehaviour
     {
         myWeapon = input;
         Name.text = input.GetName();
-        Class.text = input.GetClass();
-        if(input.IsWeaponClass("Thrown"))
+        Class.text = input.Template.weaponClass.ToString();
+        if(input.IsWeaponClass(WeaponClass.thrown))
         {
             Range.text = "SB x 3";
         }
-        else if (input.IsWeaponClass("Melee"))
+        else if (input.IsWeaponClass(WeaponClass.melee))
         {
             Range.text = "";
             ROF.text = "";

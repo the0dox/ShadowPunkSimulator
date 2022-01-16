@@ -762,11 +762,11 @@ public class TurnManager : TurnActionsSR
             foreach(PlayerStats enemy in adjacentEnemies)
             {
                 Weapon currentWeapon = null;
-                if(enemy.PrimaryWeapon != null && enemy.PrimaryWeapon.IsWeaponClass("Melee"))
+                if(enemy.PrimaryWeapon != null && enemy.PrimaryWeapon.IsWeaponClass(WeaponClass.melee))
                 {
                     currentWeapon = enemy.PrimaryWeapon;
                 }
-                else if (enemy.SecondaryWeapon != null && enemy.SecondaryWeapon.IsWeaponClass("Melee"))
+                else if (enemy.SecondaryWeapon != null && enemy.SecondaryWeapon.IsWeaponClass(WeaponClass.melee))
                 {
                     currentWeapon = enemy.SecondaryWeapon;
                 }
@@ -820,56 +820,37 @@ public class TurnManager : TurnActionsSR
     public void TotalDefense()
     {
         int willpowerBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Willpower);
-        int defensePenalty = CurrentAttack.target.GetDefensePenality();
-        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = willpowerBonus + defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"Defense", 0, modifier);
+        TacticsAttack.Defend(CurrentAttack,willpowerBonus);
         SubtractIniative(CurrentAttack.target,10);
-        RemoveRange(target);
         ClearActions();
     }
 
     public void Dodge()
     {
         int gymnasticsBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Gymnastics);
-        int defensePenalty = CurrentAttack.target.GetDefensePenality();
-        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = gymnasticsBonus + defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"Dodge", 0, modifier);
+        TacticsAttack.Defend(CurrentAttack,gymnasticsBonus);
         SubtractIniative(CurrentAttack.target,5);
-        RemoveRange(target);
         ClearActions();
     }
 
     public void Block()
     {
         int unarmedBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.UnarmedCombat);
-        int defensePenalty = CurrentAttack.target.GetDefensePenality();
-        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = unarmedBonus + defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        TacticsAttack.Defend(CurrentAttack,unarmedBonus);
         SubtractIniative(CurrentAttack.target,5);
-        RemoveRange(target);
         ClearActions();
     }
 
     public void Parry()
     { 
         int parryBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Blades);
-        int defensePenalty = CurrentAttack.target.GetDefensePenality();
-        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = parryBonus + defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense", 0, modifier);
+        TacticsAttack.Defend(CurrentAttack,parryBonus);
         SubtractIniative(CurrentAttack.target,5);
-        RemoveRange(target);
         ClearActions();
     }
     public void NoReaction()
     {
-        int defensePenalty = CurrentAttack.target.GetDefensePenality();
-        int BulletPenalty = TacticsAttack.ROFDefensePenalty(CurrentAttack);
-        int modifier = defensePenalty + BulletPenalty;
-        CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense",0, modifier);
+        TacticsAttack.Defend(CurrentAttack);
         ClearActions();
     }
 

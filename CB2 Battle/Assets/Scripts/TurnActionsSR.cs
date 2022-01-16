@@ -34,7 +34,7 @@ public class TurnActionsSR : UIButtonManager
         if(ActivePlayerStats.PrimaryWeapon != null) 
         {
             //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.PrimaryWeapon.IsWeaponClass("Melee"))
+            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.PrimaryWeapon.IsWeaponClass(WeaponClass.melee))
             {    
                 d.Add(ActivePlayerStats.PrimaryWeapon.GetName() + " (Primary)", "PrimaryWeapon");
             }
@@ -42,7 +42,7 @@ public class TurnActionsSR : UIButtonManager
         if (ActivePlayerStats.SecondaryWeapon != null)
         {
             //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.SecondaryWeapon.IsWeaponClass("Melee"))
+            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.SecondaryWeapon.IsWeaponClass(WeaponClass.melee))
             {
                 d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
             }
@@ -444,24 +444,8 @@ public class TurnActionsSR : UIButtonManager
         Dictionary<string,string> d = new Dictionary<string, string>();
         if(halfActions > 0)
         {
-            if(ActivePlayerStats.ValidAction("Aim"))
-            {
-                d.Add("Aim (Half)","Aim1");
-                
-                if(halfActions > 1)
-                {
-                    d.Add("Aim (Full)","Aim2");
-                                }
-            } 
+            d.Add("Aim","Aim");
             d.Add("Reload","Reload");
-            if(halfActions > 1)
-            {
-                d.Add("Defensive","DefensiveStance");
-                if(ActivePlayerStats.hasCondition("On Fire"))
-                {
-                    d.Add("Extinguish Fire","Extinguish");
-                }
-            }
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
@@ -929,23 +913,10 @@ public class TurnActionsSR : UIButtonManager
 
     public void Aim1()
     {
-        ActivePlayerStats.SpendAction("Aim");
-        int modifier = 0;
-        //so if this is the last action made this turn the aim will presist to the next turn
-        if(halfActions == 1)
-        {
-            modifier++;
-        }
-        ActivePlayerStats.SetCondition("Half Aiming", 1 + modifier, true);
+        ActivePlayerStats.SetCondition("Aiming", 1, true);
+        ActivePlayerStats.ResetRecoilPenalty();
+        CombatLog.Log(ActivePlayerStats.GetName() + " steadies their aim, reseting their recoil penalty!");
         halfActions--;
-        Cancel();
-    }
-
-    public void Aim2()
-    {
-        ActivePlayerStats.SpendAction("Aim");
-        ActivePlayerStats.SetCondition("Full Aiming", 2, true);
-        halfActions-= 2;
         Cancel();
     }
 
@@ -1029,16 +1000,13 @@ public class TurnActionsSR : UIButtonManager
             CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
             List<string> l = new List<string>();
             l.Add("TotalDefense");
-            if(CurrentAttack.ActiveWeapon.IsWeaponClass("Melee") && !CurrentAttack.ActiveWeapon.HasWeaponAttribute("Flexible"))
+            if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
             {
-                if(CurrentAttack.ActiveWeapon.HasWeaponAttribute("Unarmed"))
-                {
-                    l.Add("Block");
-                }
                 if(CurrentAttack.target.CanParry())
                 {
                     l.Add("Parry");
                 }
+                l.Add("Block");
                 l.Add("Dodge");
             }
             l.Add("NoReaction");
@@ -1150,45 +1118,6 @@ public class TurnActionsSR : UIButtonManager
     {
         GameObject newThreatRange = PhotonNetwork.Instantiate("ThreatRange", ActivePlayer.transform.position + new Vector3(0,0.05f,0), Quaternion.identity);
         newThreatRange.GetComponent<ThreatRangeBehavior>().SetParameters(type, ActiveWeapon, ActivePlayerStats);
-    }
-    IEnumerator AttackCoroutine()
-    {
-        
-        for (int i = 0 ; i < CurrentAttack.attacks; i++)
-        {
-            yield return new WaitForSeconds(2);
-            int hitroll;
-            if(i == 0 && CurrentAttack.attackRoll.GetRoll() != -1)
-            {
-                hitroll = CurrentAttack.attackRoll.GetRoll();
-            }
-            else
-            {
-                hitroll = Random.Range(1,101);
-            }
-            TacticsAttack.DealDamage(CurrentAttack.target, CurrentAttack.attacker, hitroll, CurrentAttack.ActiveWeapon);
-        }
-        
-        while (!PopUpText.FinishedPrinting())
-        {
-            yield return new WaitForSeconds(0.2f);
-        }
-
-        if(AttackQueue.Count == 0)
-        {
-            AttackSequenceEnd(CurrentAttack);
-        }
-        
-        CurrentAttack = null;
-        Cancel();
-    }
-
-    private void AttackSequenceEnd(AttackSequence CurrentAttack)
-    {
-        if(CurrentAttack.ActiveWeapon.IsWeaponClass("Thrown"))
-        {
-            CurrentAttack.ActiveWeapon.ThrowWeapon(CurrentAttack.attacker);
-        }
     }
 
     public void ClearActions()

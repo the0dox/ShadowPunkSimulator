@@ -26,8 +26,6 @@ public class Weapon : Item
     [SerializeField] private bool jammed = false;
     // Some weapons consume items in order to be reloaded
     [SerializeField] private ItemTemplate AmmoSource;
-    // Class determines how the weapon functions, wether it is ranged, or melee
-    private string Class;
     // Special weapons with the recharge abilitiy use this to determine if they can fire this turn or not
     private bool clipEjected = false;
     new public WeaponTemplate Template;
@@ -88,40 +86,14 @@ public class Weapon : Item
         }
     }
 
-    public int rollDamage( int value, PlayerStats player){
-        int DB = Template.damageBonus;
-        //damageBonus is calculated differently for melee weapons SB is added on top of everything else 
-        if (IsWeaponClass("Melee"))
-        {
-            DB += player.GetStat(AttributeKey.Strength);
-        }
-        value += DB;
-        if(HasWeaponAttribute("Unstable"))
-        {
-            int unstableResult = Random.Range(1,11);
-            if(unstableResult == 10)
-            {
-                CombatLog.Log(GetName() + "'s unstable attribute doubles its damage!");
-                value *= 2;
-            }
-            else if(unstableResult == 1)
-            {
-                CombatLog.Log(GetName() + "'s unstable attribute halves its damage!");
-                value /= 2;
-            }
-        }
-        CombatLog.Log(name + ": " + DisplayDamageRange() + " = " + value);
-        return value;
+    public bool IsWeaponClass(WeaponClass DesiredClass)
+    {
+        return DesiredClass.Equals(Template.weaponClass);
     }
 
-    public bool IsWeaponClass(string DesiredClass)
+    public WeaponClass GetClass()
     {
-        return DesiredClass.Equals(Class);
-    }
-
-    public string GetClass()
-    {
-        return Class;
+        return Template.weaponClass;
     }
 
     public int GetAP()
@@ -253,7 +225,7 @@ public class Weapon : Item
     //whether of not to display this weapon on the reload screen
     public bool CanReload(PlayerStats owner)
     {
-        if(IsWeaponClass("Melee"))
+        if(IsWeaponClass((WeaponClass.melee)))
         {
             return false;
         }
@@ -289,7 +261,7 @@ public class Weapon : Item
 
     public override string ToString()
     {
-        if(IsWeaponClass("Melee"))
+        if(IsWeaponClass(WeaponClass.melee))
         {
             return GetName();
         }
@@ -302,7 +274,7 @@ public class Weapon : Item
 
     public int getRange(PlayerStats owner)
     {
-        if(IsWeaponClass("Thrown"))
+        if(IsWeaponClass(WeaponClass.ranged))
         {
             return owner.GetStat(AttributeKey.Strength) * 3;
         }
@@ -342,7 +314,7 @@ public class Weapon : Item
 
     public bool CanParry()
     {
-        if(!IsWeaponClass("Melee") || HasWeaponAttribute("Unwieldy"))
+        if(!IsWeaponClass(WeaponClass.melee) || HasWeaponAttribute("Unwieldy"))
         {
             return false;
         }
@@ -351,12 +323,8 @@ public class Weapon : Item
 
     public string DisplayDamageRange()
     {
-        string DB = " ";
-        if (Template.damageBonus > 0)
-        {
-            DB += " + " + Template.damageBonus;
-        }
-        if(IsWeaponClass("Melee"))
+        string DB = "" + Template.damageBonus;
+        if(IsWeaponClass(WeaponClass.melee))
         {
             DB += " + SB";
         }
@@ -468,13 +436,13 @@ public class Weapon : Item
 
     public override void UpdateTooltip()
     {
-        tooltip = "Rating " + rating + " " + Class;
+        tooltip = "Rating " + rating + " " + Template.weaponClass.ToString() + " weapon";
         tooltip += "\n\n" + DisplayDamageRange() + " " + damageType;
-        if(IsWeaponClass("Thrown"))
+        if(IsWeaponClass(WeaponClass.thrown))
         {
             tooltip += "\nRange: SB * 3m";
         }
-        else if(!IsWeaponClass("Melee"))
+        else if(!IsWeaponClass(WeaponClass.melee))
         {
             tooltip += "\nRange: " + range + "m";
         }

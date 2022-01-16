@@ -64,14 +64,7 @@ public class RollResult
         this.firstField = weapon.Template.WeaponSkill.skillKey;
         this.secondField = weapon.Template.WeaponSkill.derrivedAttribute;
         this.threshold = 0;
-        if(owner.hasSpecialization(weapon.Template.WeaponSkill.name, weapon.Template.WeaponSpecialization))
-        {
-            this.modifiers = 2 + modifiers;
-        }
-        else
-        {
-            this.modifiers = modifiers; 
-        }
+        this.modifiers = modifiers; 
 
         if(SkillPromptBehavior.ManualRolls)
         {

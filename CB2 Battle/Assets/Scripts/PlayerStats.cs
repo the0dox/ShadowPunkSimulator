@@ -521,20 +521,25 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return bestAP;
     }
 
-    public int CalculateRecoilPenalty(int bulletsFired, bool apply)
+    public int CalculateRecoilPenalty(int bulletsFired)
     {
         int newTotalBulletsFired = TotalBulletsFired + bulletsFired;
         int totalPenalty = myData.GetAttribute(AttributeKey.RecoilComp) - newTotalBulletsFired;
         if(totalPenalty < 0)
         {
-            if(apply)
-            {
-                CombatLog.Log(GetName() + " [" + myData.GetAttribute(AttributeKey.RecoilComp) +" recoil comp] has fired " + newTotalBulletsFired + " this turn and suffers a " + totalPenalty + " recoil penalty");
-                TotalBulletsFired = newTotalBulletsFired;
-            }
             return totalPenalty;
         }
         return 0;
+    }
+
+    public void ResetRecoilPenalty()
+    {
+        TotalBulletsFired = 0;
+    }
+
+    public void IncreaseRecoilPenalty(int bulletsFired)
+    {
+        TotalBulletsFired += bulletsFired;
     }
 
     //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
@@ -569,8 +574,12 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public int GetDefensePenality()
     {
+        return -(defensePenality);
+    }
+
+    public void IncreaseDefensePenality()
+    {
         defensePenality++;
-        return -(defensePenality - 1);
     }
 
     public void PaintTarget(bool painted)
