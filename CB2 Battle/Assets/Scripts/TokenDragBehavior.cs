@@ -6,6 +6,8 @@ using Photon.Pun;
 // Used to drag tokens around
 public class TokenDragBehavior : MonoBehaviourPunCallbacks
 {
+    // Toggleable behavior
+    private bool moveable = true;
     // Used to represent the dragged model
     [SerializeField] private MeshFilter myFilter;
     // Used to send info to multiple clients
@@ -17,11 +19,25 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
     // A reference to the previous mouse position
     private Vector3 previousPosition = new Vector3();
     private float distance;
+    public static TokenDragBehavior instance;
+
+    void Awake()
+    {
+        instance = this;
+    }
 
     // Update is called once per frame
     void Update()
     {
-        CheckMouse();       
+        if(moveable)
+        {
+            CheckMouse();
+        }       
+    }
+
+    public static void ToggleMovement(bool allow)
+    {
+        instance.pv.RPC("RPC_ToggleMovement",RpcTarget.All,allow ? 1:0);
     }
 
     // All mouse behavior called every frame
@@ -119,6 +135,12 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         ClearToken();
     }
 
+    [PunRPC]
+    void RPC_ToggleMovement(int allow)
+    {
+        moveable = (allow == 1);
+    }
+
     // On holding the mouse down, save the player and begin dragging them
     private void AddToken(GameObject player)
     {
@@ -126,8 +148,11 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         if(!newToken.moving)
         {
             myToken = newToken;
+            myPath.Clear();
+            distance = 0;
             myToken.FindTiles();
             myFilter.mesh = player.GetComponentInChildren<MeshFilter>().mesh;
+            UpdatePath();
         }
     }
 

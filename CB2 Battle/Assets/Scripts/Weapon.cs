@@ -126,45 +126,45 @@ public class Weapon : Item
     public Dictionary<string, string> GetWeaponActions(bool complex)
     {
         Dictionary<string, string> output = new Dictionary<string, string>();
+        if(IsWeaponClass(WeaponClass.melee))
+        {
+            if(complex)
+            {
+                output.Add("Melee Attack", "Melee");
+            }
+            return output;
+        }
         if(FireRate.Equals("SS") && clip > 0)
         {
             output.Add("Single Shot", "fireSS");
         }
-        else if(FireRate.Equals("SA"))
+        else if(FireRate.Equals("SA") && clip > 0)
         {
-            if(clip > 0)
-            {
-                output.Add("Semi Auto", "fireSA");
-
-            }
-            if(clip > 2 && complex)
+            output.Add("Semi Auto", "fireSA");
+            if(complex)
             {
                 output.Add("Semi Auto Burst", "fireSAB");
             }
         }
-        else if(FireRate.Equals("BF"))
+        else if(FireRate.Equals("BF") && clip > 0)
         {
-            if(clip > 2)
-            {
-                output.Add("Burst Fire", "fireBF");
-
-            }
-            if(clip > 5 && complex)
+            output.Add("Burst Fire", "fireBF");
+            if(complex)
             {
                 output.Add("Long Burst", "fireLB");
             }
         }
-        else if(FireRate.Equals("FA"))
+        else if(FireRate.Equals("FA") && clip > 0)
         {
-            if(clip > 5)
-            {
-                output.Add("Full Auto", "fireFA");
-
-            }
-            if(clip > 9 && complex)
+            output.Add("Full Auto", "fireFA");
+            if(complex)
             {
                 output.Add("Full Auto Burst", "fireFAB");
             }
+        }
+        if((Template.SingleShot ? 1:0) + (Template.SemiAuto ? 1:0) + (Template.BurstFire ? 1:0) + (Template.FullAuto ? 1:0) > 1)
+        {
+            output.Add("Switch Fire Rate", "ChangeFireRate");
         }
         return output;
     }
@@ -438,21 +438,26 @@ public class Weapon : Item
     {
         tooltip = "Rating " + rating + " " + Template.weaponClass.ToString() + " weapon";
         tooltip += "\n\n" + DisplayDamageRange() + " " + damageType;
-        if(IsWeaponClass(WeaponClass.thrown))
-        {
-            tooltip += "\nRange: SB * 3m";
-        }
-        else if(!IsWeaponClass(WeaponClass.melee))
-        {
-            tooltip += "\nRange: " + range + "m";
-        }
+        
         tooltip += "\nRequired Skill: " + Template.WeaponSkill.name;
         tooltip += "\nSpecialization: " + Template.WeaponSkill.Specializations.ToArray()[Template.WeaponSpecialization];
+        tooltip += "\n accuracy" + Template.accuracy;
         tooltip += "\nArmor Penetration: " + Template.pen;
-        tooltip += "\nReload: " + ReloadString();
-        tooltip += "\nRate of Fire: " + ROFtoString(); 
-        tooltip += "\nClip: " + clip + "/" + clipMax;
-        tooltip += "\nAmmo type: " + AmmoSource.name;
+
+        if(IsWeaponClass(WeaponClass.melee))
+        {
+            if(Template.rangeClass.getReach() > 1)
+            {
+                tooltip += "\nReach: " + Template.rangeClass.getReach();
+            }
+        }
+        else
+        {
+            tooltip += "\nReload: " + ReloadString();
+            tooltip += "\nRate of Fire: " + ROFtoString(); 
+            tooltip += "\nClip: " + clip + "/" + clipMax;
+            tooltip += "\nAmmo type: " + AmmoSource.name;
+        }
         tooltip += "\nupgrades:";
         string upgradedesc = " ";
         foreach(ItemTemplate ug in upgrades.Keys)

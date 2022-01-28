@@ -10,32 +10,32 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Defiance EX Shocker
+  m_Name: smg
   m_EditorClassIdentifier: 
   weight: 0
-  cost: 180
+  cost: 0
   availablity: 
   description: 
   unique: 1
-  rating: 0
+  rating: 3
   icon: {fileID: 0}
   upgrades: []
   Attributes: []
-  damageBonus: 7
-  rangeClass: {fileID: 11400000, guid: 30e4754382f8a0240899ab534b97e922, type: 2}
-  pen: 5
-  SingleShot: 1
+  damageBonus: 5
+  rangeClass: {fileID: 11400000, guid: dcc174bf66c50964aaa74d114569a6a2, type: 2}
+  pen: 4
+  SingleShot: 0
   SemiAuto: 0
   BurstFire: 0
-  FullAuto: 0
+  FullAuto: 1
   WeaponSkill: {fileID: 11400000, guid: ad37561d6fb94f34d806288ac8864dd5, type: 2}
-  WeaponSpecialization: 3
-  accuracy: 4
-  clipMax: 4
+  WeaponSpecialization: 0
+  accuracy: 0
+  clipMax: 30
   damageType: 
   blast: 0
   AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}
   clipType: 0
   weaponClass: 1
-  Lethal: 0
+  Lethal: 1
   debugAddAllUpgrades: 0

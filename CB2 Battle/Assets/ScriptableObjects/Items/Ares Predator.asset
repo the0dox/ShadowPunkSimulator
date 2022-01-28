@@ -38,5 +38,6 @@ MonoBehaviour:
   blast: 0
   AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}
   clipType: 0
+  weaponClass: 1
   Lethal: 1
   debugAddAllUpgrades: 0

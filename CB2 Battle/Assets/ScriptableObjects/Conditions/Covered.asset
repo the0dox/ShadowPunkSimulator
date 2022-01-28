@@ -10,9 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1f0852cd1f52964cb2d51f6f0398d13, type: 3}
-  m_Name: Under Fire
+  m_Name: Covered
   m_EditorClassIdentifier: 
-  Stats: []
-  Modifiers: 
+  IgnoreKey: 
+  Modifiers: 0
   duration: 0
   clearOnStart: 0
+  clearOnMove: 1
+  conditionKey: 5

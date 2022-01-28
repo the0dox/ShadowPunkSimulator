@@ -10,8 +10,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public int team; 
     // display name, the only name the player should see from this character
     public string playername; 
-    // a key used by turnmanager to lock a character into a continous action until its complete, 
-    private string repeatingAction;
     // For strict action enforcement, a player can only attempt on action per sub-type per turn
     private List<string> CompletedActions = new List<string>(); 
     // A reference to who is currently grappling this player
@@ -24,8 +22,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     private Material DefaultColor;
     // Reference to the savedata associated with this character
     public CharacterSaveData myData;
-    // Characters can store the cover bonus of cover while advancing
-    private int AdvanceBonus;
     // Keys are every condition this player has, values are the duration of the conditions
     public Dictionary<ConditionTemplate, int> Conditions = new Dictionary<ConditionTemplate, int>();
     // Used for overworld only, true if a player is occupied with a job
@@ -36,14 +32,12 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public Weapon SecondaryWeapon;
     // Reference to the weapon in the player primary hand
     public Weapon PrimaryWeapon; 
-    private RollResult currentRoll;
     // used for multiplayer quick referencing
     public int ID;
     private PhotonView pv;
     public int NPCHealth;
     public int NPCStun;
-    private int moveMax;
-    private int remainingMove;
+    public int remainingMove;
     private int defensePenality = 0;
     private int TotalBulletsFired;
 
@@ -97,13 +91,13 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     {
         pv.RPC("RPC_SetHP", RpcTarget.All, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
         pv.RPC("RPC_SetSP", RpcTarget.All, getStun(), myData.GetAttribute(AttributeKey.StunHealth));   
-        pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.Agility));
+        pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.MoveWalk));
     }
 
     [PunRPC]
-    void RPC_SetMove(int agility)
+    void RPC_SetMove(int remainingMove)
     {
-        moveMax = agility * 2;
+        this.remainingMove = remainingMove;
     }
 
     [PunRPC]
@@ -156,11 +150,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         location: reveresed die roll for hit location
         takes unaltered damage and applies any damage reduction and subtracts from health
     */
-    public void takeDamage(int damage, string location)
-    {
-        takeDamage(damage,location, "I");
-    }
-
     public void takeDamage(int damage)
     {
         if(team != 0)
@@ -189,22 +178,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         pv.RPC("RPC_SetSP", RpcTarget.AllBuffered, getStun(), myData.GetAttribute(AttributeKey.StunHealth));  
     }
 
-
-
-    public void takeDamage(int damage, string location,string damageType)
-    {
-        int currentHealth = getWounds();
-        myData.SetAttribute(AttributeKey.SDamage, currentHealth + damage,false);
-        pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
-    }
-
-    public void takeFatigue(int levels)
-    {
-        int currentStun = myData.GetAttribute(AttributeKey.SDamage);
-        myData.SetAttribute(AttributeKey.SDamage, currentStun + levels,false);
-        pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
-    }
-
     public int GetStat(AttributeKey key)
     {
         return myData.GetAttribute(key);
@@ -215,14 +188,52 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return remainingMove;
     }
 
+    public void OnMovementEnd()
+    {
+        List<ConditionTemplate> removeKey = new List<ConditionTemplate>(); 
+        foreach(ConditionTemplate ct in Conditions.Keys)
+        {
+            if(ct.clearOnMove)
+            {
+                removeKey.Add(ct);
+            }
+        }
+        foreach(ConditionTemplate ct in removeKey)
+        {
+            CombatLog.Log("By moving: " + playername + " loses their " + ct.name + " condition!");
+            Conditions.Remove(ct);
+        }
+    }
+
     public void SpendMovement(float distance)
     {
         int roundedDistance = Mathf.CeilToInt(distance);
-        remainingMove -= roundedDistance;
-        if(remainingMove < 0)
+        int newMove = remainingMove;
+        newMove -= roundedDistance;
+        if(newMove < 0)
         {
-            remainingMove = 0;
+            newMove = 0;
         }
+        pv.RPC("RPC_SetMove", RpcTarget.All, newMove);
+    }
+
+    public void Run()
+    {
+        SetCondition(Condition.Running, 1, true);
+        int newMove = remainingMove + myData.GetAttribute(AttributeKey.MoveWalk);
+        pv.RPC("RPC_SetMove", RpcTarget.All, newMove);
+    }
+
+    public void Prone()
+    {
+        SetCondition(Condition.Prone, 0, true);
+        pv.RPC("RPC_SetMove", RpcTarget.All, 0);
+    }
+
+    public void Stand()
+    {
+        RemoveCondition(Condition.Prone);
+        pv.RPC("RPC_SetMove", RpcTarget.All, remainingMove);
     }
 
     public void Unequip(Weapon w)
@@ -250,12 +261,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     {
         return(PrimaryWeapon != null && SecondaryWeapon != null);
     }
-
-    public bool OffHandPenalty(Weapon w)
-    {
-        return (w.Equals(SecondaryWeapon)); //temporary fix as the game can't track duplicates;
-    }
-
     public RollResult AbilityCheck(AttributeKey skillKey, AttributeKey attributeKey = AttributeKey.Empty, AttributeKey LimitKey = AttributeKey.Empty, string customName = "", int threshold = 0, int modifier = 0)
     {
         RollResult newRoll = new RollResult(myData, skillKey, attributeKey, LimitKey, threshold, modifier);
@@ -342,7 +347,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public string MoveToString()
     {
-        return "Remaining Moves: " + remainingMove + "/" + moveMax;
+        if(hasCondition(Condition.Running))
+        {
+            return "Remaining Moves: " + remainingMove + "/" + myData.GetAttribute(AttributeKey.MoveRun);
+        }
+        return "Remaining Moves: " + remainingMove + "/" + myData.GetAttribute(AttributeKey.MoveWalk);
     }
 
     public bool ValidAction(string actionName)
@@ -364,122 +373,45 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return (SecondaryWeapon != null && SecondaryWeapon.CanParry() || (PrimaryWeapon != null && PrimaryWeapon.CanParry())); 
     }
 
-    public int ParryBonus()
+    public void SetCondition(Condition key, int duration, bool visible)
     {
-        int primaryBonus = -99;
-        if(PrimaryWeapon != null && PrimaryWeapon.CanParry())
-        {
-            primaryBonus = 0;
-            if (PrimaryWeapon.HasWeaponAttribute("Defensive"))
-            {
-                primaryBonus += 15;
-            }
-            if(PrimaryWeapon.HasWeaponAttribute("Balanced"))
-            {
-                primaryBonus += 10;
-            }
-            if(PrimaryWeapon.HasWeaponAttribute("Unbalanced"))
-            {
-                primaryBonus -= 10;
-            }
-        }
-        
-        int secondaryBonus = -99;
-        if(SecondaryWeapon != null && SecondaryWeapon.CanParry())
-        {
-            secondaryBonus = 0;
-            if (SecondaryWeapon != null && SecondaryWeapon.HasWeaponAttribute("Defensive"))
-            {
-                secondaryBonus += 15;
-            }
-            if(SecondaryWeapon != null && SecondaryWeapon.HasWeaponAttribute("Balanced"))
-            {
-                secondaryBonus += 10;
-            }
-            if(SecondaryWeapon.HasWeaponAttribute("Unbalanced"))
-            {
-                secondaryBonus -= 10;
-            }
-        }
-        if((primaryBonus > secondaryBonus))
-        {
-            return primaryBonus;
-        }
-        else
-        {
-            return secondaryBonus;
-        }
-    }
-
-    public bool PowerFieldAbility()
-    {
-        if((PrimaryWeapon == null || !PrimaryWeapon.HasWeaponAttribute("Power Field")) && (SecondaryWeapon == null || !SecondaryWeapon.HasWeaponAttribute("Power Field")))
-        {
-            return false;
-        }
-        else
-        {
-            if (Random.Range(1,101) >= 25)
-            {
-                CombatLog.Log(GetName() + " 's power field shatters the attackers weapon!");
-                return true;
-            }
-            return false;  
-        }
-    }
-    
-    //sets string as a reference for tactics action to repeat untill ClearRepeatingAction() is called
-    public void SetRepeatingAction(string input)
-    {
-        repeatingAction = input;
-    }
-
-    public void CompleteRepeatingAction()
-    {
-        repeatingAction = null;
-    }
-
-    public string GetRepeatingAction()
-    {
-        return repeatingAction;
-    }
-
-    public void SetCondition(string name, int duration, bool visible)
-    {
-        ConditionTemplate c = ConditionsReference.Condition(name);
+        ConditionTemplate currentTemplate = ConditionsReference.GetTemplate(key);
         if (visible)
         {
-            PopUpText.CreateText(c.name + "!", Color.yellow, gameObject);
+            PopUpText.CreateText(key.ToString() + "!", Color.yellow, gameObject);
         }
         //if the condition already exists, set its duration to the new duration
-        if(hasCondition(c.name))
+        if(hasCondition(key))
         {
-            Conditions[c] = duration;
+            Conditions[currentTemplate] = duration;
         }
         //else add it like normal
         else
         {
-            Debug.Log("Added" + c.name + "Condition!");
-            Conditions.Add(c,duration);
+            Debug.Log("Added" + key.ToString() + "Condition!");
+            Conditions.Add(currentTemplate,duration);
         }
     }
-    public bool hasCondition(string Name)
+    public bool hasCondition(Condition key)
     {
-        ConditionTemplate c = ConditionsReference.Condition(Name);
-        return Conditions.ContainsKey(c);
+        ConditionTemplate templateKey = ConditionsReference.GetTemplate(key);
+        return Conditions.ContainsKey(templateKey);
     }
-    public void RemoveCondition(string Name)
+    public void RemoveCondition(Condition key)
     {
-        ConditionTemplate c = ConditionsReference.Condition(Name);
-        Conditions.Remove(c);
+        ConditionTemplate templateKey = ConditionsReference.GetTemplate(key);
+        if(Conditions.ContainsKey(templateKey))
+        {
+            Conditions.Remove(templateKey);   
+        }
     }
 
-    public int CalculateStatModifiers(string ability)
+    public int CalculateStatModifiers(string ignoreKey = "")
     {
         int total = 0;
         foreach(ConditionTemplate key in Conditions.Keys)
         {
-            total += key.GetModifier(ability);
+            total += key.GetModifier(ignoreKey);
         }
         return total;
     }
@@ -497,7 +429,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
                 {
                     header = " +";
                 }
-                outputStack.Push(header + value + "%: " + key.name);
+                outputStack.Push(header + value + " from " + key.name + " condition");
             }
         }
         return outputStack;
@@ -546,7 +478,14 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public void StartRound()
     {
         defensePenality = 0;
-        remainingMove = moveMax;
+        if(!hasCondition(Condition.Prone))
+        {
+            pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.MoveWalk));
+        }
+        else
+        {
+            pv.RPC("RPC_SetMove", RpcTarget.All, 0);
+        }
         List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
         List<ConditionTemplate> IncrementKeys = new List<ConditionTemplate>();
         foreach (ConditionTemplate Key in Conditions.Keys)
@@ -599,7 +538,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         grappleTarget = null;
         grappler = attacker;
         attacker.grappleTarget = this;
-        SetCondition("Grappled",0,true);
+        SetCondition(Condition.Grappled,0,true);
         CombatLog.Log(GetName() + " is grappled by " + grappler.GetName());
         SpendAction("reaction");
         attacker.SpendAction("reaction");
@@ -607,7 +546,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public void ControlGrapple()
     {
-        RemoveCondition("Grappled");
+        RemoveCondition(Condition.Grappled);
         grappler.SetGrappler(this);
         grappler = null;
     }
@@ -617,27 +556,13 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         CombatLog.Log(GetName() + ": is no longer grappling" + grappleTarget.GetName());
         PopUpText.CreateText("Released!", Color.yellow, grappleTarget.gameObject);
         grappleTarget.grappler = null;
-        grappleTarget.RemoveCondition("Grappled");
+        grappleTarget.RemoveCondition(Condition.Grappled);
         grappleTarget = null;
     }
 
     public bool Grappling()
     {
         return (grappleTarget != null || grappler != null);
-    }
-
-    public void ApplyAdvanceBonus(int bonus)
-    {
-        AdvanceBonus = bonus;
-    }
-
-    public int GetAdvanceBonus(string location)
-    {
-        if (location != "Body" && location != "Left Leg" && location != "Right Leg")
-        {
-            return 0;
-        }
-        return AdvanceBonus;
     }
 
     public List<Weapon> GetWeaponsForEquipment()
@@ -655,14 +580,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public bool IsHelpless()
     {
-        if(hasCondition("Immobilised") || hasCondition("Unconscious"))
-        {
-            return true;
-        }
-        else
-        {
-            return false;
-        }
+        return false;
     }
 
     public bool IsOccupied()
@@ -677,147 +595,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     {
         string output = GetName();
         return output;
-    }
-
-    public void RollComplete(RollResult myRoll)
-    {
-        string methodName = myRoll.GetCommand();
-        if(methodName != null)
-        {
-            currentRoll = myRoll;
-            Invoke(methodName,0);
-        }
-    }
-
-    public void ApplySpecialEffects(string hitBodyPart, Weapon w, int result)
-    {
-        throw new System.NotImplementedException();
-    }
-
-    IEnumerator ShockEffect(int modifier, int damage)
-    {
-        RollResult ShockResistRoll = AbilityCheck("T",modifier);
-        while(!ShockResistRoll.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        if(!ShockResistRoll.Passed())
-        {
-            int rounds = damage;
-            if(rounds / 2 > 0)
-            {
-                rounds = rounds/2;
-            }
-            CombatLog.Log("The shocking attribute of the weapon" + GetName() + " for " + rounds + " rounds");
-            SetCondition("Stunned",rounds,true);
-        }
-        else
-        {
-            CombatLog.Log(GetName() + " resists the shocking attribute of the weapon");
-            PopUpText.CreateText("Resisted!", Color.yellow, gameObject);
-        }
-    }
-
-    IEnumerator ToxicEffect(int modifier, int damage)
-    {
-        RollResult ToxicResistRoll = AbilityCheck("T",modifier);
-        while(!ToxicResistRoll.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        if(!ToxicResistRoll.Passed())
-        {
-            int toxicdamage = Random.Range(1,11);
-            takeDamage(toxicdamage,"Body");
-            CombatLog.Log("The toxic attribute of the weapon deals an additional 1d10 = <" + damage + "> ignoring soak");
-            PopUpText.CreateText("Posioned!", Color.red, gameObject);
-        }
-        else
-        {
-            CombatLog.Log(GetName() + " resists the toxic attribute of the weapon");
-            PopUpText.CreateText("Resisted!", Color.yellow, gameObject);
-        }
-    }
-
-    public void Snare()
-    {
-        if(!currentRoll.Passed())
-        {
-            CombatLog.Log("The snare attribute of the weapon immobilises " + GetName());
-            SetCondition("Immobilised",0,true);
-            SetCondition("Prone",0,true);
-            SpendAction("Reaction");
-        }
-        else
-        {
-            CombatLog.Log(GetName() + " avoids the snare attribute of the weapon");
-        }
-        currentRoll = null;
-    }
-
-    public void Suppression()
-    {
-        bool suppressed = hasCondition("Pinned");
-        if(currentRoll.Passed())
-        {
-            if(suppressed)
-            {
-                CombatLog.Log(GetName() + " passes their check and is no longer pinned!");
-                RemoveCondition("Pinned");
-            }
-            else
-            {
-                CombatLog.Log(GetName() + " passes their check and can act freely!");
-            }
-        }
-        else if(!suppressed)
-        {
-            SetCondition("Pinned",0,true);
-            CombatLog.Log(GetName() + " fails their check and is pinned!");
-        }
-        else
-        {
-            CombatLog.Log(GetName() + " is unable to steel their nerves!");
-        }
-        currentRoll = null;
-    }
-
-    public void Fire()
-    {
-        bool ablaze = hasCondition("On Fire");
-        if(currentRoll.Passed())
-        {
-            if(ablaze)
-            {
-                PopUpText.CreateText("Extinguished!",Color.green,gameObject);
-                CombatLog.Log(GetName() + " passes their check puts out the fire!");
-                RemoveCondition("On Fire");
-            }
-        }
-        else if(!ablaze)
-        {
-            SetCondition("On Fire",0,true);
-            CombatLog.Log(GetName() + " fails their check and is set ablaze!");
-        }
-        else
-        {
-            CombatLog.Log(GetName() + " is unable to put the fire out!");
-        }
-        currentRoll = null;
-    }
-
-    public void EscapeBonds()
-    {
-        if(currentRoll.Passed())
-        {
-            CombatLog.Log(GetName() + " escapes the grapple!");
-            grappler.ReleaseGrapple();
-        }
-        else
-        {
-            CombatLog.Log(GetName() + " is unable to escape the grapple.");
-        }
-        currentRoll = null;
     }
 
     public void SetID(int id)

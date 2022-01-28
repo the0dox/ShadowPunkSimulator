@@ -74,10 +74,6 @@ public class ThreatRangeBehavior : MonoBehaviour
                     {
                         TurnManager.RollToHit(t.GetComponent<PlayerStats>(),"Semi",w,attacker);
                     }
-                    if(!target.hasCondition("Pinned"))
-                    {
-                        target.AbilityCheck("WP",-20,"Suppression");
-                    }
                     
                     RemoveRange(attacker);
                 }

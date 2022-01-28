@@ -25,6 +25,7 @@ public class AttackSequence
     public RollResult soakRoll;
     public bool soakRolled = false;
     public bool AttackMissed = false;
+    public Tile CoverTile;
 
     // creates an attack sequence without specifying a hitlocation
     public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks, bool skipAttack)
@@ -53,12 +54,6 @@ public class AttackSequence
     public void AttackRollComplete()
     {
         attackRolled = true;
-        if(attackRoll.GetHits() < 1)
-        {
-            CombatLog.Log(attacker.GetName() + " misses!");
-            PopUpText.CreateText("Missed", Color.yellow, target.gameObject);
-            AttackMissed = true;
-        }
     }
     public void ReactionRollComplete()
     {
@@ -70,10 +65,15 @@ public class AttackSequence
             netHits -= reactionRoll.GetHits();
         } 
         // Attack misses if net hits is 0 or less TO IMPLEMENT: Scrape
-        if(netHits < 1)
+        if(netHits < 0)
         {
             CombatLog.Log(target.GetName() + " avoids the attack!");
             PopUpText.CreateText("Missed", Color.yellow, target.gameObject);
+            AttackMissed = true;
+        }
+        else if(netHits < 1)
+        {
+            HitCover();
             AttackMissed = true;
         }
         // If attack hits, start a soak roll
@@ -90,6 +90,27 @@ public class AttackSequence
                 armorMod = 0;
             }
             soakRoll = target.AbilityCheck(AttributeKey.Body, AttributeKey.Empty, AttributeKey.Empty, "Armor", 0, armorMod);
+        }
+    }
+
+    private void HitCover()
+    {
+        if(CoverTile != null && target.hasCondition(Condition.Covered))
+        {
+            Tile stackedCover = CoverTile.GetStackedTile();
+            if(stackedCover != null)
+            {
+                stackedCover.damageCover(this);
+            }
+            else
+            {
+                CoverTile.damageCover(this);
+            }
+        }
+        else
+        {
+            CombatLog.Log("by getting 0 hits, " + target.GetName() + " suffers a grazing hit!");
+            PopUpText.CreateText("Grazed!", Color.yellow, target.gameObject);
         }
     }
     

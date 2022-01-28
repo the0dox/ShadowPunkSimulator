@@ -17,11 +17,7 @@ public static class TacticsAttack
     public static AttackSequence Attack(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
         AttackSequence output = new AttackSequence(target,myStats,w,type,0,false);
-        //add modiifers;
-        //modifiers += adjacencyBonus(target,myStats, w);
-        //modifiers += TacticsAttack.CalculateHeightAdvantage(target,myStats);
-        // ranged weps get a bonus depending on distance to target
-        //int attackModifiers = w.RangeBonus(target.transform, myStats) + modifiers;
+
         int totalModifiers = 0;
         Dictionary<string,int> modifiers = ApplyModifiers(output,true);
         
@@ -31,8 +27,18 @@ public static class TacticsAttack
         }
 
         // expend ammo & increase recoil
-        w.ExpendAmmo(AmmoExpenditure[type]);
-        myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+        if(w.IsWeaponClass(WeaponClass.ranged))
+        {
+            w.ExpendAmmo(AmmoExpenditure[type]);
+            myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+        }
+
+        // Save cover 
+        Tile coverTile = GetCoverTile(myStats.gameObject, target.gameObject);
+        if(coverTile != null)
+        {
+            output.CoverTile = coverTile;
+        }
 
         RollResult attackRoll = new RollResult(myStats.myData, w, totalModifiers);
         output.attackRoll = attackRoll;
@@ -178,14 +184,8 @@ public static class TacticsAttack
     }
 
 
-    public static Tile CalculateCover(GameObject attacker,  GameObject target, string HitLocation)
+    public static Tile GetCoverTile(GameObject attacker,  GameObject target)
     {
-        //cover never protects arms and head
-        if (HitLocation != "Body" && HitLocation != "LeftLeg" && HitLocation != "RightLeg")
-        {
-            return null;
-        }
-
 
         RaycastHit hit;
         Tile tile;
@@ -257,48 +257,6 @@ public static class TacticsAttack
         return null;
     }
 
-    public static int SaveCoverBonus(PlayerStats target)
-    {
-
-
-        RaycastHit hit;
-        Tile tile;
-
-        if (Physics.Raycast(target.transform.position, Vector3.left, out hit, 1))
-        {
-            tile = hit.collider.GetComponent<Tile>(); 
-            if (tile != null)
-            {
-                return tile.CoverReduction(0,0);
-            }
-        }
-        if (Physics.Raycast(target.transform.position, Vector3.right, out hit, 1))
-        {
-            tile = hit.collider.GetComponent<Tile>(); 
-            if (tile != null)
-            {
-                return tile.CoverReduction(0,0);
-            }
-        }
-        if (Physics.Raycast(target.transform.position, Vector3.forward, out hit, 1))
-        {
-            tile = hit.collider.GetComponent<Tile>(); 
-            if (tile != null)
-            {
-                return tile.CoverReduction(0,0);
-            }
-        }
-        if (Physics.Raycast(target.transform.position, Vector3.back, out hit, 1))
-        {
-            tile = hit.collider.GetComponent<Tile>(); 
-            if (tile != null)
-            {
-                return tile.CoverReduction(0,0);
-            }
-        }
-        return 0;
-    }
-
     public static int CalculateHeightAdvantage(PlayerStats target, PlayerStats attacker)
    {
         Vector3 difference = attacker.transform.position - target.transform.position;
@@ -313,101 +271,6 @@ public static class TacticsAttack
         }
    }
 
-    //true stops attack sequence, false continues it
-   public static bool Jammed(int rollResult, Weapon w, string type, PlayerStats owner)
-   {
-       if(w.IsWeaponClass(WeaponClass.melee))
-       {
-           return false;
-       } 
-       if(w.HasWeaponAttribute("Flame"))
-       {
-           if(rollResult == 9)
-           {
-            CombatLog.Log(w.GetName() + " Jams by getting a 9 on the damage roll!");
-            PopUpText.CreateText("Jammed!",Color.red,owner.gameObject);
-            w.SetJamStatus(true);
-            return true;
-           }
-           else
-           {
-               return false;
-           }
-       }
-       int JamTarget = 96;
-       if(type.Equals("Auto") || type.Equals("Semi"))
-       {
-           JamTarget = 94;
-       }
-       if(w.HasWeaponAttribute("Unreliable") || w.HasWeaponAttribute("Overheats"))
-       {
-           JamTarget = 91; 
-       }
-       //on jam
-       if(rollResult >= JamTarget)
-       {
-           CombatLog.Log(w.GetName() + " Jams by exceeding a " + JamTarget + " on the hit roll!");
-           //9 in 10 chance to not jam
-           if(w.HasWeaponAttribute("Reliable"))
-           {
-
-               int reliableRoll = Random.Range(1,11);
-               if(reliableRoll == 10)
-               {
-                    PopUpText.CreateText("Jammed!",Color.red,owner.gameObject);
-                    w.SetJamStatus(true);
-                    return true;
-               }
-               //still a miss but no ammo is lost
-               else
-               {
-                   CombatLog.Log(w.GetName() + "'s reliable quality prevented it from being jammed!");
-                   PopUpText.CreateText("Reliable!",Color.green, owner.gameObject);
-                   return true;
-               }
-           }
-           else
-           {
-               if(w.HasWeaponAttribute("Overheats"))
-               {
-                    int overheatResult = Random.Range(1,11);
-                    if(overheatResult > 8)
-                    {
-                        foreach(PlayerStats p in owner.GetComponent<TacticsMovement>().AdjacentPlayers())
-                        {
-                            DealDamage(p,owner,"Body",w);
-                        }
-                        DealDamage(owner,owner,"Body",w);
-                        owner.Unequip(w);
-                        owner.myData.RemoveItem(w);
-                        CombatLog.Log("The " + w.GetName() +" explodes! hiting everyone within a meter of " + owner.GetName());
-                    }
-                    else if(overheatResult > 5)
-                    {
-                        int energyDamage = Random.Range(1,11) + 2;
-                        int rounds = Random.Range(1,11);
-                        owner.Unequip(w);
-                        //owner.takeDamage(energyDamage - owner.GetStat("RightArm") - owner.GetStat("T"), "RightArm");
-                        CombatLog.Log("The " + w.GetName() + " burns the hands of " + owner.GetName() + " dealing 1d10 + 2 = " + energyDamage + "Energy Damage" + "and cannot be used for " + rounds + " rounds");
-                    }
-                    else
-                    {
-                        int rounds = Random.Range(1,11);
-                        owner.Unequip(w);
-                        CombatLog.Log("The " + w.GetName() + " overheats and cannot be used for " + rounds + " rounds");
-                    }
-                   PopUpText.CreateText("Overheats!",Color.red,owner.gameObject);
-               }
-               else
-               {
-                    PopUpText.CreateText("Jammed!",Color.red,owner.gameObject);
-               }
-               w.SetJamStatus(true);
-               return true;
-           }
-       }
-       return false;
-   }   
     public static List<string> GenerateTooltip(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
         AttackSequence tempAttackSequence = new AttackSequence(target,myStats, w, type, 0, false);
@@ -420,10 +283,31 @@ public static class TacticsAttack
         {
             Stack<string> outputStack = new Stack<string>();
             int attackDice = 0;
+            int defenseDice = 0;
+            
+            Dictionary<string, int> modifiersDefensive = ApplyModifiers(tempAttackSequence,false);
+            foreach(string key in modifiersDefensive.Keys)
+            {
+                int modifier = modifiersDefensive[key];
+                string addition = "";
+                if(modifier > 0)
+                {
+                    addition = "+";
+                }
+                if(modifier != 0)
+                {
+                    outputStack.Push(addition + modifier + " from " + key);
+                    defenseDice += modifier;
+                }
+            }
+            // bonus from attribute
+            defenseDice += target.myData.GetAttribute(AttributeKey.Reaction) + target.myData.GetAttribute(AttributeKey.Intuition);
+            outputStack.Push("Total Defense Dice: " + defenseDice);
+            outputStack.Push("------------");
+
             Dictionary<string, int> modifiers = ApplyModifiers(tempAttackSequence,true);
             foreach(string key in modifiers.Keys)
             {
-                Debug.Log(key + " being checked");
                 int modifier = modifiers[key];
                 string addition = "";
                 if(modifier > 0)
@@ -441,9 +325,11 @@ public static class TacticsAttack
             outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.derrivedAttribute + " attribute");
             attackDice += attributeDice;
             // bonus from skill
-            int skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill);
+            int skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.skillKey);
             outputStack.Push("+" + skillDice + " from " + w.Template.WeaponSkill.name + " skill");
             attackDice += skillDice;
+
+            
 
             outputStack.Push("Accuracy Limit: " + w.Template.accuracy);
 
@@ -502,12 +388,18 @@ public static class TacticsAttack
         modifiers.Add(" from defense penalty", GetDefensePenality(thisAttack,type));
         modifiers.Add(" from range", rangePenalty(thisAttack,type));
         modifiers.Add(" from aiming", fromAiming(thisAttack,type));
+        modifiers.Add(" from low ammo", InsufficientBulletPenalty(thisAttack,type));
+        modifiers.Add(" from reach", GetReachBonus(thisAttack,type));
+        modifiers.Add(" from running", GetChargingBonus(thisAttack,type));
+        modifiers.Add(" from prone condition", GetPronePenalty(thisAttack,type));
+        modifiers.Add(" from prone target", GetProneTargetPenalty(thisAttack,type));
+        modifiers.Add(" from cover", GetCoverBonus(thisAttack,type));
         return modifiers;
     }
 
     private static int rangePenalty(AttackSequence thisAttack, bool attack)
     {
-        if(!attack)
+        if(!attack || thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
         {
             return 0;
         }
@@ -527,7 +419,7 @@ public static class TacticsAttack
 
     private static int fromAiming(AttackSequence thisAttack, bool attack)
     {
-        if(attack && thisAttack.attacker.hasCondition("Aiming"))
+        if(attack && thisAttack.attacker.hasCondition(Condition.Aiming))
         {
             return 1;
         }
@@ -536,7 +428,7 @@ public static class TacticsAttack
 
     private static int recoilPenalty(AttackSequence thisAttack, bool attack)
     {
-        if(!attack)
+        if(!attack || thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
         {
             return 0;
         }
@@ -545,12 +437,30 @@ public static class TacticsAttack
 
     public static int ROFDefensePenalty(AttackSequence thisAttack, bool attack)
     {
-        if(attack)
+        if(attack || thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
         {
             return 0;
         }
         return 1-AmmoExpenditure[thisAttack.FireRate];
     } 
+
+    private static int InsufficientBulletPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(!attack || thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            return 0;
+        }
+        int requiredBullets = AmmoExpenditure[thisAttack.FireRate];
+        int availableBullets = thisAttack.ActiveWeapon.getClip();
+        if(requiredBullets <= availableBullets)
+        {
+            return 0;
+        }
+        else
+        {
+            return availableBullets - requiredBullets;
+        }
+    }
 
     private static int GetDefensePenality(AttackSequence thisAttack, bool attack)
     {
@@ -559,5 +469,104 @@ public static class TacticsAttack
             return 0;
         }
         return thisAttack.target.GetDefensePenality();
+    }
+
+    private static int GetReachBonus(AttackSequence thisAttack, bool attack)
+    {
+        if(attack || !thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            return 0;
+        }
+        int attackerReach = thisAttack.ActiveWeapon.Template.rangeClass.getReach();
+        int defenderReach = 0;
+        int primaryReach = 0;
+        int secondaryReach = 0;
+        if(thisAttack.target.PrimaryWeapon != null && thisAttack.target.PrimaryWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            primaryReach = thisAttack.target.PrimaryWeapon.Template.rangeClass.getReach();
+        }
+        if(thisAttack.target.SecondaryWeapon != null && thisAttack.target.SecondaryWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            secondaryReach = thisAttack.target.PrimaryWeapon.Template.rangeClass.getReach();
+        }
+        if(primaryReach > secondaryReach)
+        {
+            defenderReach = primaryReach;
+        }
+        else
+        {
+            defenderReach = secondaryReach;
+        }
+        int reachDifference = defenderReach - attackerReach;
+        if(reachDifference > 0)
+        {
+            return reachDifference;
+        }
+        return 0;
+    }
+
+    private static int GetChargingBonus(AttackSequence thisAttack, bool attack)
+    {
+        if(attack)
+        {
+            if(thisAttack.attacker.hasCondition(Condition.Running))
+            {
+                if(thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+                {
+                    return 2;
+                }
+                else
+                {
+                    return -2;
+                }
+            }
+        }
+        else if(thisAttack.target.hasCondition(Condition.Running))
+        {
+            return -2;
+        }
+        return 0;
+    }
+
+    private static int GetPronePenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.hasCondition(Condition.Prone))
+        {
+            return -1;
+        }
+        return 0;
+    }
+    
+    private static int GetProneTargetPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(thisAttack.target.hasCondition(Condition.Prone) && thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            if(attack)
+            {
+                return 1;
+            }
+            else
+            {
+                return -2; 
+            }
+        }
+        return 0;
+    }
+
+    private static int GetCoverBonus(AttackSequence thisAttack, bool attack)
+    {
+        Tile cover = GetCoverTile(thisAttack.attacker.gameObject, thisAttack.target.gameObject);
+        if(!attack)
+        {
+            if(thisAttack.target.hasCondition(Condition.Covered) && cover != null)
+            {
+                if(BoardBehavior.isAdvancedCover(cover))
+                {
+                    return 4;
+                }
+                return 2;
+            }
+        }
+        return 0;
     }
 }

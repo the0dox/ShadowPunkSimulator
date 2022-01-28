@@ -3,32 +3,51 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 using Photon.Pun;
+using TMPro;
 // UI screen that displays the info of the active player
 public class UIPlayerInfo : MonoBehaviourPunCallbacks
 {
-    // displays the name of the active player
-    public GameObject PlayerName;
-    // displays health of the active player
-    public GameObject Health;
-    // displays the remaining actions of the active player
-    public GameObject Actions;
     // displays the weapon held in the active player's primary hand
-    public GameObject WeaponOne;
+    [SerializeField] private Text WeaponOne;
     // displays the weapon held in the active player's secondary hand
-    public GameObject WeaponTwo;
+    [SerializeField] private Text WeaponTwo;
     // Photonview used to communicate with other clients 
+    [SerializeField] private Text PlayerName;
     [SerializeField] private PhotonView pv;
-    [SerializeField] private Text Moves;
+    [SerializeField] private TextMeshProUGUI Health;
+    [SerializeField] private TextMeshProUGUI Moves;
+    [SerializeField] private Image Action1;
+    [SerializeField] private Image Action2;
+    [SerializeField] private Image ActionFree;
+    [SerializeField] private Image HealthBar;
+    [SerializeField] private Image MoveBar;
+    private static UIPlayerInfo instance;
     
+    void Awake()
+    {
+        instance = this;
+    }
+
+    public static void UpdateDisplay(PlayerStats ps, int actions, int freeActions)
+    {
+        instance.UpdateDisplayInstance(ps,actions,freeActions);
+    }
+
     // ps: the active player whos turn it is
     // actions: the remaining actions in this turn
     // takes all the information of the active player
-    public void UpdateDisplay(PlayerStats ps, int actions)
+    public void UpdateDisplayInstance(PlayerStats ps, int actions, int freeActions)
     {
         string Pname = ps.GetName();
-        string WoundsText = ps.HealthToString();
-        string ActionsText = "Half Actions: " + actions +"/2";
-        string MoveText = ps.MoveToString();
+        int moveMax = 0;
+        if(ps.hasCondition(Condition.Running))
+        {
+            moveMax = ps.myData.GetAttribute(AttributeKey.MoveRun);
+        }
+        else
+        {
+            moveMax = ps.myData.GetAttribute(AttributeKey.MoveWalk);
+        }
         string WeaponOneText = "---";
         string WeaponTwoText = "---";
         if(ps.PrimaryWeapon != null)
@@ -39,20 +58,42 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         {
             WeaponTwoText = ps.SecondaryWeapon.ToString();
         }
-        pv.RPC("RPC_UpdateDisplay",RpcTarget.All,Pname,WoundsText,ActionsText, MoveText,WeaponOneText,WeaponTwoText);
+        pv.RPC("RPC_UpdateDisplay",RpcTarget.All,Pname,ps.getWounds(), ps.myData.GetAttribute(AttributeKey.PhysicalHealth),actions, freeActions, ps.remainingMove, moveMax, WeaponOneText,WeaponTwoText);
     }
 
     // used to change the display on all clients 
     [PunRPC]
-    void RPC_UpdateDisplay(string Pname, string WoundsText, string ActionsText, string MoveText, string WeaponOneText, string WeaponTwoText)
+    void RPC_UpdateDisplay(string Pname, int wounds, int woundMax, int Actions, int freeAction, int move, int moveMax, string WeaponOneText, string WeaponTwoText)
     {
-        PlayerName.GetComponent<Text>().text = Pname;
-        Health.GetComponent<Text>().text = WoundsText;
-        Actions.GetComponent<Text>().text = ActionsText;
-        Moves.text = MoveText;
-        Text wpOne = WeaponOne.GetComponent<Text>();
-        Text wpTwo = WeaponTwo.GetComponent<Text>();
-        wpOne.text = WeaponOneText;
-        wpTwo.text = WeaponTwoText;
+        PlayerName.text = Pname;
+        // HP
+        string woundsText = "Wounds: " +  (woundMax - wounds)  + "/" + woundMax;
+        float percentageHealth = (float) (woundMax-wounds)/woundMax;
+        Health.text = woundsText;
+        HealthBar.fillAmount = percentageHealth;
+        // Move
+        string moveText = "Moves: " + move + "/" + moveMax;
+        Moves.text = moveText;
+        float percentageMove = (float)move/moveMax;
+        MoveBar.fillAmount = percentageMove;
+        // Actions
+        Action1.color = Color.white;
+        Action2.color = Color.white;
+        ActionFree.color = Color.white;
+        if(Actions < 2)
+        {
+            Action1.color = Color.gray;
+        }
+        if(Actions < 1)
+        {
+            Action2.color = Color.gray;
+        }
+        if(freeAction < 1)
+        {
+            ActionFree.color = Color.gray;
+        }
+        // Weapons
+        WeaponOne.text = WeaponOneText;
+        WeaponTwo.text = WeaponTwoText;
     }
 }

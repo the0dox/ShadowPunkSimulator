@@ -28,7 +28,7 @@ MonoBehaviour:
   pen: 0
   SingleShot: 0
   SemiAuto: 1
-  BurstFire: 0
+  BurstFire: 1
   FullAuto: 0
   WeaponSkill: {fileID: 11400000, guid: ad37561d6fb94f34d806288ac8864dd5, type: 2}
   WeaponSpecialization: 1
@@ -38,5 +38,6 @@ MonoBehaviour:
   blast: 0
   AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}
   clipType: 5
+  weaponClass: 1
   Lethal: 1
   debugAddAllUpgrades: 0

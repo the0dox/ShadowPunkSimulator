@@ -48,12 +48,14 @@ public class ActionButtonScript : MonoBehaviour
     // On button press send my action string to the game controller
     public void GetAction()
     {
+        Debug.Log("clicked");
         pv.RPC("RPC_GetAction",RpcTarget.MasterClient, action);
     }
 
     [PunRPC]
     void RPC_GetAction(string sendAction)
     {
+        Debug.Log("recieved");
         if(!CameraButtons.UIActive())
         {
             if(GameObject.FindGameObjectWithTag("GameController").TryGetComponent<TurnManager>(out TurnManager tm))

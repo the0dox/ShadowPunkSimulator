@@ -97,6 +97,17 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         LoadedScene = null;
     }
 
+    public static void RemoveTile(Tile destroyedTile)
+    {
+        Instance.pv.RPC("RPC_DestroyTile",RpcTarget.AllBuffered,destroyedTile.transform.position);
+    }
+    
+    [PunRPC]
+    void RPC_DestroyTile(Vector3 destroyKey)
+    {
+        BoardBehavior.RemoveTile(destroyKey);
+    }
+
     [PunRPC]
     void RPC_LoadTile(Dictionary<string,string> TileLocations)
     {

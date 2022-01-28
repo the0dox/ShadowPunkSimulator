@@ -15,7 +15,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
 
    public bool moving = false;
    public bool finishedMove = false;
-   public float jumpHeight = 2;
+   public int jumpHeight = 2;
    public float moveSpeed = 4; 
    public Weapon activeWeapon;
    Vector3 velocity = new Vector3();
@@ -79,11 +79,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
 
    public void ComputeAdjacencyLists()
    {
-      foreach (GameObject tile in tiles)
-      {
-         Tile t = tile.GetComponent<Tile>();
-         t.FindNeighbors(jumpHeight);
-      }
+      BoardBehavior.ComputeAdjacencyLists(jumpHeight);
    }
 
    public void FindTiles()

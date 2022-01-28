@@ -93,6 +93,8 @@ MonoBehaviour:
   - RPC_MoveToTile
   - RPC_PlaceToken
   - RPC_List_Single
+  - RPC_ToggleMovement
+  - RPC_DestroyTile
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

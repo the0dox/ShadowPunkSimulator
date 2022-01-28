@@ -47,7 +47,7 @@ public class TurnManager : TurnActionsSR
                     CurrentAttack.AttackRollComplete();
                     TryReaction();
                 }
-                if(CurrentAttack.reactionRoll != null && CurrentAttack.reactionRoll.Completed()&& !CurrentAttack.reactionRolled)
+                if(CurrentAttack.reactionRoll != null && CurrentAttack.reactionRoll.Completed() && !CurrentAttack.reactionRolled)
                 {
                     CurrentAttack.ReactionRollComplete();
                 }
@@ -62,6 +62,7 @@ public class TurnManager : TurnActionsSR
             {
             if(ActivePlayer.finishedMoving())
             {
+                ActivePlayerStats.OnMovementEnd();
                 Cancel();
             }
             CheckMouse();
@@ -70,8 +71,7 @@ public class TurnManager : TurnActionsSR
                 case "Move":
                 break;
                 case "Stand":
-                    AttackOfOppertunity();
-                    ActivePlayerStats.RemoveCondition("Prone");
+                    ActivePlayerStats.RemoveCondition(Condition.Prone);
                     PopUpText.CreateText("Standing!", Color.green, ActivePlayerStats.gameObject);
                     halfActions--;
                     Cancel();
@@ -183,107 +183,6 @@ public class TurnManager : TurnActionsSR
                 */
             }
             break;
-        case "Run":
-            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
-            {
-                Tile t = ServerHitObject.GetComponent<Tile>();
-                //player can reach 
-                ActivePlayerStats.SetCondition("Running",0,true);
-                if (t.selectableRunning)
-                {
-                    //make tile green
-                    //ActivePlayer.moveToTile(t);
-                    AttackOfOppertunity();
-                    halfActions-=2;
-                    currentAction = "Move";
-                    ActivePlayer.RemoveSelectableTiles();
-
-                    
-                    if(ActivePlayerStats.hasCondition("Braced"))
-                    {
-                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                        ActivePlayerStats.RemoveCondition("Braced");
-                    }
-                }
-            }
-            break;
-        case "Disengage":
-            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
-            {
-                Tile t = ServerHitObject.GetComponent<Tile>();
-                //player can reach 
-                if (t.selectableRunning)
-                {
-                    //make tile green
-                    //ActivePlayer.moveToTile(t);
-                    if(ActivePlayerStats.AbilityCheck("Acrobatics",0).Passed())
-                    {
-                        CombatLog.Log(ActivePlayerStats.GetName() + "'s successful acrobatics check reduces the cost of disengaging to a half action");
-                        halfActions--;
-                    }
-                    else
-                    {
-                        halfActions -= 2;
-                    }                  
-                    currentAction = "Move";  
-                    ActivePlayer.RemoveSelectableTiles();
-
-                    if(ActivePlayerStats.hasCondition("Braced"))
-                    {
-                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                        ActivePlayerStats.RemoveCondition("Braced");
-                    }
-                }
-            }
-            break;
-        case "Advance":
-            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
-            {
-                Tile t = ServerHitObject.GetComponent<Tile>();
-                //player can reach 
-                if (t.selectableRunning)
-                {
-                    //make tile green
-                    //ActivePlayer.moveToTile(t);
-                    ActivePlayerStats.ApplyAdvanceBonus(TacticsAttack.SaveCoverBonus(ActivePlayerStats)); 
-                    halfActions-=2;
-
-                    if(ActivePlayerStats.hasCondition("Braced"))
-                    {
-                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                        ActivePlayerStats.RemoveCondition("Braced");
-                    }
-                }
-        }
-            break;
-        case "Charge":
-            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving)
-            {
-                Tile t = ServerHitObject.GetComponent<Tile>();
-                //player can reach 
-                if (t.selectableRunning)
-                {
-                    //make tile green
-                    //ActivePlayer.moveToTile(t);
-                    AttackOfOppertunity();
-                    ActivePlayerStats.SetCondition("Charging",1,true);
-                    ActivePlayerStats.SpendAction("Charge");
-                    currentAction = "Move";
-                    ActivePlayer.RemoveSelectableTiles();
-                    halfActions -= 2;
-
-                    if(ActivePlayerStats.hasCondition("Braced"))
-                    {
-                        CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                        PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                        ActivePlayerStats.RemoveCondition("Braced");
-                    }
-                }
-            }
-            break;
         case "Attack":
             if (ServerHitObject.tag == "Player")
             {
@@ -294,21 +193,9 @@ public class TurnManager : TurnActionsSR
             if (ServerHitObject.tag == "Player")
             {
                 PlayerStats CMtarget = ServerHitObject.GetComponent<PlayerStats>();
-                if(FireRate.Equals("Stun"))
-                {
-                    RollToStun(CMtarget, ActivePlayerStats);
-                }
-                else if(FireRate.Equals("Grapple"))
+                if(FireRate.Equals("Grapple"))
                 {
                     RollToGrapple(CMtarget, ActivePlayerStats);
-                }
-                else if(FireRate.Equals("Knock"))
-                {
-                    RollToKnock(CMtarget, ActivePlayerStats);
-                }
-                else if(FireRate.Equals("Feint"))
-                {
-                    RollToFeint(CMtarget, ActivePlayerStats);
                 }
             }
             break;
@@ -344,6 +231,7 @@ public class TurnManager : TurnActionsSR
             ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
             //CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
             halfActions = 2;
+            freeActions = 1;
             ActivePlayerStats.ResetActions();
             ActivePlayer.ResetMove();
             ApplyConditions();
@@ -376,20 +264,18 @@ public class TurnManager : TurnActionsSR
 
         foreach (KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors) 
         {
-            float newInitative = kvp.Key - 10;
-            if(Mathf.FloorToInt(newInitative) >= 1)
+            float initative = kvp.Key;
+            if(Mathf.FloorToInt(initative) >= 1)
             {
-                Debug.Log("keep initiative "+ newInitative + " for " + kvp.Value.GetComponent<PlayerStats>().GetName());
-                IntiativeActiveActors.Add(newInitative, kvp.Value);
+                IntiativeActiveActors.Add(initative, kvp.Value);
             }
             else{
-                Debug.Log("remove initative less than 0 for " + kvp.Value.GetComponent<PlayerStats>().GetName());
-                float emptyInitativeScore = 0;
-                while(TempSorter.ContainsKey(emptyInitativeScore))
+                initative = 0;
+                while(TempSorter.ContainsKey(initative))
                 {
-                    emptyInitativeScore += 0.001f;
+                    initative += 0.01f;
                 }
-                TempSorter.Add(emptyInitativeScore,kvp.Value);
+                TempSorter.Add(initative, kvp.Value);
             }
         }
 
@@ -497,7 +383,16 @@ public class TurnManager : TurnActionsSR
     }
 
     public void EndTurn(){
-        IntiativeFinishedActors.Add(IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1],ActivePlayerStats);
+        float newInitative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1] - 10;
+        if(Mathf.FloorToInt(newInitative) < 1)
+        {
+            newInitative = 0;
+            while(IntiativeFinishedActors.ContainsKey(newInitative))
+            {
+                newInitative += 0.001f;
+            }
+        }
+        IntiativeFinishedActors.Add(newInitative,ActivePlayerStats);
         IntiativeActiveActors.RemoveAt(IntiativeActiveActors.Count-1);
         StartTurn();
     }
@@ -542,30 +437,9 @@ public class TurnManager : TurnActionsSR
     //any special effects from conditions
     public void ApplyConditions()
     {
-        if(ActivePlayerStats.hasCondition("Pinned"))
+        if(ActivePlayerStats.hasCondition(Condition.Running))
         {
-            halfActions--;
-        }
-        if(ActivePlayerStats.hasCondition("Stunned"))
-        {
-            PopUpText.CreateText("Stunned!", Color.yellow, ActivePlayerStats.gameObject);
-            halfActions = 0;
-            ActivePlayerStats.SpendAction("reaction");
-        }
-        if(ActivePlayerStats.IsHelpless())
-        {
-            PopUpText.CreateText("Helpess!", Color.yellow, ActivePlayerStats.gameObject);
-            halfActions = 0;
-            ActivePlayerStats.SpendAction("reaction");
-        }
-        if(ActivePlayerStats.hasCondition("On Fire"))
-        {
-            StartCoroutine(FireDistractionDelay());
-            int damage = Random.Range(1,11);
-            ActivePlayerStats.takeDamage(damage,"Body","E");
-            ActivePlayerStats.takeFatigue(1);
-            CombatLog.Log(ActivePlayerStats.GetName() + " takes 1d10 = " + damage + " damage from the fire!");
-            PopUpText.CreateText("Burning! (-" + damage +")",Color.red,ActivePlayerStats.gameObject);
+            freeActions = 0;
         }
         if(ActivePlayerStats.Grappling())
         {
@@ -603,91 +477,18 @@ public class TurnManager : TurnActionsSR
         if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         {
             AttackSequence newAttack = TacticsAttack.Attack(target, attacker, ActiveWeapon, ROF);
-            if(HitLocation != null)
-            {
-                newAttack.HitLocation = HitLocation;
-            }
             AttackQueue.Enqueue(newAttack);
             currentAction = null;
             // if its not the attackers turn (overwatch) then don't subtract half actions
             if(ActivePlayerStats == attacker)
             {
                 halfActions--;
-                if(ROF.Equals("SAB") || ROF.Equals("LB") || ROF.Equals("FAB"))
+                if(w.IsWeaponClass(WeaponClass.melee) || ROF.Equals("SAB") || ROF.Equals("LB") || ROF.Equals("FAB"))
                 {
                     halfActions--;
                 }
             }
         }
-    }
-
-    public void RollToStun(PlayerStats target, PlayerStats attacker)
-    {
-        //only a valid target if on diferent teams
-        if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
-        {
-            StartCoroutine(StunDelay(target,attacker));
-        }
-    }
-
-    IEnumerator StunDelay(PlayerStats target, PlayerStats attacker)
-    {
-            //to implement check talents to avoid penalty
-            int modifiers = 0;
-            if(!attacker.hasCondition("TakeDown"))
-            {
-                modifiers -= 20;
-            }
-            RollResult StunResult = attacker.AbilityCheck("WS",modifiers);
-            while(!StunResult.Completed())
-            {
-                yield return new WaitForSeconds(0.5f);
-            }
-            if (StunResult.Passed())
-            {
-                AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Stun",1,true));
-            }
-            halfActions -= 2;
-            Cancel();
-    }
-
-    public void RollToKnock(PlayerStats target, PlayerStats attacker)
-    {
-        this.target = target; 
-        //only a valid target if on diferent teams
-        if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
-        {
-            //to implement check to see if you moved
-            StartCoroutine(KnockDelay(target,attacker));
-        }
-    }
-
-    IEnumerator KnockDelay(PlayerStats target, PlayerStats attacker)
-    {
-        RollResult OpposedStrengthTest = attacker.AbilityCheck("KnockDown",0,null,target);
-        while(!OpposedStrengthTest.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        int result = OpposedStrengthTest.GetDOF();
-        if (result > 1)
-        {
-            CombatLog.Log(attacker.GetName() + " knock down attempt wins by 2 DOF and takes the wind out of " + target.GetName());
-            target.takeDamage(attacker.GetStat(AttributeKey.Strength)-4,"Body");
-            target.takeFatigue(1);
-        }
-        if (result > 0)
-        {
-            CombatLog.Log(attacker.GetName() + "Knocks " + target.GetName() + " Prone");
-            target.SetCondition("Prone",0,true);
-        }
-        else if (result < -1)
-        {
-            CombatLog.Log(attacker.GetName() + " loses by 2 DOF and gets knocked down himself!");
-            attacker.SetCondition("Prone",0,true);
-        }
-        halfActions--;
-        Cancel();
     }
 
     public void RollToGrapple(PlayerStats target, PlayerStats attacker)
@@ -718,37 +519,6 @@ public class TurnManager : TurnActionsSR
                 AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Grapple",1,true));
             }
             halfActions -= 2;
-            Cancel();
-    }
-
-    public void RollToFeint(PlayerStats target, PlayerStats attacker)
-    {
-        this.target = target; 
-        //only a valid target if on diferent teams
-        if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
-        {
-            FeintDelay(target,attacker);
-        }
-    }
-
-    IEnumerator FeintDelay(PlayerStats target, PlayerStats attacker)
-    {
-        RollResult OpposedWSCheck = attacker.AbilityCheck("S",0,null,target);
-        while(!OpposedWSCheck.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        int result = OpposedWSCheck.GetDOF();
-        if (result > 0)
-            {
-                CombatLog.Log(attacker.GetName() + " next attack can't be avoided!");
-                attacker.SetCondition("Feinted", 1, true);
-            }
-            else
-            {
-                 CombatLog.Log(attacker.GetName() + " fails to feint");
-            }
-            halfActions--;
             Cancel();
     }
 

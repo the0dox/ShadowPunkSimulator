@@ -65,6 +65,44 @@ public class BoardBehavior : MonoBehaviour
         }
         return true;
     }
+
+    public static bool isAdvancedCover(Tile tile)
+    {
+        Vector3 newPos = tile.transform.position + Vector3.up;
+        return Tiles.ContainsKey(newPos);
+    }
+
+    public static bool InCover(GameObject player)
+    {
+        Vector3 location = player.transform.position;
+        location.y = Mathf.Floor(location.y);
+        
+        if(Tiles.ContainsKey(location + Vector3.forward))
+        {
+            return true;
+        }
+        if(Tiles.ContainsKey(location + Vector3.left))
+        {
+            return true;
+        }
+        if(Tiles.ContainsKey(location + Vector3.right))
+        {
+            return true;
+        }
+        if(Tiles.ContainsKey(location + Vector3.back))
+        {
+            return true;
+        }
+        return false;
+    }
+
+    public static void RemoveTile(Vector3 removeKey)
+    {
+        Tile removedTile = Tiles[removeKey];
+        Tiles.Remove(removeKey);
+        removedTile.DestroyMe();
+    }
+
     public static void ComputeAdjacencyLists(int jumpHeight)
     {
       foreach(Vector3 key in Tiles.Keys)

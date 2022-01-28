@@ -37,4 +37,9 @@ public class RangeWeaponClass : ScriptableObject
     {
         return distance <= extremeRange;
     }
+
+    public int getReach()
+    {
+        return shortRange - 1;
+    }
 }

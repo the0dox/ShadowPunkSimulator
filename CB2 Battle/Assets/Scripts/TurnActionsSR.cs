@@ -13,11 +13,10 @@ public class TurnActionsSR : UIButtonManager
     public GameObject Canvas;
     public GameObject ActionUIButton;
     protected int halfActions;
+    protected int freeActions;
     protected string FireRate;
-    public GameObject PlayerUIDisplay;
     protected PlayerStats target;
     protected int attacks;
-    protected string HitLocation; 
     public GameObject ThreatRangePrefab;
     public WeaponTemplate unarmed;
     int RepeatedAttacks;
@@ -28,31 +27,18 @@ public class TurnActionsSR : UIButtonManager
 
     public void Combat()
     {
-        currentAction = null;
+        TokenDragBehavior.ToggleMovement(false);
         Dictionary<string,string> d = new Dictionary<string, string>();
         
         if(ActivePlayerStats.PrimaryWeapon != null) 
         {
-            //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.PrimaryWeapon.IsWeaponClass(WeaponClass.melee))
-            {    
-                d.Add(ActivePlayerStats.PrimaryWeapon.GetName() + " (Primary)", "PrimaryWeapon");
-            }
+            d.Add(ActivePlayerStats.PrimaryWeapon.GetName() + " (Primary)", "PrimaryWeapon");
         }
         if (ActivePlayerStats.SecondaryWeapon != null)
         {
-            //if charging only melee weapons are usable
-            if(ActivePlayerStats.ValidAction("Charge") || !ActivePlayerStats.ValidAction("Charge") && ActivePlayerStats.SecondaryWeapon.IsWeaponClass(WeaponClass.melee))
-            {
-                d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
-            }
+            d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
         }
-        d.Add("Unarmed","Unarmed");
-        //can't cancel if they charged!
-        if(ActivePlayerStats.ValidAction("Charge"))
-        {
-            d.Add("Cancel","Cancel");
-        }
+        d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
 
@@ -61,29 +47,34 @@ public class TurnActionsSR : UIButtonManager
         currentAction = null;
         List<string> l = new List<string>();
         
-        if(ActivePlayerStats.hasCondition("Prone"))
+        if(ActivePlayerStats.hasCondition(Condition.Prone))
         {
             l.Add("Stand");
         }
         else
         {
-            if(halfActions > 1)
-            {
-                l.Add("Charge");
-                l.Add("Run");
-                if(TacticsAttack.SaveCoverBonus(ActivePlayerStats) > 0)
-                {
-                    l.Add("Advance");
-                }
-            }
-            if(ActivePlayer.GetAdjacentEnemies(ActivePlayerStats.GetTeam()) > 0)
-            {
-                l.Add("Disengage");
-            }
+            l.Add("Prone");
+            l.Add("Run");
         }
         l.Add("Cancel");
         ConstructActions(l);
     }
+
+    public void Run()
+    {
+        ActivePlayerStats.Run();
+        SpendFreeAction();
+        Cancel();
+    }
+
+    
+    public void Prone()
+    {
+        ActivePlayerStats.Prone();
+        SpendFreeAction();
+        Cancel();
+    }
+
 
     public void PrimaryWeapon()
     {
@@ -106,7 +97,6 @@ public class TurnActionsSR : UIButtonManager
     public void GetWeaponActions()
     {
         Dictionary<string,string> d = ActiveWeapon.GetWeaponActions(halfActions > 1);
-        d.Add("Switch Fire Rate", "ChangeFireRate");
         d.Add("Cancel","Combat");
         ConstructActions(d);
         /*
@@ -194,53 +184,6 @@ public class TurnActionsSR : UIButtonManager
             }
         }
         */
-    }
-
-    public void Brace()
-    {
-        CombatLog.Log(ActivePlayerStats.GetName() + " braces their heavy weapon. They cannot move until they unbrace!");
-        ActivePlayerStats.SetCondition("Braced",0,true);
-        halfActions--;
-        Cancel();
-    }
-
-    public void BraceProne()
-    {
-        CombatLog.Log(ActivePlayerStats.GetName() + " braces their heavy weapon. They cannot move until they unbrace!");
-        ActivePlayerStats.SetCondition("Braced",0,true);
-        ActivePlayerStats.SetCondition("Prone",0,true);
-        halfActions--;
-        Cancel();
-    }
-
-    public void GuardedAttack()
-    { 
-        currentAction = "Attack";
-        FireRate = "Full";
-        ActivePlayerStats.SetCondition("GuardedAttack", 0, false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        Dictionary<string,string> d = new Dictionary<string,string>();
-        d.Add("Cancel","GuardedCancel");
-        ConstructActions(d);
-    }
-
-    public void AllOut()
-    {
-        currentAction = "Attack";
-        FireRate = "Full";
-        ActivePlayerStats.SetCondition("AllOut", 0, false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        Dictionary<string,string> d = new Dictionary<string,string>();
-        d.Add("Cancel","AllOutCancel");
-        ConstructActions(d);
-    }
-
-    public void DefensiveStance()
-    {
-        ActivePlayerStats.SetCondition("Defensive Stance", 0, true);
-        halfActions -= 2;
     }
 
     public void Feint()
@@ -389,38 +332,6 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
-    public void BreakSnare()
-    {
-        if(ActivePlayerStats.AbilityCheck("S",0).Passed())
-        {
-            ActivePlayerStats.RemoveCondition("Immobilised");
-            PopUpText.CreateText("Freed!", Color.green,ActivePlayerStats.gameObject);
-            CombatLog.Log(ActivePlayerStats.GetName() + " breaks their bonds!");
-        }
-        else
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " is unable to break their bonds!");
-        }
-        halfActions -= 2;
-        Cancel();
-    }
-
-    public void EscapeBonds()
-    {
-        if(ActivePlayerStats.AbilityCheck("A",0).Passed())
-        {
-            ActivePlayerStats.RemoveCondition("Immobilised");
-            PopUpText.CreateText("Freed!", Color.green,ActivePlayerStats.gameObject);
-            CombatLog.Log(ActivePlayerStats.GetName() + " escapes their bonds!");
-        }
-        else
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " is unable to escape their bonds!");
-        }
-        halfActions -= 2;
-        Cancel();
-    }
-
     public void Move()
     {
         currentAction = "Move"; 
@@ -429,13 +340,9 @@ public class TurnActionsSR : UIButtonManager
 
     public void Stand()
     {
-        currentAction = "Stand";
-        if(ActivePlayerStats.hasCondition("Braced"))
-        {
-            CombatLog.Log("By standing, " + CurrentAttack.target.GetName() + " loses their Brace Condition");
-            PopUpText.CreateText("Unbraced!", Color.red, CurrentAttack.target.gameObject);
-            CurrentAttack.target.RemoveCondition("Braced");
-        }
+       ActivePlayerStats.Stand();
+       halfActions--;
+       Cancel();
     }
 
     public void Misc()
@@ -446,6 +353,10 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Aim","Aim");
             d.Add("Reload","Reload");
+            if(BoardBehavior.InCover(ActivePlayerStats.gameObject))
+            {
+                d.Add("Take Cover","takecover");
+            }
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
@@ -498,16 +409,11 @@ public class TurnActionsSR : UIButtonManager
     public void ConstructActions()
     {   
         Dictionary<string,string> d = new Dictionary<string, string>();
-        if(ActivePlayerStats.hasCondition("Immobilised"))
-        {
-            d.Add("Break Bonds", "BreakSnare");
-            d.Add("Escape Bonds", "EscapeBonds");
-        }
-        else if(ActivePlayerStats.Grappling())
+        if(ActivePlayerStats.Grappling())
         {
             if(halfActions > 1)
             {
-                if(ActivePlayerStats.hasCondition("Grappled"))
+                if(ActivePlayerStats.hasCondition(Condition.Grappled))
                 {
                     d.Add("Control Grapple","GrappleControl");
                     d.Add("Escape Grapple","GrappleContortionist");
@@ -564,6 +470,13 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
+    public void takecover()
+    {
+        ActivePlayerStats.SetCondition(Condition.Covered, -1, true);
+        halfActions--;
+        Cancel();
+    }
+
     public void ChargeAttack()
     {
         currentAction ="Attack";
@@ -588,89 +501,10 @@ public class TurnActionsSR : UIButtonManager
         ConstructActions(d);
     }
 
-    public void Head()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        HitLocation = "Head";
-        ActivePlayerStats.SetCondition("Called",1,false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-
-        Dictionary<string, string> d = new Dictionary<string,string>();
-        d.Add("Cancel", "CalledCancel");
-        ConstructActions(d);
-    }
-    public void RightArm()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        HitLocation = "RightArm";
-        ActivePlayerStats.SetCondition("Called",1,false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        
-        Dictionary<string, string> d = new Dictionary<string,string>();
-        d.Add("Cancel", "CalledCancel");
-        ConstructActions(d);
-    }
-    public void LeftArm()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        HitLocation = "LeftArm";
-        ActivePlayerStats.SetCondition("Called",1,false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-
-        Dictionary<string, string> d = new Dictionary<string,string>();
-        d.Add("Cancel", "CalledCancel");
-        ConstructActions(d);
-    }
-    public void Body()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        HitLocation = "Body";
-        ActivePlayerStats.SetCondition("Called",1,false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-
-        Dictionary<string, string> d = new Dictionary<string,string>();
-        d.Add("Cancel", "CalledCancel");
-        ConstructActions(d);
-    }
-    public void RightLeg()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        HitLocation = "RightLeg";
-        ActivePlayerStats.SetCondition("Called",1,false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-
-        Dictionary<string, string> d = new Dictionary<string,string>();
-        d.Add("Cancel", "CalledCancel");
-        ConstructActions(d);
-    }
-    public void LeftLeg()
-    {
-        currentAction = "Attack";
-        FireRate = "S";
-        HitLocation = "LeftLeg";
-        ActivePlayerStats.SetCondition("Called",1,false);
-        PushToolTips();
-        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        
-        Dictionary<string, string> d = new Dictionary<string,string>();
-        d.Add("Cancel", "CalledCancel");
-        ConstructActions(d);
-    }
-
     public void CalledCancel()
     {
         //to implement trait that avoids this penalty
-        ActivePlayerStats.RemoveCondition("Called");
+        ActivePlayerStats.RemoveCondition(Condition.CalledShot);
         Cancel();
     }
     
@@ -689,6 +523,15 @@ public class TurnActionsSR : UIButtonManager
         Dictionary<string,string> d = ActiveWeapon.GetSelectableFireRates();
         d.Add("Cancel","Cancel");
         ConstructActions(d);
+    }
+
+    public void Melee()
+    {
+        currentAction = "Attack";
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
     }
 
     public void fireSS()
@@ -818,6 +661,7 @@ public class TurnActionsSR : UIButtonManager
         {
             ActiveWeapon.ExpendAmmo(FireRate);
             int roll = Random.Range(1,11);
+            /*
             if(!TacticsAttack.Jammed(roll, ActiveWeapon,FireRate,ActivePlayerStats))
             {
                 foreach(Transform t in targets)
@@ -827,6 +671,7 @@ public class TurnActionsSR : UIButtonManager
                     StartCoroutine(WaitForFireResult(CurrentStats, ActiveWeapon));
                 }
             }
+            */
         halfActions--;
         }
         Cancel();
@@ -842,10 +687,11 @@ public class TurnActionsSR : UIButtonManager
         if(!AvoidResult.Passed())
         {
             CombatLog.Log(target.GetName() + " is hit by the " + w.GetName() + "'s spray!");
-            if(!target.hasCondition("On Fire"))
+            /*if(!target.hasCondition("On Fire"))
             {
                 target.AbilityCheck("A",0,"Fire");
             }
+            */
             TacticsAttack.DealDamage(target, ActivePlayerStats, "Body", w);
         }
         else
@@ -913,7 +759,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void Aim1()
     {
-        ActivePlayerStats.SetCondition("Aiming", 1, true);
+        ActivePlayerStats.SetCondition(Condition.Aiming, 1, true);
         ActivePlayerStats.ResetRecoilPenalty();
         CombatLog.Log(ActivePlayerStats.GetName() + " steadies their aim, reseting their recoil penalty!");
         halfActions--;
@@ -1016,51 +862,9 @@ public class TurnActionsSR : UIButtonManager
 
     public void ResolveHit()
     {
-        if(CurrentAttack.FireRate.Equals("Stun"))
-        {
-            if(CurrentAttack.attacks > 0)
-            {
-                int StunDamage = Random.Range(1,11);
-                int StunResist = Random.Range(1,11);
-                CombatLog.Log(CurrentAttack.attacker.GetName() + " Rolls 1d10 + SB = " + StunDamage);
-                CombatLog.Log(CurrentAttack.target.name + " Rolls 1d10 + T + HeadAP = " + StunResist);
-                int diff = StunDamage - StunResist;
-                if (diff == 0)
-                {
-                    diff = 1;
-                }
-                if (diff > 0) 
-                {
-                    CurrentAttack.target.takeFatigue(1);
-                    CombatLog.Log(CurrentAttack.target.GetName() + " is stunned for " + diff + " rounds");
-                    CurrentAttack.target.SetCondition("Stunned", (diff), true);
-                }
-                else
-                {
-                    PopUpText.CreateText("Resisted!", Color.yellow,CurrentAttack.target.gameObject);
-                }
-            }
-            
-            CurrentAttack = null;
-            Cancel();
-        }
-        else if(CurrentAttack.FireRate.Equals("Grapple"))
-        {
-            if(CurrentAttack.attacks > 0)
-            {
-                CurrentAttack.target.SetGrappler(CurrentAttack.attacker);
-            }
-            
-            CurrentAttack = null;
-            Cancel();
-        }
-        else
-        {    
-            TacticsAttack.DealDamage(CurrentAttack);
-            CurrentAttack = null;
-            Cancel();
-        }
-
+        TacticsAttack.DealDamage(CurrentAttack);
+        CurrentAttack = null;
+        Cancel();
     }
 
     public void SupressingFire(List<Transform> targets)
@@ -1070,11 +874,11 @@ public class TurnActionsSR : UIButtonManager
         {
             PlayerStats CurrentStats = t.GetComponent<PlayerStats>();
             //only attacker is out of range of the spray. ALLIES CAN GET HIT TOO
-            if(CurrentStats.GetTeam() != ActivePlayerStats.GetTeam() && !CurrentStats.hasCondition("Pinned"))
+            if(CurrentStats.GetTeam() != ActivePlayerStats.GetTeam())
             {
-                CurrentStats.AbilityCheck("WP",-20,"Suppression");
+                //CurrentStats.AbilityCheck("WP",-20,"Suppression");
             }
-            CurrentStats.SetCondition("Under Fire", 1,false);
+            //CurrentStats.SetCondition("Under Fire", 1,false);
         } 
         StartCoroutine(SuppressionDelay(targets));
     }
@@ -1141,18 +945,6 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
-    public void GuardedCancel()
-    {
-        ActivePlayerStats.RemoveCondition("GuardedAttack");
-        Cancel();
-    }
-
-    public void AllOutCancel()
-    {
-        ActivePlayerStats.RemoveCondition("AllOut");
-        Cancel();
-    }
-
     public void PushToolTips()
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
@@ -1174,6 +966,18 @@ public class TurnActionsSR : UIButtonManager
         TooltipBehavior.UpdateToolTips(output);
     }
 
+    private void SpendFreeAction()
+    {
+        if(freeActions > 0)
+        {
+            freeActions--;
+        }
+        else
+        {
+            halfActions--;
+        }
+    }
+
     public void Cancel()
     {
         if(halfActions < 0)
@@ -1182,21 +986,15 @@ public class TurnActionsSR : UIButtonManager
         }
         ActiveWeapon = null;
         ConstructActions();
-        if(ActivePlayerStats.GetRepeatingAction() != null)
-        {
-            currentAction = ActivePlayerStats.GetRepeatingAction();
-        }
-        else
-        {
-            Move();
-        }
+        Move();
         FireRate = null;
         target = null;
-        HitLocation = null;
         ValidTargets = null;
         RepeatedAttacks = 0;
         attacks = 0;
-        PlayerUIDisplay.GetComponent<UIPlayerInfo>().UpdateDisplay(ActivePlayerStats, halfActions);
+        UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
         PushToolTips();
+        
+        TokenDragBehavior.ToggleMovement(true);
     }
 }

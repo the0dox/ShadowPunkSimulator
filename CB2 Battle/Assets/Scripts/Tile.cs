@@ -20,7 +20,7 @@ public class Tile : MonoBehaviour
     public float distance = 0; 
 
     public int ArmorValue = 8;
-    public int TotalAV;
+    public int StructurePoints = 4;
     public Vector3 MapPosition;
 
     public static Vector3 topright = new Vector3(1,0,1);
@@ -35,7 +35,6 @@ public class Tile : MonoBehaviour
     void Start()
     {
         MapPosition = transform.position;
-        TotalAV = ArmorValue;
         ScrolledBox.SetActive(false);
     }
     // Update is called once per frame
@@ -140,24 +139,46 @@ public class Tile : MonoBehaviour
         return null; 
     }
 
-    public int CoverReduction(int damage, int AP)
+    public void damageCover(AttackSequence incomingAttack)
     {
-        if(ArmorValue < (damage + AP))
+        CombatLog.Log("by getting 0 hits, " + incomingAttack.attacker.GetName() + " hits cover!");
+
+        int damage = incomingAttack.ActiveWeapon.GetDamage();
+        int AP = incomingAttack.ActiveWeapon.Template.pen;
+
+        int armorDice = ArmorValue - AP;
+
+        int successes = 0;
+
+        for(int i = 0; i < armorDice; i++)
         {
-            ArmorValue--;
-            float percentage = ((float)TotalAV)/ArmorValue;
-            
-            if(ArmorValue < 1)
+            int result = Random.Range(1,7);
+            if(result > 4)
             {
-                CombatLog.Log("Cover is sufficiently damaged that it provides no AP");
+                successes++;
             }
-            else
-            {
-                CombatLog.Log("Cover is reduced to " + ArmorValue + "AP");
-            }
-        return ArmorValue + 1;
         }
-        return ArmorValue;
+
+        if(damage > successes)
+        {
+            int netDamage = TacticsAttack.AmmoExpenditure[incomingAttack.FireRate]; 
+            StructurePoints -= netDamage;
+            Debug.Log(StructurePoints +"<SP ");
+            PopUpText.CreateText("-" + netDamage, Color.red, gameObject);
+            if(StructurePoints < 1)
+            {
+                GlobalManager.RemoveTile(this);
+            }
+        }
+        else
+        {
+            PopUpText.CreateText("-0", Color.yellow, gameObject);
+        }
+    }
+
+    public Tile GetStackedTile()
+    {
+        return (BoardBehavior.GetTile(transform.position + Vector3.up)); 
     }
 
     public void OnScrolled(bool on)
@@ -168,6 +189,6 @@ public class Tile : MonoBehaviour
 
     public void DestroyMe()
     {
-        DestroyImmediate(this);
+        Destroy(gameObject);
     }
 }

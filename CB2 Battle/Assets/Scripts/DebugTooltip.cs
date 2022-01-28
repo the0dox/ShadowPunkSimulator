@@ -29,13 +29,13 @@ public class DebugTooltip : MonoBehaviour
         AdderPopup.SetActive(true);
         AdderConditionField.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
-        Dictionary<string,ConditionTemplate> Conditions = ConditionsReference.ConditionTemplates();
-        foreach(string Key in Conditions.Keys)
+        Dictionary<Condition,ConditionTemplate> Conditions = ConditionsReference.ConditionTemplates();
+        foreach(Condition Key in Conditions.Keys)
         {
             if(!myStats.hasCondition(Key))
             {
                 Dropdown.OptionData NewData = new Dropdown.OptionData();
-                NewData.text = Key;
+                NewData.text = Key.ToString();
                 results.Add(NewData);
             }
         }
@@ -49,13 +49,13 @@ public class DebugTooltip : MonoBehaviour
         SubtracterPopup.SetActive(true);
         SubtractConditionField.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
-        Dictionary<string,ConditionTemplate> Conditions = ConditionsReference.ConditionTemplates();
-        foreach(string Key in Conditions.Keys)
+        Dictionary<Condition,ConditionTemplate> Conditions = ConditionsReference.ConditionTemplates();
+        foreach(Condition Key in Conditions.Keys)
         {
             if(myStats.hasCondition(Key))
             {
                 Dropdown.OptionData NewData = new Dropdown.OptionData();
-                NewData.text = Key;
+                NewData.text = Key.ToString();
                 results.Add(NewData);
             }
         }
@@ -83,7 +83,8 @@ public class DebugTooltip : MonoBehaviour
 
     public void AddCondition()
     {
-        string conditionSelection = AdderConditionField.captionText.text;
+        Condition conditionSelection;
+        Condition.TryParse<Condition>(AdderConditionField.captionText.text, true, out conditionSelection);
         int num = 0;
         int size = 0;
         int result = 0;
@@ -121,7 +122,7 @@ public class DebugTooltip : MonoBehaviour
             }
             logOutput += " = " + result +"\n"; 
         }
-        logOutput += myStats.GetName() + " gains the " + conditionSelection + " condition for " + result + " rounds.";
+        logOutput += myStats.GetName() + " gains the " + conditionSelection.ToString() + " condition for " + result + " rounds.";
         CombatLog.Log(logOutput);
         myStats.SetCondition(conditionSelection,result,true);
         DestroyMe();
@@ -172,8 +173,9 @@ public class DebugTooltip : MonoBehaviour
 
     public void RemoveCondition()
     {
-        string conditionSelection = SubtractConditionField.captionText.text;
-        CombatLog.Log(myStats.GetName() + " loses the " + conditionSelection + " condition.");
+        Condition conditionSelection;
+        Condition.TryParse<Condition>(AdderConditionField.captionText.text, true, out conditionSelection);
+        CombatLog.Log(myStats.GetName() + " loses the " + conditionSelection.ToString() + " condition.");
         myStats.RemoveCondition(conditionSelection);
         DestroyMe();
     }
