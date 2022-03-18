@@ -757,9 +757,9 @@ public class TurnActionsSR : UIButtonManager
         ConstructActions(d);
     }
 
-    public void Aim1()
+    public void Aim()
     {
-        ActivePlayerStats.SetCondition(Condition.Aiming, 1, true);
+        ActivePlayerStats.SetCondition(Condition.Aiming, 0, true);
         ActivePlayerStats.ResetRecoilPenalty();
         CombatLog.Log(ActivePlayerStats.GetName() + " steadies their aim, reseting their recoil penalty!");
         halfActions--;
@@ -863,6 +863,7 @@ public class TurnActionsSR : UIButtonManager
     public void ResolveHit()
     {
         TacticsAttack.DealDamage(CurrentAttack);
+        CurrentAttack.attacker.RemoveCondition(Condition.Aiming);
         CurrentAttack = null;
         Cancel();
     }

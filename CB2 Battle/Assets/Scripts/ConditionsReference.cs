@@ -46,4 +46,5 @@ public enum Condition
     CalledShot,
     Covered,
     Running,
+    FullDefense
 }

@@ -589,8 +589,8 @@ public class TurnManager : TurnActionsSR
 
     public void TotalDefense()
     {
-        int willpowerBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Willpower);
-        TacticsAttack.Defend(CurrentAttack,willpowerBonus);
+        CurrentAttack.target.SetCondition(Condition.FullDefense,1,true);
+        TacticsAttack.Defend(CurrentAttack,0);
         SubtractIniative(CurrentAttack.target,10);
         ClearActions();
     }

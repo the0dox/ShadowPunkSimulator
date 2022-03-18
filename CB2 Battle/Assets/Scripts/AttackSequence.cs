@@ -26,6 +26,7 @@ public class AttackSequence
     public bool soakRolled = false;
     public bool AttackMissed = false;
     public Tile CoverTile;
+    public int coverRange = 0;
 
     // creates an attack sequence without specifying a hitlocation
     public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks, bool skipAttack)
@@ -39,16 +40,6 @@ public class AttackSequence
         {
             attackRoll = new RollResult();
         }
-    }
-    // creates an attack sequence while specifying a hitlocation
-    public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks,string HitLocation)
-    {
-        this.ActiveWeapon = ActiveWeapon;
-        this.attacker = attacker;
-        this.target = target;
-        this.FireRate = ROF;
-        this.attacks =attacks;
-        this.HitLocation = HitLocation;
     }
     
     public void AttackRollComplete()
@@ -64,14 +55,14 @@ public class AttackSequence
         {
             netHits -= reactionRoll.GetHits();
         } 
-        // Attack misses if net hits is 0 or less TO IMPLEMENT: Scrape
+        // Attack misses if net hits is 0
         if(netHits < 0)
         {
             CombatLog.Log(target.GetName() + " avoids the attack!");
             PopUpText.CreateText("Missed", Color.yellow, target.gameObject);
             AttackMissed = true;
         }
-        else if(netHits < 1)
+        else if(netHits <= coverRange)
         {
             HitCover();
             AttackMissed = true;
@@ -97,15 +88,7 @@ public class AttackSequence
     {
         if(CoverTile != null && target.hasCondition(Condition.Covered))
         {
-            Tile stackedCover = CoverTile.GetStackedTile();
-            if(stackedCover != null)
-            {
-                stackedCover.damageCover(this);
-            }
-            else
-            {
-                CoverTile.damageCover(this);
-            }
+            CoverTile.damageCover(this);
         }
         else
         {

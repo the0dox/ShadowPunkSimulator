@@ -37,7 +37,17 @@ public static class TacticsAttack
         Tile coverTile = GetCoverTile(myStats.gameObject, target.gameObject);
         if(coverTile != null)
         {
-            output.CoverTile = coverTile;
+            Tile stackedCover = coverTile.GetStackedTile();
+            if(stackedCover != null)
+            {
+                output.CoverTile = stackedCover;
+                output.coverRange = 4;
+            }
+            else
+            {
+                output.CoverTile = coverTile;
+                output.coverRange = 2;
+            }
         }
 
         RollResult attackRoll = new RollResult(myStats.myData, w, totalModifiers);
@@ -190,7 +200,9 @@ public static class TacticsAttack
         RaycastHit hit;
         Tile tile;
 
-        if (Physics.Raycast(target.transform.position, Vector3.left, out hit, 1))
+        Vector3 targetnormpos = new Vector3(target.transform.position.x, Mathf.FloorToInt(target.transform.position.y), target.transform.position.z);
+        Debug.Log(targetnormpos);
+        if (Physics.Raycast(targetnormpos, Vector3.left, out hit, 1))
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
@@ -201,12 +213,12 @@ public static class TacticsAttack
 
                 if (roundedAngle < 0)
                 {                
-                    //CombatLog.Log("Covered from the left");
+                    CombatLog.Log("Covered from the left");
                     return tile;
                 }
             }
         }
-        if (Physics.Raycast(target.transform.position, Vector3.right, out hit, 1))
+        if (Physics.Raycast(targetnormpos, Vector3.right, out hit, 1))
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
@@ -217,12 +229,12 @@ public static class TacticsAttack
 
                 if (roundedAngle > 0 && roundedAngle < 180)
                 {                
-                    //CombatLog.Log("Covered from the right");
+                    CombatLog.Log("Covered from the right");
                     return tile;
                 }
             }
         }
-        if (Physics.Raycast(target.transform.position, Vector3.forward, out hit, 1))
+        if (Physics.Raycast(targetnormpos, Vector3.forward, out hit, 1))
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
@@ -233,12 +245,12 @@ public static class TacticsAttack
 
                 if (roundedAngle > -90 && roundedAngle < 90 )
                 {                
-                    //CombatLog.Log("Covered from the front");
+                    CombatLog.Log("Covered from the front");
                     return tile;
                 }
             }
         }
-        if (Physics.Raycast(target.transform.position, Vector3.back, out hit, 1))
+        if (Physics.Raycast(targetnormpos, Vector3.back, out hit, 1))
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
@@ -249,7 +261,7 @@ public static class TacticsAttack
 
                 if (roundedAngle < -90 || roundedAngle > 90)
                 {                
-                    //CombatLog.Log("Covered from the back");
+                    CombatLog.Log("Covered from the back");
                     return tile;
                 }
             }
@@ -284,25 +296,16 @@ public static class TacticsAttack
             Stack<string> outputStack = new Stack<string>();
             int attackDice = 0;
             int defenseDice = 0;
-            
-            Dictionary<string, int> modifiersDefensive = ApplyModifiers(tempAttackSequence,false);
-            foreach(string key in modifiersDefensive.Keys)
-            {
-                int modifier = modifiersDefensive[key];
-                string addition = "";
-                if(modifier > 0)
-                {
-                    addition = "+";
-                }
-                if(modifier != 0)
-                {
-                    outputStack.Push(addition + modifier + " from " + key);
-                    defenseDice += modifier;
-                }
-            }
             // bonus from attribute
+            
+            Dictionary<string, int> defenseModifiers = ApplyModifiers(tempAttackSequence,false);
             defenseDice += target.myData.GetAttribute(AttributeKey.Reaction) + target.myData.GetAttribute(AttributeKey.Intuition);
-            outputStack.Push("Total Defense Dice: " + defenseDice);
+            foreach(string key in defenseModifiers.Keys)
+            {
+                int modifier = defenseModifiers[key];
+                defenseDice += modifier;
+            }
+            outputStack.Push(GetCoverTooltip(tempAttackSequence));
             outputStack.Push("------------");
 
             Dictionary<string, int> modifiers = ApplyModifiers(tempAttackSequence,true);
@@ -332,7 +335,7 @@ public static class TacticsAttack
             
 
             outputStack.Push("Accuracy Limit: " + w.Template.accuracy);
-
+            outputStack.Push("Opposed by Defense: " + defenseDice);
             outputStack.Push("Total Attack Dice: " + attackDice);
 
             while(outputStack.Count > 0)
@@ -393,7 +396,7 @@ public static class TacticsAttack
         modifiers.Add(" from running", GetChargingBonus(thisAttack,type));
         modifiers.Add(" from prone condition", GetPronePenalty(thisAttack,type));
         modifiers.Add(" from prone target", GetProneTargetPenalty(thisAttack,type));
-        modifiers.Add(" from cover", GetCoverBonus(thisAttack,type));
+        modifiers.Add(" from full defense", GetFulldefenseBonus(thisAttack, type));
         return modifiers;
     }
 
@@ -543,30 +546,37 @@ public static class TacticsAttack
         {
             if(attack)
             {
-                return 1;
+                return 2;
             }
             else
             {
-                return -2; 
+                return -4; 
             }
         }
         return 0;
     }
 
-    private static int GetCoverBonus(AttackSequence thisAttack, bool attack)
+    private static int GetFulldefenseBonus(AttackSequence thisAttack, bool attack)
     {
-        Tile cover = GetCoverTile(thisAttack.attacker.gameObject, thisAttack.target.gameObject);
-        if(!attack)
+        if(!attack && thisAttack.target.hasCondition(Condition.FullDefense))
         {
-            if(thisAttack.target.hasCondition(Condition.Covered) && cover != null)
-            {
-                if(BoardBehavior.isAdvancedCover(cover))
-                {
-                    return 4;
-                }
-                return 2;
-            }
+            return thisAttack.target.myData.GetAttribute(AttributeKey.Willpower);
         }
         return 0;
+    }
+
+    private static string GetCoverTooltip(AttackSequence thisAttack)
+    {
+        Tile cover = GetCoverTile(thisAttack.attacker.gameObject, thisAttack.target.gameObject);
+        if(thisAttack.target.hasCondition(Condition.Covered) && cover != null)
+        {
+            // stacked cover provides more of a bonus
+            if(cover.GetStackedTile() != null)
+            {
+                return "target threshold: >4";
+            }
+            return "target threshold: >2";
+        }
+        return "target threshold: >0";
     }
 }

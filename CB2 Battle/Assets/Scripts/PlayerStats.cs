@@ -263,6 +263,13 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     }
     public RollResult AbilityCheck(AttributeKey skillKey, AttributeKey attributeKey = AttributeKey.Empty, AttributeKey LimitKey = AttributeKey.Empty, string customName = "", int threshold = 0, int modifier = 0)
     {
+        /*
+        int ConditionalModifiers = 0;
+        if(!customName.Equals("Armor"))
+        {
+            ConditionalModifiers += getStun()/3 + getWounds()/3;
+        }
+        */
         RollResult newRoll = new RollResult(myData, skillKey, attributeKey, LimitKey, threshold, modifier);
         newRoll.customName = customName;
         return newRoll;

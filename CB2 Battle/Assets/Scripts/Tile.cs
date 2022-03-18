@@ -141,7 +141,7 @@ public class Tile : MonoBehaviour
 
     public void damageCover(AttackSequence incomingAttack)
     {
-        CombatLog.Log("by getting 0 hits, " + incomingAttack.attacker.GetName() + " hits cover!");
+        CombatLog.Log("by getting between 0-" + incomingAttack.coverRange +  " hits, " + incomingAttack.attacker.GetName() + " hits cover!");
 
         int damage = incomingAttack.ActiveWeapon.GetDamage();
         int AP = incomingAttack.ActiveWeapon.Template.pen;
