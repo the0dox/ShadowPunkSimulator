@@ -34,18 +34,15 @@ public static class TacticsAttack
         }
 
         // Save cover 
-        Tile coverTile = GetCoverTile(myStats.gameObject, target.gameObject);
-        if(coverTile != null)
+        output.CoverTile = GetCoverTile(myStats.transform.position, target.transform.position, true);
+        if(output.CoverTile != null)
         {
-            Tile stackedCover = coverTile.GetStackedTile();
-            if(stackedCover != null)
+            if(output.CoverTile.IsStackedTile())
             {
-                output.CoverTile = stackedCover;
                 output.coverRange = 4;
             }
             else
             {
-                output.CoverTile = coverTile;
                 output.coverRange = 2;
             }
         }
@@ -194,26 +191,23 @@ public static class TacticsAttack
     }
 
 
-    public static Tile GetCoverTile(GameObject attacker,  GameObject target)
+    public static Tile GetCoverTile(Vector3 attacker,  Vector3 target, bool repeat)
     {
 
         RaycastHit hit;
         Tile tile;
-
-        Vector3 targetnormpos = new Vector3(target.transform.position.x, Mathf.FloorToInt(target.transform.position.y), target.transform.position.z);
-        Debug.Log(targetnormpos);
+        Vector3 targetnormpos = new Vector3(target.x, Mathf.FloorToInt(target.y) + 1, target.z);
         if (Physics.Raycast(targetnormpos, Vector3.left, out hit, 1))
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
             {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker.transform.position);
+                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
                 float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
                 int roundedAngle = Mathf.RoundToInt(angle);
 
                 if (roundedAngle < 0)
                 {                
-                    CombatLog.Log("Covered from the left");
                     return tile;
                 }
             }
@@ -223,13 +217,12 @@ public static class TacticsAttack
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
             {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker.transform.position);
+                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
                 float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
                 int roundedAngle = Mathf.RoundToInt(angle);
 
                 if (roundedAngle > 0 && roundedAngle < 180)
                 {                
-                    CombatLog.Log("Covered from the right");
                     return tile;
                 }
             }
@@ -239,13 +232,12 @@ public static class TacticsAttack
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
             {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker.transform.position);
+                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
                 float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
                 int roundedAngle = Mathf.RoundToInt(angle);
 
                 if (roundedAngle > -90 && roundedAngle < 90 )
                 {                
-                    CombatLog.Log("Covered from the front");
                     return tile;
                 }
             }
@@ -255,16 +247,19 @@ public static class TacticsAttack
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
             {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker.transform.position);
+                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
                 float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
                 int roundedAngle = Mathf.RoundToInt(angle);
 
                 if (roundedAngle < -90 || roundedAngle > 90)
                 {                
-                    CombatLog.Log("Covered from the back");
                     return tile;
                 }
             }
+        }
+        if(repeat)
+        {
+            return GetCoverTile(attacker, target + new Vector3(0,-1,0), false);
         }
         return null;
     }
@@ -567,11 +562,11 @@ public static class TacticsAttack
 
     private static string GetCoverTooltip(AttackSequence thisAttack)
     {
-        Tile cover = GetCoverTile(thisAttack.attacker.gameObject, thisAttack.target.gameObject);
+        Tile cover = GetCoverTile(thisAttack.attacker.transform.position, thisAttack.target.transform.position, true);
         if(thisAttack.target.hasCondition(Condition.Covered) && cover != null)
         {
             // stacked cover provides more of a bonus
-            if(cover.GetStackedTile() != null)
+            if(cover.IsStackedTile())
             {
                 return "target threshold: >4";
             }

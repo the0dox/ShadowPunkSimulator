@@ -112,4 +112,100 @@ public class BoardBehavior : MonoBehaviour
       }
     }
 
+    public static void DistributeCoverDamage(Vector3 originalPos, int Damage)
+    {
+        Tile originalTile = GetTile(originalPos);
+        Damage = originalTile.DamageCover(Damage);
+
+        List<Vector3> destructableNeighbors = new List<Vector3>();
+        destructableNeighbors = ValidDestructableNeighbors(destructableNeighbors, originalPos);
+
+        Debug.Log("valid neighbors:" + destructableNeighbors.Count);
+
+        
+
+        // countine damaging cover until all damage has been applied or all cover is gone
+        while(Damage > 0 && destructableNeighbors.Count > 0)
+        {
+            // select random tile within neighbors and apply remaing damage to it
+            int randomIndex = Random.Range(0, destructableNeighbors.Count); 
+            Vector3 randomPosition = destructableNeighbors[randomIndex];
+            Tile randomTile = GetTile(randomPosition);
+
+            if(randomTile != null)
+            {
+                Damage = randomTile.DamageCover(Damage);
+            }
+
+            // if tile is destroyed remove it from the list
+            if(randomTile == null)
+            {
+                destructableNeighbors.Remove(randomPosition);
+                Debug.Log("I'm destroyed and removed");
+            }
+            destructableNeighbors = ValidDestructableNeighbors(destructableNeighbors, randomPosition);
+        }
+        Debug.Log("finished");
+        //RemoveIllogicalTiles();
+    }
+
+    private static List<Vector3> ValidDestructableNeighbors(List<Vector3> currentTiles, Vector3 newlyDestroyedTile)
+    {
+        for(int x = -1; x < 2; x++)
+        {
+            for(int y = -1; y < 2; y++)
+            {
+                for(int z = -1; z < 2; z++)
+                {
+                    Vector3 potentialTileposition = newlyDestroyedTile + new Vector3(x,y,z);
+                    Tile potentialTile = GetTile(potentialTileposition);
+                    // new tile must not be a duplicate, exist, and also not be an indestructable floor tile
+                    if(!currentTiles.Contains(potentialTileposition) && potentialTile != null && !potentialTile.blank)
+                    {
+                        currentTiles.Add(potentialTileposition);
+                    }
+                }
+            }
+        }
+        return currentTiles;
+    }
+
+    private static void RemoveIllogicalTiles()
+    {
+        foreach(Vector3 key in Tiles.Keys)
+        {
+            Tile currentTile = Tiles[key];
+            if(!currentTile.blank)
+            {
+                if(Tiles.ContainsKey(key + Vector3.forward))
+                {
+                    break;
+                }
+                
+                if(Tiles.ContainsKey(key + Vector3.back))
+                {
+                    break;
+                }
+
+                if(Tiles.ContainsKey(key + Vector3.left))
+                {
+                    break;
+                }
+                if(Tiles.ContainsKey(key + Vector3.right))
+                {
+                    break;
+                }
+                if(Tiles.ContainsKey(key + Vector3.up))
+                {
+                    break;
+                }
+                if(Tiles.ContainsKey(key + Vector3.down))
+                {
+                    break;
+                }
+                Debug.Log("illogical tile detected");
+                GlobalManager.RemoveTile(currentTile);
+            }
+        }
+    }
 }

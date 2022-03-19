@@ -5,9 +5,19 @@ using Photon.Pun;
 
 public class LoadingManager : MonoBehaviourPunCallbacks
 {
+    [SerializeField] private bool offlineMode = false;
+
     private void Start()
     {
-        PhotonNetwork.ConnectUsingSettings();
+        PhotonNetwork.OfflineMode = offlineMode;
+        if(offlineMode)
+        {
+            PhotonNetwork.LoadLevel("Lobby");
+        }
+        else
+        {
+            PhotonNetwork.ConnectUsingSettings();
+        }
     }
 
     public override void OnConnectedToMaster()

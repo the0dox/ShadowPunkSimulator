@@ -259,7 +259,6 @@ public class TurnManager : TurnActionsSR
 
     private void CompletePass()
     {
-        Debug.Log("passcomplete");
         SortedList<float, PlayerStats> TempSorter = new SortedList<float, PlayerStats>(); 
 
         foreach (KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors) 

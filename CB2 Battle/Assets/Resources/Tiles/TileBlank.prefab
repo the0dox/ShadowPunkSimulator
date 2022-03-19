@@ -132,13 +132,14 @@ MonoBehaviour:
   selectable: 0
   attack: 0
   selectableRunning: 0
+  blank: 1
   adjacencyList: []
   diagonalList: []
   visited: 0
   parent: {fileID: 0}
   distance: 0
   ArmorValue: 0
-  TotalAV: 0
+  StructurePoints: -1
   MapPosition: {x: 0, y: 0, z: 0}
   indicator: {fileID: 4736577032655970459}
   transMat: {fileID: 2100000, guid: b5ecadc6e6a64ae4a96bf9ab6e70058e, type: 2}

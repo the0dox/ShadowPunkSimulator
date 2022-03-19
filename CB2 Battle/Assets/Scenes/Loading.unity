@@ -328,6 +328,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 7695c400b440ea549a2be7281306a0a5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  offlineMode: 1
 --- !u!4 &1989459284
 Transform:
   m_ObjectHideFlags: 0

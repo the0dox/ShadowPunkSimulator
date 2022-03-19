@@ -88,7 +88,7 @@ public class AttackSequence
     {
         if(CoverTile != null && target.hasCondition(Condition.Covered))
         {
-            CoverTile.damageCover(this);
+            CoverTile.HitCover(this);
         }
         else
         {

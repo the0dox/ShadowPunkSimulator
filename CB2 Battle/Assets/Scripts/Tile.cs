@@ -11,6 +11,7 @@ public class Tile : MonoBehaviour
     public bool selectable = false; 
     public bool attack = false;
     public bool selectableRunning = false; 
+    public bool blank = false;
     public List<Tile> adjacencyList = new List<Tile>();
     public List<Tile> diagonalList = new List<Tile>();
 
@@ -139,7 +140,7 @@ public class Tile : MonoBehaviour
         return null; 
     }
 
-    public void damageCover(AttackSequence incomingAttack)
+    public void HitCover(AttackSequence incomingAttack)
     {
         CombatLog.Log("by getting between 0-" + incomingAttack.coverRange +  " hits, " + incomingAttack.attacker.GetName() + " hits cover!");
 
@@ -162,23 +163,45 @@ public class Tile : MonoBehaviour
         if(damage > successes)
         {
             int netDamage = TacticsAttack.AmmoExpenditure[incomingAttack.FireRate]; 
-            StructurePoints -= netDamage;
-            Debug.Log(StructurePoints +"<SP ");
-            PopUpText.CreateText("-" + netDamage, Color.red, gameObject);
-            if(StructurePoints < 1)
-            {
-                GlobalManager.RemoveTile(this);
-            }
+            BoardBehavior.DistributeCoverDamage(transform.position, netDamage);
         }
         else
         {
+            
             PopUpText.CreateText("-0", Color.yellow, gameObject);
         }
     }
 
-    public Tile GetStackedTile()
+    public int DamageCover(int damage)
     {
-        return (BoardBehavior.GetTile(transform.position + Vector3.up)); 
+        // blank tiles cannot be destroyed
+        if(blank)
+        {
+            Debug.LogError("Error: cannot damage blank tiles, is the tile selector method functioning properly?");
+            return -1;
+        }
+        int netDamage = damage - StructurePoints;
+        StructurePoints -= damage;
+        PopUpText.CreateText("-" + damage, Color.red, gameObject);
+        if(StructurePoints < 1)
+        {
+            GlobalManager.RemoveTile(this);
+        }
+        Debug.Log("remaining damage:" + netDamage);
+        return netDamage;
+    }
+
+    public bool IsStackedTile()
+    {
+        Tile underTile = BoardBehavior.GetTile(transform.position + Vector3.down);
+        if(underTile != null)
+        {
+            if (!underTile.blank)
+            {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void OnScrolled(bool on)
