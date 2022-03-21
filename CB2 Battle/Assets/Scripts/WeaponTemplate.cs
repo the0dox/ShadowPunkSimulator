@@ -36,8 +36,20 @@ public class WeaponTemplate : ItemTemplate
     [SerializeField] public WeaponClass weaponClass;
     [SerializeField] public bool Lethal;
     [SerializeField] public bool debugAddAllUpgrades = false;
+    [SerializeField] public BlastClass blastClass = BlastClass.none;
 
 }
+
+public enum BlastClass
+{
+    // used for most weapons
+    none,
+    // grenades and rockets
+    sphere,
+    // fire cones and overwatch 
+    cone
+}
+
 public enum reloadingMethod
 {
     // uses detachable clip easiest to reload

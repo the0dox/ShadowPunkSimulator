@@ -280,21 +280,14 @@ public class CharacterSaveData
         // if this object is already owned by the player
         if(item.Stackable())
         {
+            // if 
             if(equipmentObjects.Contains(item))
             {
                 item.AddStack();
             }
             else
-            {
-                Item myItem = GetItem(item.Template.name);
-                if(myItem != null)
-                {
-                    myItem.AddStack();
-                }
-                else
-                {
-                    equipmentObjects.Add(item);   
-                }
+            {   
+                equipmentObjects.Add(item);   
             }
         }
         else 

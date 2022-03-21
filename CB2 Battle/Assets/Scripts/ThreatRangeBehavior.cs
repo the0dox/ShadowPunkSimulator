@@ -216,7 +216,7 @@ public class ThreatRangeBehavior : MonoBehaviour
 
     IEnumerator Scatter()
     {
-        RollResult ScatterRoll = attacker.AbilityCheck("BS",0);
+        RollResult ScatterRoll = attacker.AbilityCheck(w.Template.WeaponSkill.skillKey, w.Template.WeaponSkill.derrivedAttribute, AttributeKey.PhysicalLimit, null , 3,0);
         while(!ScatterRoll.Completed())
         {
             yield return new WaitForSeconds (0.5f);
@@ -224,6 +224,12 @@ public class ThreatRangeBehavior : MonoBehaviour
         if(!ScatterRoll.Passed())
         {
             int distance = Random.Range(1,6);
+            //SR rule more hits = less scatter
+            distance -= ScatterRoll.GetHits();
+            if(distance < 0)
+            {
+                distance = 0;
+            }
             transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
             gameObject.transform.Translate(transform.forward.normalized * distance);
             pv.RPC("RPC_ScatterMove",RpcTarget.Others, transform.position);

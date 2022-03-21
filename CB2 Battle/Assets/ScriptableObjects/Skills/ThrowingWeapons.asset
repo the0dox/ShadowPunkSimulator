@@ -17,6 +17,9 @@ MonoBehaviour:
   derrivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
-  Specializations: []
+  displayText: Used for throwing anything from shurkiens to grenades
+  limit: 24
+  Specializations:
+  - Aerodynamic
+  - Blades
+  - Non-aerodynamic

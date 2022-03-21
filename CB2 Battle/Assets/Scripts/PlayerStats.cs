@@ -528,6 +528,22 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         defensePenality++;
     }
 
+    public void RemoveItem(Item item)
+    {
+        myData.RemoveItem(item);
+        if(!myData.equipmentObjects.Contains(item))
+        {
+            if(PrimaryWeapon == item)
+            {
+                PrimaryWeapon = null;
+            }
+            if(SecondaryWeapon == item)
+            {
+                SecondaryWeapon = null;
+            }
+        }
+    }
+
     public void PaintTarget(bool painted)
     {
         if(painted)

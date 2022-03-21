@@ -27,6 +27,7 @@ public class AttackSequence
     public bool AttackMissed = false;
     public Tile CoverTile;
     public int coverRange = 0;
+    private bool skipAttack = false;
 
     // creates an attack sequence without specifying a hitlocation
     public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks, bool skipAttack)
@@ -38,7 +39,10 @@ public class AttackSequence
         this.attacks =attacks;
         if(skipAttack)
         {
-            attackRoll = new RollResult();
+            attackRolled = true;
+            reactionRolled = true;
+            this.skipAttack = true;
+            SoakRoll();
         }
     }
     
@@ -70,18 +74,23 @@ public class AttackSequence
         // If attack hits, start a soak roll
         else
         {
-            int armorMod = target.GetAP();
-            int armorPen = ActiveWeapon.GetAP();
-            if(armorMod > 0)
-            {
-                armorMod -= armorPen;
-            }
-            if(armorMod < 0)
-            {
-                armorMod = 0;
-            }
-            soakRoll = target.AbilityCheck(AttributeKey.Body, AttributeKey.Empty, AttributeKey.Empty, "Armor", 0, armorMod);
+            SoakRoll();    
         }
+    }
+
+    public void SoakRoll()
+    {
+        int armorMod = target.GetAP();
+        int armorPen = ActiveWeapon.GetAP();
+        if(armorMod > 0)
+        {
+            armorMod -= armorPen;
+        }
+        if(armorMod < 0)
+        {
+            armorMod = 0;
+        }
+        soakRoll = target.AbilityCheck(AttributeKey.Body, AttributeKey.Empty, AttributeKey.Empty, "Armor", 0, armorMod);
     }
 
     private void HitCover()
@@ -97,6 +106,15 @@ public class AttackSequence
         }
     }
     
+    public int GetNetHits()
+    {
+        if(skipAttack)
+        {
+            return 0;
+        }
+        return attackRoll.GetHits() - reactionRoll.GetHits();
+    }
+
     public void SoakRollComplete()
     {
         soakRolled = true;

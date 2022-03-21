@@ -67,7 +67,7 @@ public static class TacticsAttack
 
     public static void DealDamage(AttackSequence currentAttack)
     {
-        int damageBonus = currentAttack.attackRoll.GetHits() - currentAttack.reactionRoll.GetHits() - currentAttack.soakRoll.GetHits();
+        int damageBonus = currentAttack.GetNetHits() - currentAttack.soakRoll.GetHits();
         int weaponDamage = currentAttack.ActiveWeapon.GetDamage();
         if(currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
         {
@@ -88,7 +88,7 @@ public static class TacticsAttack
             currentAttack.target.takeStun(totalDamage);
             PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.cyan, currentAttack.target.gameObject); 
         }
-        CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + (currentAttack.attackRoll.GetHits() - currentAttack.reactionRoll.GetHits()) + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
+        CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + currentAttack.GetNetHits() + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
         
     }
 

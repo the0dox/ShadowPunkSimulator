@@ -86,7 +86,7 @@ public class ThreatCone : MonoBehaviour
                 }
             }
         }
-        Debug.Log(visibleTargets.Count);
+        //Debug.Log(visibleTargets.Count);
     }
 
     void OnCollisionExit(Collision collision)

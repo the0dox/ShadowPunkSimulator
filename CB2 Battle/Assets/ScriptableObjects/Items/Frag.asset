@@ -10,7 +10,7 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Weapons
+  m_Name: Frag
   m_EditorClassIdentifier: 
   weight: 0
   cost: 0
@@ -21,20 +21,22 @@ MonoBehaviour:
   icon: {fileID: 0}
   upgrades: []
   Attributes: []
-  damageBonus: 0
-  rangeClass: {fileID: 0}
-  pen: 0
+  damageBonus: 8
+  rangeClass: {fileID: 11400000, guid: 6d797f14716c8a244a8c9210da3ebc4a, type: 2}
+  pen: -5
   SingleShot: 0
   SemiAuto: 0
   BurstFire: 0
   FullAuto: 0
-  WeaponSkill: {fileID: 0}
-  WeaponSpecialization: 0
+  WeaponSkill: {fileID: 11400000, guid: 22e33267de80d744fb4c108660dfa26d, type: 2}
+  WeaponSpecialization: 2
   accuracy: 0
   clipMax: 0
   damageType: 
-  blast: 0
-  AmmoSource: {fileID: 0}
+  blast: 5
+  AmmoSource: {fileID: 11400000}
   clipType: 0
-  Lethal: 0
+  weaponClass: 2
+  Lethal: 1
   debugAddAllUpgrades: 0
+  blastClass: 1

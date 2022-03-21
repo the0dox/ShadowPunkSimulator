@@ -134,6 +134,18 @@ public class Weapon : Item
             }
             return output;
         }
+        if(IsWeaponClass(WeaponClass.thrown))
+        {
+            if(Template.blastClass.Equals(BlastClass.sphere))
+            {
+                output.Add("Throw Attack", "BlastAttack");
+            }
+            else
+            {
+                output.Add("Throw Attack", "fireThrown");
+            }
+            return output;
+        }
         if(FireRate.Equals("SS") && clip > 0)
         {
             output.Add("Single Shot", "fireSS");
@@ -274,7 +286,7 @@ public class Weapon : Item
 
     public int getRange(PlayerStats owner)
     {
-        if(IsWeaponClass(WeaponClass.ranged))
+        if(IsWeaponClass(WeaponClass.thrown))
         {
             return owner.GetStat(AttributeKey.Strength) * 3;
         }
@@ -342,25 +354,32 @@ public class Weapon : Item
     }
     public string ROFtoString()
     {
-        string output = "";
-        if(Template.SingleShot)
+        if(IsWeaponClass(WeaponClass.ranged))
         {
-            output += "SS/";
+            string output = "";
+            if(Template.SingleShot)
+            {
+                output += "SS/";
+            }
+            if(Template.SemiAuto)
+            {
+                output += "SA/";
+            }
+            if(Template.BurstFire)
+            {
+                output += "BF/";
+            }
+            if(Template.FullAuto)
+            {
+                output += "FA/";
+            }
+            output.TrimEnd(output[output.Length - 1]);
+            return output;
         }
-        if(Template.SemiAuto)
+        else
         {
-            output += "SA/";
-        }
-        if(Template.BurstFire)
-        {
-            output += "BF/";
-        }
-        if(Template.FullAuto)
-        {
-            output += "FA/";
-        }
-        output.TrimEnd(output[output.Length - 1]);
-        return output;
+            return "";
+        }        
     }
 
     public int getClip()

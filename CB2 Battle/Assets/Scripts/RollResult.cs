@@ -192,7 +192,7 @@ public class RollResult
 
     public bool Passed()
     {
-        return (successes - threshold) > 0;
+        return successes >= threshold;
     }
 
     // returns a int value if glitched, 0 for no glitch, 1 for standard, 2 for critical
