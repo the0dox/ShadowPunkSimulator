@@ -237,6 +237,15 @@ public class ThreatRangeBehavior : MonoBehaviour
         }
         yield return new WaitForSeconds (0.2f);
         TurnManager.BlastAttack(myRange.GetTargets());
+        if(w.Template.Lethal)
+        {
+            List<Transform> Tiles = myRange.GetCover();
+            foreach(Transform t in Tiles)
+            {
+                Tile currentTile = BoardBehavior.GetTile(t.position);
+                currentTile.HitCover(w);
+            }
+        }
     }
 
     [PunRPC]

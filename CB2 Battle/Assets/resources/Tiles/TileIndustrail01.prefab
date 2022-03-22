@@ -285,7 +285,7 @@ MonoBehaviour:
   parent: {fileID: 0}
   distance: 0
   ArmorValue: 9
-  StructurePoints: 1
+  StructurePoints: 2
   MapPosition: {x: 0, y: 0, z: 0}
   indicator: {fileID: 6073068602247506577}
   transMat: {fileID: 2100000, guid: b5ecadc6e6a64ae4a96bf9ab6e70058e, type: 2}

@@ -10,6 +10,8 @@ public class ThreatCone : MonoBehaviour
 	private List<Transform> visibleTargets = new List<Transform>();
     // List of transforms that line of sight applies 
     private List<Transform> validTargets = new List<Transform>();
+    private List<Transform> validCover = new List<Transform>();
+    private bool collectCover = false;
     // Toggles wether the threat range (transparent red area) is visible to the player, determined by threatrangebehavior
     public bool draw = true;
     // Toggled to use the stricter los rules for blast weapons
@@ -72,17 +74,26 @@ public class ThreatCone : MonoBehaviour
     {
         foreach (ContactPoint contact in collision.contacts)
         {
+            Transform currentTransform = contact.otherCollider.transform;
             // los is expensive and should only be called on players
             if(contact.otherCollider.tag == "Player")
             {
                 // checks los between players so long as they aren't excluded
-                if( ValidContact(contact.otherCollider.transform) && contact.otherCollider.transform != avoidOwner)
+                if( ValidContact(currentTransform) && currentTransform != avoidOwner)
                 {
-                    if(!visibleTargets.Contains(contact.otherCollider.transform) )
+                    if(!visibleTargets.Contains(currentTransform))
                     {
                         
-                        visibleTargets.Add(contact.otherCollider.transform);
+                        visibleTargets.Add(currentTransform);
                     }
+                }
+            }
+            else if(contact.otherCollider.tag == "Tile")
+            {
+                if(!validCover.Contains(currentTransform))
+                {
+                    Debug.Log("adding tile at " + collision.gameObject.transform.position);
+                    validCover.Add(currentTransform);
                 }
             }
         }
@@ -91,15 +102,23 @@ public class ThreatCone : MonoBehaviour
 
     void OnCollisionExit(Collision collision)
     {
+        Transform myTrans = collision.transform;
         // los is expensive and should only be called on players
         if(collision.gameObject.tag == "Player")
         {
-            Transform myTrans = collision.transform;
             if(visibleTargets.Contains(myTrans))
             {
                 myTrans.GetComponent<PlayerStats>().PaintTarget(false);
                 visibleTargets.Remove(myTrans);
-                Debug.Log(myTrans.gameObject.name + "has left my view");
+            }
+        }
+        else if(collision.gameObject.tag == "Tile")
+        {
+            if(validCover.Contains(myTrans))
+            {
+                Debug.Log("removing tile at " + collision.gameObject.transform.position);
+                Transform myTile = collision.transform;
+                validCover.Remove(myTile);
             }
         }
     }
@@ -114,7 +133,6 @@ public class ThreatCone : MonoBehaviour
         {
             return TacticsAttack.HasLOS(target.gameObject, avoidOwner.gameObject);
         }
-
     }
 
     // Returns the transforms of all players within the threat range to the behavior class
@@ -126,6 +144,12 @@ public class ThreatCone : MonoBehaviour
             t.GetComponent<PlayerStats>().PaintTarget(false);
         }
         return visibleTargets;
+    }
+
+    public List<Transform> GetCover()
+    {
+        Debug.Log(validCover.Count + " valid cover count");
+        return validCover;
     }
 
     // used by behavior class to destroy the visual component of the token

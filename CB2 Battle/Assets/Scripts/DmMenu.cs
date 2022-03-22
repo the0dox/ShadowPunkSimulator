@@ -10,15 +10,19 @@ public class DmMenu : MonoBehaviourPunCallbacks
     static private Dictionary<int, CharacterSaveData> SavedCharacters;
     
     [SerializeField] private GameObject PlayerScreen;
+    [SerializeField] private GameObject ClientScreen;
     [SerializeField] private GameObject SelectorButton;
     [SerializeField] private GameObject SceneButton;
     [SerializeField] private Text MDRtoggleStatus;
     [SerializeField] private PhotonView pv;
+    private static GameObject ClientInstance;
     private static GameObject DisplayInstance;
     private static GameObject PlayerScreenInstance;
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
     private List<SceneSaveData> SavedScenes = new List<SceneSaveData>();
     private Vector3 CharacterSelectorPos;
+    private bool ClientNoPlayer = true;
+    private int ClientPlayerID = -999;
     private static GameObject instance;
     private static PhotonView spv;
     private Dictionary<int, string> DummyCharacters = new Dictionary<int, string>();
@@ -31,11 +35,39 @@ public class DmMenu : MonoBehaviourPunCallbacks
             StartCoroutine(LoadDelay());
         }
         instance = gameObject;
+        ClientInstance = ClientScreen;
         DisplayInstance = Display;
         PlayerScreenInstance = PlayerScreen;
         //AddMissingSkill("KnockDown",1);
         SkillPromptBehavior.ManualRolls = false;
         MDRToggle();
+    }
+
+    void Update()
+    {
+        // on pressing escape
+        if(Input.GetKeyUp(KeyCode.Escape))
+        {
+            // show dm menu to the server creator
+            if(pv.IsMine)
+            {
+                Toggle();
+            }
+            // if a single player
+            else
+            {
+                // first time calling players need to open the character select screen
+                if(ClientNoPlayer)
+                {
+                    SinglePlayerToggle();
+                }
+                // Clients with a character will instead get their charactersheets
+                else
+                {
+                    DisplayCharacterSheet(ClientPlayerID);
+                }
+            }
+        }
     }
 
     IEnumerator LoadDelay()
@@ -77,6 +109,19 @@ public class DmMenu : MonoBehaviourPunCallbacks
         }
 
         MDRtoggleStatus.text = "Die Entries: " + addition;
+    }
+
+    public void SinglePlayerToggle()
+    {   
+        CameraButtons.UIFreeze(!PlayerScreenInstance.activeInHierarchy);
+        if(PlayerScreenInstance.activeInHierarchy)
+        {
+            PlayerScreenInstance.SetActive(false);
+        }
+        else
+        {
+            ViewCharacters();
+        }
     }
 
     public static void Toggle()

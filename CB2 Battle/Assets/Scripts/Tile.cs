@@ -167,8 +167,36 @@ public class Tile : MonoBehaviour
         }
         else
         {
-            
             PopUpText.CreateText("-0", Color.yellow, gameObject);
+        }
+    }
+
+    // damage cover without spreading feature
+    public void HitCover(Weapon incomingWeapon)
+    {
+        int damage = incomingWeapon.GetDamage();
+        int AP = incomingWeapon.Template.pen;
+
+        int armorDice = ArmorValue - AP;
+
+        int successes = 0;
+
+        for(int i = 0; i < armorDice; i++)
+        {
+            int result = Random.Range(1,7);
+            if(result > 4)
+            {
+                successes++;
+            }
+        }
+
+        if(damage > successes)
+        {
+            int strucutreDamage = incomingWeapon.GetDamage() * 2; 
+            if(strucutreDamage >= StructurePoints)
+            {
+                GlobalManager.RemoveTile(this);
+            }
         }
     }
 
