@@ -97,6 +97,7 @@ MonoBehaviour:
   - RPC_DestroyTile
   - RPC_AssignCharacter
   - RPC_ClientDisplay
+  - RPC_StartTurn
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

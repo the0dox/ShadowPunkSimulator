@@ -9,6 +9,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject Display;
     static private Dictionary<int, CharacterSaveData> SavedCharacters;
     static private Dictionary<int, Photon.Realtime.Player> CharacterPermissions;
+    static private Dictionary<int, bool> ActiveCharacterSheets;
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject ClientScreen;
     [SerializeField] private GameObject SelectorButton;
@@ -20,7 +21,6 @@ public class DmMenu : MonoBehaviourPunCallbacks
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
     private List<SceneSaveData> SavedScenes = new List<SceneSaveData>();
     private Vector3 CharacterSelectorPos;
-    private int ClientPlayerID = -999;
     private static GameObject instance;
     private static PhotonView spv;
     private Dictionary<int, string> DummyCharacters = new Dictionary<int, string>();
@@ -73,6 +73,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(1f);
         SavedCharacters = new Dictionary<int, CharacterSaveData>();
         CharacterPermissions = new Dictionary<int, Photon.Realtime.Player>();
+        ActiveCharacterSheets = new Dictionary<int, bool>();
         int index = 0;
         foreach(CharacterSaveData csd in SaveSystem.LoadPlayer())
         {
@@ -115,6 +116,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         MDRtoggleStatus.text = "Die Entries: " + addition;
     }
 
+    // A player client can either ask for available sheets if they don't have an avatar or call for their avatar's sheet
     public void SinglePlayerToggle()
     {   
         CameraButtons.UIFreeze(!PlayerScreenInstance.activeInHierarchy);
@@ -190,6 +192,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         
     }
 
+    // called on the master by a given client, sends back a charactersheet
     [PunRPC]
     void RPC_ClientDisplay(int callingPlayerID)
     {
@@ -202,9 +205,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
                 if(kvp.Value != null && kvp.Value.Equals(CallingPlayer))
                 {
                     CharacterSaveData csd = SavedCharacters[kvp.Key];
-                    GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet", new Vector3(), Quaternion.identity);
-                    CharacterSheet characterSheet = newSheet.GetComponent<CharacterSheet>();
-                    characterSheet.UpdateStatsIn(csd, callingPlayerID);
+                    SendClientCharacterSheet(csd,callingPlayerID);
                 }
             }
         }
@@ -223,6 +224,37 @@ public class DmMenu : MonoBehaviourPunCallbacks
             pv.RPC("RPC_Recieve_Players", CallingPlayer, dummyCopy);
         }
         
+    }
+
+    // master sends character data to calling player id
+    private void SendClientCharacterSheet(CharacterSaveData csd, int callingPlayerID)
+    {
+        if(!ActiveCharacterSheets.ContainsKey(callingPlayerID))
+        {
+            ActiveCharacterSheets.Add(callingPlayerID, false);
+        }
+        if(!ActiveCharacterSheets[callingPlayerID])
+        {
+            //flag indicating its safe to send charactersheet
+            ActiveCharacterSheets[callingPlayerID] = true;
+            GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet", new Vector3(), Quaternion.identity);
+            CharacterSheet characterSheet = newSheet.GetComponent<CharacterSheet>();
+            characterSheet.UpdateStatsIn(csd, callingPlayerID);
+        }
+        else
+        {
+            Debug.Log("first sheet needs to be exited out first");
+        }
+    }
+
+    // master knows that this player can ask for another charactersheet 
+    public static void RemoveClientSheet(int callingPlayerID)
+    {
+        if(!ActiveCharacterSheets.ContainsKey(callingPlayerID))
+        {
+            ActiveCharacterSheets.Add(callingPlayerID, false);
+        }
+        ActiveCharacterSheets[callingPlayerID] = false;
     }
 
     [PunRPC]
@@ -298,6 +330,26 @@ public class DmMenu : MonoBehaviourPunCallbacks
         spv.RPC("RPC_AssignCharacter",RpcTarget.MasterClient,StatsID,myID);
     }
 
+    public static Photon.Realtime.Player GetOwner(PlayerStats player)
+    {
+        CharacterSaveData csd = player.myData;
+        if(SavedCharacters.ContainsValue(csd))
+        {
+            foreach(KeyValuePair<int,CharacterSaveData> kvp in SavedCharacters)
+            {
+                if(kvp.Value == csd)
+                {
+                    int index = kvp.Key;
+                    if(CharacterPermissions.ContainsKey(index) && CharacterPermissions[index] != null)
+                    {
+                        return CharacterPermissions[index];
+                    }
+                }
+            }
+        }
+        return PhotonNetwork.LocalPlayer;
+    }
+
     // called from a player to the master, assigns selected character to player 
     [PunRPC]
     void RPC_AssignCharacter(int StatsID, int callingPlayerID)
@@ -306,11 +358,11 @@ public class DmMenu : MonoBehaviourPunCallbacks
         if(CharacterPermissions.ContainsKey(StatsID) && CharacterPermissions[StatsID] == null)
         {
             CharacterPermissions[StatsID] = CallingPlayer;
-            CombatLog.Log("Character " + SavedCharacters[StatsID] + " is now assigned to Player " + callingPlayerID);
+            CombatLog.Log("Character " + SavedCharacters[StatsID].playername + " is now assigned to Player " + callingPlayerID);
         }
         else
         {
-            CombatLog.Log("Character " + SavedCharacters[StatsID] + " is already assigned!");
+            CombatLog.Log("Character " + SavedCharacters[StatsID].playername + " is already assigned!");
         }
     }
 }

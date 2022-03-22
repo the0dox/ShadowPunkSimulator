@@ -21,6 +21,7 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     [SerializeField] private Image ActionFree;
     [SerializeField] private Image HealthBar;
     [SerializeField] private Image MoveBar;
+    [SerializeField] private GameObject display;
     private static UIPlayerInfo instance;
     
     void Awake()
@@ -29,7 +30,7 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     }
 
     public static void UpdateDisplay(PlayerStats ps, int actions, int freeActions)
-    {
+    {  
         instance.UpdateDisplayInstance(ps,actions,freeActions);
     }
 
@@ -95,5 +96,27 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         // Weapons
         WeaponOne.text = WeaponOneText;
         WeaponTwo.text = WeaponTwoText;
+    }
+
+    public static void StartTurn(PlayerStats activePlayer)
+    {
+        Photon.Realtime.Player activePlayerOwner = DmMenu.GetOwner(activePlayer);
+        instance.pv.RPC("RPC_StartTurn",RpcTarget.All, activePlayerOwner.ActorNumber);
+    }
+
+    [PunRPC]
+    void RPC_StartTurn(int PlayerID)
+    {
+        Photon.Realtime.Player activePlayer = PhotonNetwork.CurrentRoom.GetPlayer(PlayerID);
+        if(pv.IsMine || PhotonNetwork.LocalPlayer == activePlayer)
+        {   
+            Debug.Log("I own this player");
+            instance.display.SetActive(true);
+        }
+        else
+        {
+            Debug.Log("I don't own this player");
+            instance.display.SetActive(false);
+        }
     }
 }

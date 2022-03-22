@@ -228,8 +228,8 @@ public class TurnManager : TurnActionsSR
         if (IntiativeActiveActors.Count > 0) 
         {
             ActivePlayerStats = IntiativeActiveActors[IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1]];
+            UIPlayerInfo.StartTurn(ActivePlayerStats);
             ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
-            //CombatLog.Log("player " + ActivePlayerStats.GetName() + " is starting their turn");
             halfActions = 2;
             freeActions = 1;
             ActivePlayerStats.ResetActions();

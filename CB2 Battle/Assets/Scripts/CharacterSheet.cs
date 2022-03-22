@@ -41,29 +41,35 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     public void UpdateStatsOut()
     {
         CameraButtons.UIFreeze(false);
+        // if this is called client side send my changes to the server
         if(!pv.IsMine)
         {
-            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, ActivePlayer.CompileStats(), ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber, NameField.text, ActivePlayer.CompileStats(), ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
         }
-        else if(CurrentToken != null && CurrentToken.team != 0)
+        // if this is server side apply the changes
+        else 
         {
-            CurrentToken.NPCHealth = this.NPCHealth;
-            CurrentToken.OnDownload();
-        }
-        else
-        {
-            
-            GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-            foreach(GameObject p in players)
+            // apply changes to npcs
+            if(CurrentToken != null && CurrentToken.team != 0)
             {
-                PlayerStats currentPlayer = p.GetComponent<PlayerStats>();
-                if(currentPlayer.myData.Equals(ActivePlayer))
+                CurrentToken.NPCHealth = this.NPCHealth;
+                CurrentToken.OnDownload();
+            }
+            // apply changes to an individual player
+            else
+            {
+                GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+                foreach(GameObject p in players)
                 {
-                    currentPlayer.OnDownload();
+                    PlayerStats currentPlayer = p.GetComponent<PlayerStats>();
+                    if(currentPlayer.myData.Equals(ActivePlayer))
+                    {
+                        currentPlayer.OnDownload();
+                    }
                 }
             }
+            PhotonNetwork.Destroy(gameObject);
         }
-        Destroy(gameObject);
     }
 
     // playerstats activeplayer in the initative queue
@@ -85,7 +91,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         }
         ActivePlayer = input;
         Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
-        //server side edit, no need for transfer
+        //server side edit, no need for transfer notice this is always called by master so isMine doesn't work here
         if(CallingPlayer == pv.Owner)
         {
             UpdateStatsIn();
@@ -261,8 +267,9 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Client sends this to the master to be saved 
     [PunRPC]
-    void RPC_SyncStatsOut(string newName,  string[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
+    void RPC_SyncStatsOut(int callingPlayerID, string newName, string[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
     {
+        DmMenu.RemoveClientSheet(callingPlayerID);
         ActivePlayer.playername = newName;
         ActivePlayer.skillSpecialization = newSpecalizations;
         List<string> convertedArray = new List<string>();
