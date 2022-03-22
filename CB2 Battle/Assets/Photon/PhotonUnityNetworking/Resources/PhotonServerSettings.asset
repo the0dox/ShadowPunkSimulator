@@ -95,6 +95,8 @@ MonoBehaviour:
   - RPC_List_Single
   - RPC_ToggleMovement
   - RPC_DestroyTile
+  - RPC_AssignCharacter
+  - RPC_ClientDisplay
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

@@ -119,7 +119,7 @@ public class Item
             }
         }
         output = output.TrimEnd(output[output.Length - 1]);
-        Debug.Log(name + " saving upgrade keys " + output);
+        //Debug.Log(name + " saving upgrade keys " + output);
         return output;
     }
 

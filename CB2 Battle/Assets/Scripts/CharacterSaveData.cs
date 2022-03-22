@@ -52,11 +52,11 @@ public class CharacterSaveData
         CalculateCharacteristics();
     }
 
-    public CharacterSaveData(string playername, int[] attribues, Dictionary<string,int> specalizations, List<string> newequipment)
+    public CharacterSaveData(string playername, string[] attribues, Dictionary<string,int> specalizations, List<string> newequipment)
     {
         this.playername = playername;
-        this.attribues = attribues;
         this.skillSpecialization = specalizations;
+        DecompileStats(attribues);
         decompileEquipment(newequipment);
     }
 
@@ -74,6 +74,32 @@ public class CharacterSaveData
         equipmentCode = compileEquipment();
         equipmentObjects = null;
     }
+    
+    // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
+    // a dictionary when the player is created 
+    public string[] CompileStats()
+    {
+        string[] convertedAttributes = new string[100];
+        for(int i = 0; i < 100; i++)
+        {
+            string convertedAttribute = attribues[i].ToString();
+            convertedAttributes[i] = convertedAttribute;
+        }
+        return convertedAttributes;
+    }
+
+    public void DecompileStats(string[]newAttributes)
+    {
+        int[] convertedAttributes = new int[100];
+        for(int i = 0; i < 100; i++)
+        {
+            int convertedInt = 0;
+            int.TryParse(newAttributes[i], out convertedInt);
+            convertedAttributes[i] = convertedInt;
+        }
+        this.attribues = convertedAttributes;
+    }
+
 
     public void decompileEquipment(List<string> newequipmentcode)
     {
@@ -115,7 +141,7 @@ public class CharacterSaveData
                 int clip = weaponcast.getClip();
                 code+="|" + clip;
             }
-            Debug.Log(code);
+            //Debug.Log(code);
             output.Add(code); 
         }
         return output;

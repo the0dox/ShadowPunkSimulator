@@ -8,24 +8,24 @@ public class DmMenu : MonoBehaviourPunCallbacks
 {
     [SerializeField] private GameObject Display;
     static private Dictionary<int, CharacterSaveData> SavedCharacters;
-    
+    static private Dictionary<int, Photon.Realtime.Player> CharacterPermissions;
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject ClientScreen;
     [SerializeField] private GameObject SelectorButton;
     [SerializeField] private GameObject SceneButton;
     [SerializeField] private Text MDRtoggleStatus;
     [SerializeField] private PhotonView pv;
-    private static GameObject ClientInstance;
     private static GameObject DisplayInstance;
     private static GameObject PlayerScreenInstance;
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
     private List<SceneSaveData> SavedScenes = new List<SceneSaveData>();
     private Vector3 CharacterSelectorPos;
-    private bool ClientNoPlayer = true;
     private int ClientPlayerID = -999;
     private static GameObject instance;
     private static PhotonView spv;
     private Dictionary<int, string> DummyCharacters = new Dictionary<int, string>();
+
+    public static CharacterSheet ActiveCharacterSheet;
 
     void Start()
     {
@@ -35,7 +35,6 @@ public class DmMenu : MonoBehaviourPunCallbacks
             StartCoroutine(LoadDelay());
         }
         instance = gameObject;
-        ClientInstance = ClientScreen;
         DisplayInstance = Display;
         PlayerScreenInstance = PlayerScreen;
         //AddMissingSkill("KnockDown",1);
@@ -48,8 +47,15 @@ public class DmMenu : MonoBehaviourPunCallbacks
         // on pressing escape
         if(Input.GetKeyUp(KeyCode.Escape))
         {
+            // delete sheets if active
+            if(ActiveCharacterSheet != null)
+            {
+                ActiveCharacterSheet.UpdateStatsOut();
+                ActiveCharacterSheet = null;
+                CameraButtons.UIFreeze(false);
+            }
             // show dm menu to the server creator
-            if(pv.IsMine)
+            else if(pv.IsMine)
             {
                 Toggle();
             }
@@ -57,15 +63,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
             else
             {
                 // first time calling players need to open the character select screen
-                if(ClientNoPlayer)
-                {
-                    SinglePlayerToggle();
-                }
-                // Clients with a character will instead get their charactersheets
-                else
-                {
-                    DisplayCharacterSheet(ClientPlayerID);
-                }
+                SinglePlayerToggle();
             }
         }
     }
@@ -74,10 +72,16 @@ public class DmMenu : MonoBehaviourPunCallbacks
     {
         yield return new WaitForSeconds(1f);
         SavedCharacters = new Dictionary<int, CharacterSaveData>();
+        CharacterPermissions = new Dictionary<int, Photon.Realtime.Player>();
         int index = 0;
         foreach(CharacterSaveData csd in SaveSystem.LoadPlayer())
         {
             SavedCharacters.Add(index, csd);
+            // add players 
+            if(csd.team == 0)
+            {
+                CharacterPermissions.Add(index, null);
+            }
             index++;
         }
         SavedScenes = SaveSystem.LoadScenes();
@@ -120,7 +124,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         }
         else
         {
-            ViewCharacters();
+            pv.RPC("RPC_ClientDisplay", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
         }
     }
 
@@ -135,6 +139,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     {
         CharacterSaveData newplayer = new CharacterSaveData(true);
         SavedCharacters.Add(SavedCharacters.Count, newplayer);
+        CharacterPermissions.Add(SavedCharacters.Count, null);
         ViewCharacters();
     }
     public void CreateNPC()
@@ -158,28 +163,72 @@ public class DmMenu : MonoBehaviourPunCallbacks
         }
     }
 
+    //smart view of all character sheets for DM only!
     public void ViewCharacters()
     {
-        pv.RPC("RPC_GetDummyPlayers", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
+        foreach(GameObject prevButton in PrevSelectorButtons)
+        {
+            Destroy(prevButton);
+        }
+        CharacterSelectorPos = new Vector3(250,130,0);
+        PlayerScreen.SetActive(true);
+        foreach(int key in SavedCharacters.Keys)
+        {
+            GameObject newButton = Instantiate(SelectorButton) as GameObject;
+            newButton.transform.SetParent(PlayerScreen.transform);
+            newButton.transform.localPosition = CharacterSelectorPos;
+            newButton.GetComponent<CharacterSelectorButton>().SetData(key, SavedCharacters[key]);
+            newButton.transform.localScale = Vector3.one;
+            PrevSelectorButtons.Add(newButton);
+            CharacterSelectorPos -= new Vector3(125,0,0);
+            if(CharacterSelectorPos.x < -250)
+            {
+                CharacterSelectorPos.x = 250;
+                CharacterSelectorPos.y -= 75;
+            }
+        }
+        
     }
 
     [PunRPC]
-    void RPC_GetDummyPlayers(int callingPlayerID)
+    void RPC_ClientDisplay(int callingPlayerID)
     {
         Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
-        Dictionary<int,string> dummyCopy = new Dictionary<int, string>();
-        foreach(KeyValuePair<int,CharacterSaveData> kvp in SavedCharacters)
+        // if I own a player, find it and send back his character sheet
+        if(CharacterPermissions.ContainsValue(CallingPlayer))
         {
-            dummyCopy.Add(kvp.Key,kvp.Value.playername);
+            foreach(KeyValuePair<int, Photon.Realtime.Player> kvp in CharacterPermissions)
+            {
+                if(kvp.Value != null && kvp.Value.Equals(CallingPlayer))
+                {
+                    CharacterSaveData csd = SavedCharacters[kvp.Key];
+                    GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet", new Vector3(), Quaternion.identity);
+                    CharacterSheet characterSheet = newSheet.GetComponent<CharacterSheet>();
+                    characterSheet.UpdateStatsIn(csd, callingPlayerID);
+                }
+            }
         }
-        pv.RPC("RPC_Recieve_Players", CallingPlayer, dummyCopy);
+        // if I don't own a player, display unowned players 
+        else
+        {
+            Dictionary<int,string> dummyCopy = new Dictionary<int, string>();
+            foreach(KeyValuePair<int,CharacterSaveData> kvp in SavedCharacters)
+            {
+                // if a player and not owned by anyone
+                if(CharacterPermissions.ContainsKey(kvp.Key) && CharacterPermissions[kvp.Key] == null)
+                {
+                    dummyCopy.Add(kvp.Key,kvp.Value.playername);
+                }
+            }
+            pv.RPC("RPC_Recieve_Players", CallingPlayer, dummyCopy);
+        }
+        
     }
 
     [PunRPC]
     void RPC_Recieve_Players(Dictionary<int, string> newPlayers)
     {
         DummyCharacters = newPlayers;
-        bool amClient = pv.IsMine;
         foreach(GameObject prevButton in PrevSelectorButtons)
         {
             Destroy(prevButton);
@@ -191,14 +240,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
             GameObject newButton = Instantiate(SelectorButton) as GameObject;
             newButton.transform.SetParent(PlayerScreen.transform);
             newButton.transform.localPosition = CharacterSelectorPos;
-            if(amClient)
-            {
-                newButton.GetComponent<CharacterSelectorButton>().SetData(index, SavedCharacters[index]);
-            }
-            else
-            {  
-                newButton.GetComponent<CharacterSelectorButton>().SetDummyData(index, DummyCharacters[index]);
-            }
+            newButton.GetComponent<CharacterSelectorButton>().SetDummyData(index, DummyCharacters[index]);
             newButton.transform.localScale = Vector3.one;
             PrevSelectorButtons.Add(newButton);
             CharacterSelectorPos -= new Vector3(125,0,0);
@@ -248,17 +290,27 @@ public class DmMenu : MonoBehaviourPunCallbacks
         return null;
     }
 
-    public static void DisplayCharacterSheet(int StatsID)
+    // Player side reference to claim a character sends the corresponding RPC to master
+    public static void AssignCharacter(int StatsID)
     {
-        int myID = PhotonNetwork.LocalPlayer.ActorNumber;   
-        spv.RPC("RPC_CharacterSheet",RpcTarget.MasterClient,StatsID,myID);
+        int myID = PhotonNetwork.LocalPlayer.ActorNumber;
+        PlayerScreenInstance.SetActive(false);
+        spv.RPC("RPC_AssignCharacter",RpcTarget.MasterClient,StatsID,myID);
     }
 
+    // called from a player to the master, assigns selected character to player 
     [PunRPC]
-    void RPC_CharacterSheet(int StatsID, int callingPlayerID)
+    void RPC_AssignCharacter(int StatsID, int callingPlayerID)
     {
-        CharacterSaveData csd = SavedCharacters[StatsID];
-        GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet", new Vector3(), Quaternion.identity);
-        newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(csd, callingPlayerID);
+        Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
+        if(CharacterPermissions.ContainsKey(StatsID) && CharacterPermissions[StatsID] == null)
+        {
+            CharacterPermissions[StatsID] = CallingPlayer;
+            CombatLog.Log("Character " + SavedCharacters[StatsID] + " is now assigned to Player " + callingPlayerID);
+        }
+        else
+        {
+            CombatLog.Log("Character " + SavedCharacters[StatsID] + " is already assigned!");
+        }
     }
 }

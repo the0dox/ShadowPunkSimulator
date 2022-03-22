@@ -87,7 +87,7 @@ public class CharacterSelectorButton : MonoBehaviour
     {
         if(isDummy)
         {
-            DmMenu.DisplayCharacterSheet(index);
+            DmMenu.AssignCharacter(index);
         }
         else
         {

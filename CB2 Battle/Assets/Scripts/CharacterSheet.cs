@@ -29,6 +29,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     private int NPCHealth = -1;
     // Called when created downloads player data onto the sheet and freezes the screen
     public void Init(){
+        DmMenu.ActiveCharacterSheet = this;
         CameraButtons.UIFreeze(true);
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
         transform.localPosition = new Vector3();
@@ -39,11 +40,10 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     // Uploading data is different depending on if we are editing save data of a map token
     public void UpdateStatsOut()
     {
-
         CameraButtons.UIFreeze(false);
         if(!pv.IsMine)
         {
-            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, ActivePlayer.attribues, ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, NameField.text, ActivePlayer.CompileStats(), ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
         }
         else if(CurrentToken != null && CurrentToken.team != 0)
         {
@@ -93,7 +93,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         // client side edit, transfer charactershetet
         else
         { 
-            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.GetStats(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.CompileStats(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth);
         }
     }
     // Generic info that both kinds of download needs to know
@@ -243,7 +243,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Master sends this to the client to be edited
     [PunRPC]
-    void RPC_SyncStats(string name, int[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth)
+    void RPC_SyncStats(string name, string[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth)
     {
         List<string> convertedArray = new List<string>();
         for(int i = 0; i < equipment.Length; i++)
@@ -261,10 +261,9 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Client sends this to the master to be saved 
     [PunRPC]
-    void RPC_SyncStatsOut(string newName,  int[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
+    void RPC_SyncStatsOut(string newName,  string[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
     {
         ActivePlayer.playername = newName;
-        ActivePlayer.attribues = newCharacteristics;
         ActivePlayer.skillSpecialization = newSpecalizations;
         List<string> convertedArray = new List<string>();
         for(int i = 0; i < newequipment.Length; i++)
@@ -272,7 +271,9 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
             convertedArray.Add(newequipment[i]);
         }
         ActivePlayer.decompileEquipment(convertedArray);
+        ActivePlayer.DecompileStats(newCharacteristics);
         NPCHealth = newNPCHealth;
         UpdateStatsOut();
     }
+
 }
