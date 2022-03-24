@@ -20,6 +20,14 @@ public class BoardBehavior : MonoBehaviour
         //ComputeAdjacencyLists(1);
     }
 
+    public static void ClearBoard()
+    {    
+        foreach (Vector3 key in Tiles.Keys)
+        {
+            Tiles[key].reset();
+        }
+    }
+
     public static Tile GetTile(Vector3 pos)
     {
         if(Tiles.ContainsKey(pos))
@@ -64,12 +72,6 @@ public class BoardBehavior : MonoBehaviour
             return false;
         }
         return true;
-    }
-
-    public static bool isAdvancedCover(Tile tile)
-    {
-        Vector3 newPos = tile.transform.position + Vector3.up;
-        return Tiles.ContainsKey(newPos);
     }
 
     public static bool InCover(GameObject player)

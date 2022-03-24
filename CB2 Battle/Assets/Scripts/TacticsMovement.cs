@@ -86,7 +86,6 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
    {
       PlayerStats myStats = GetComponent<PlayerStats>();
       float distance = (float)myStats.GetMovement();
-      int team = myStats.GetTeam();
       ComputeAdjacencyLists();
       GetCurrentTile();
 
@@ -100,18 +99,16 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
          while (process.Count > 0) 
          {
             Tile t = process.Dequeue();
-
-            selectableTiles.Add(t);
-            PlayerStats occupant = t.GetOccupant();
-            if(occupant == null || occupant.GetTeam() == team)
-            { 
-               if (t.distance < distance) {     
-
-                  foreach (Tile tile in t.adjacencyList)
-                  {
-                     
+            if (t.distance < distance) 
+            {    
+               foreach (Tile tile in t.adjacencyList)
+               {
+                  PlayerStats occupant = tile.GetOccupant();
+                  if(occupant == null)
+                  { 
                      if (!tile.visited)
                      {
+                        selectableTiles.Add(t);
                         tile.visited = true;
                         float distanceCost = 1;
                         if(t.diagonalList.Contains(tile))

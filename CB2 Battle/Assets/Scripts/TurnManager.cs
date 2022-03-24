@@ -12,7 +12,6 @@ public class TurnManager : TurnActionsSR
     [SerializeField] private GameObject DebugToolTipReference; 
     private bool gameStart = false;
     public InitativeTrackerScript It;
-    float incrementer = 0;
     
     SortedList<float, PlayerStats> IntiativeActiveActors = new SortedList<float, PlayerStats>(); 
     SortedList<float, PlayerStats> IntiativeFinishedActors = new SortedList<float, PlayerStats>(); 
@@ -342,10 +341,9 @@ public class TurnManager : TurnActionsSR
             PlayerStats ps = p.GetComponent<PlayerStats>();
             ps.StartRound();
             float initiative = ps.RollInitaitve() + (float)ps.GetStat(AttributeKey.Agility)/10f;
-            if(IntiativeActiveActors.ContainsKey(initiative))
+            while(IntiativeActiveActors.ContainsKey(initiative))
             {
-                incrementer += 0.01f;
-                initiative += incrementer;
+                initiative += 0.01f;
             }
             IntiativeActiveActors.Add(initiative,ps);
         }
@@ -561,11 +559,9 @@ public class TurnManager : TurnActionsSR
     {
         PlayerStats newps = newPlayer.GetComponent<PlayerStats>();
         float initiative = newps.RollInitaitve() + (float)newps.GetStat(AttributeKey.Agility)/10f;
-        Stack<TacticsMovement> TempStack = new Stack<TacticsMovement>();
-        if(IntiativeActiveActors.ContainsKey(initiative))
+        while(IntiativeFinishedActors.ContainsKey(initiative))
         {
-            incrementer += 0.01f;
-            initiative += incrementer;
+            initiative += 0.01f;
         }
         IntiativeFinishedActors.Add(initiative, newps);
         StartTurn();

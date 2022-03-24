@@ -71,6 +71,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(0.01f);
         foreach(Vector3 pos in playerEntities.Keys)
         {
+            yield return new WaitForSeconds(0.01f);
             PlayerSpawner.CreatePlayer(playerEntities[pos],pos, false);
         }
         GameObject GM = GameObject.FindGameObjectWithTag("GameController");
@@ -97,11 +98,22 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         LoadedScene = null;
     }
 
+    public static void ClearBoard()
+    {
+        Instance.pv.RPC("RPC_ResetBoard", RpcTarget.All);
+    }
+
+    [PunRPC] 
+    void RPC_ResetBoard()
+    {
+        BoardBehavior.ClearBoard();
+    }
+
     public static void RemoveTile(Tile destroyedTile)
     {
         Instance.pv.RPC("RPC_DestroyTile",RpcTarget.AllBuffered,destroyedTile.transform.position);
     }
-    
+
     [PunRPC]
     void RPC_DestroyTile(Vector3 destroyKey)
     {
@@ -117,6 +129,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
             Vector3 pos = new Vector3(float.Parse(posSplit[0]),float.Parse(posSplit[1]),float.Parse(posSplit[2]));
             GameObject Tile = TileReference.Tile(TileLocations[posKey]);
             GameObject newEntity = Instantiate(Tile) as GameObject;
+            newEntity.GetComponent<Tile>().reset();
             newEntity.transform.position = pos;
         }
         BoardBehavior.Init();

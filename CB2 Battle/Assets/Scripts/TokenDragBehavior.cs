@@ -120,6 +120,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         if(myToken != null)
         {
             PlayerStats myStats = myToken.GetComponent<PlayerStats>();
+            myToken.GetComponent<TacticsMovement>().PaintCurrentTile("");
             int id = myStats.GetID();
             pv.RPC("RPC_PlaceToken", RpcTarget.All, id, myPath.ToArray(), distance);
         }

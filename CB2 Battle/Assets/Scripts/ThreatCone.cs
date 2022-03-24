@@ -11,7 +11,6 @@ public class ThreatCone : MonoBehaviour
     // List of transforms that line of sight applies 
     private List<Transform> validTargets = new List<Transform>();
     private List<Transform> validCover = new List<Transform>();
-    private bool collectCover = false;
     // Toggles wether the threat range (transparent red area) is visible to the player, determined by threatrangebehavior
     public bool draw = true;
     // Toggled to use the stricter los rules for blast weapons

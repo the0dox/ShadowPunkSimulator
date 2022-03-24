@@ -839,12 +839,13 @@ public class TurnActionsSR : UIButtonManager
     public void TryReaction()
     {
         //CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
-        CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("current");
+        CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
         if(!CurrentAttack.AttackMissed)
         {
             CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
             List<string> l = new List<string>();
             l.Add("TotalDefense");
+            l.Add("Dodge");
             if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
             {
                 if(CurrentAttack.target.CanParry())
@@ -852,7 +853,6 @@ public class TurnActionsSR : UIButtonManager
                     l.Add("Parry");
                 }
                 l.Add("Block");
-                l.Add("Dodge");
             }
             l.Add("NoReaction");
             ConstructActions(l);
@@ -994,7 +994,11 @@ public class TurnActionsSR : UIButtonManager
         attacks = 0;
         UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
         PushToolTips();
-        
+        GlobalManager.ClearBoard();
+        if(ActivePlayer != null)
+        {
+            ActivePlayer.PaintCurrentTile("current");
+        }
         TokenDragBehavior.ToggleMovement(true);
     }
 }

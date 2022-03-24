@@ -309,7 +309,13 @@ public class CharacterSaveData
             // if 
             if(equipmentObjects.Contains(item))
             {
-                item.AddStack();
+                foreach(Item i in equipmentObjects)
+                {
+                    if(i.Equals(item))
+                    {
+                        i.AddStack();
+                    }
+                }
             }
             else
             {   

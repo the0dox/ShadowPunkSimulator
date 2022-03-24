@@ -191,5 +191,19 @@ public class Item
     {
         return(this.Template == other.Template);
     }
+
+    public override bool Equals(object obj)
+    {
+        if (obj == null)
+        {
+            return false;
+        }
+        if (!(obj is Item))
+        {
+            return false;
+        }
+        Item other = (Item)obj;
+        return this.Template == other.Template;
+    }
 }
 

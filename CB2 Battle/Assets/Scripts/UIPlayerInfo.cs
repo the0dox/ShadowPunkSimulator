@@ -110,12 +110,10 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         Photon.Realtime.Player activePlayer = PhotonNetwork.CurrentRoom.GetPlayer(PlayerID);
         if(pv.IsMine || PhotonNetwork.LocalPlayer == activePlayer)
         {   
-            Debug.Log("I own this player");
             instance.display.SetActive(true);
         }
         else
         {
-            Debug.Log("I don't own this player");
             instance.display.SetActive(false);
         }
     }
