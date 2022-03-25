@@ -2,13 +2,17 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+using UnityEngine.UI;
 
 public class LoadingManager : MonoBehaviourPunCallbacks
 {
     [SerializeField] private bool offlineMode = false;
+    [SerializeField] private Text descriptionTextObject;
+    [SerializeField] private string description;
 
     private void Start()
     {
+        descriptionTextObject.text = description + UnityEditor.PlayerSettings.bundleVersion;
         PhotonNetwork.OfflineMode = offlineMode;
         if(offlineMode)
         {

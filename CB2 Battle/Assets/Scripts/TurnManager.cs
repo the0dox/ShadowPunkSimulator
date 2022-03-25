@@ -12,10 +12,15 @@ public class TurnManager : TurnActionsSR
     [SerializeField] private GameObject DebugToolTipReference; 
     private bool gameStart = false;
     public InitativeTrackerScript It;
+    public static TurnManager instance;
     
     SortedList<float, PlayerStats> IntiativeActiveActors = new SortedList<float, PlayerStats>(); 
     SortedList<float, PlayerStats> IntiativeFinishedActors = new SortedList<float, PlayerStats>(); 
     // Start is called before the first frame update
+    void Awake()
+    {
+        instance = this;
+    }
 
     void Update ()
     {
@@ -142,63 +147,11 @@ public class TurnManager : TurnActionsSR
     {
         switch(currentAction)
         {
-        case "Move":
-            if (ServerHitObject.tag == "Tile" && !ActivePlayer.moving && currentAction != null)
-            {
-                /*
-                Tile t = ServerHitObject.GetComponent<Tile>();
-
-                //player can reach 
-                if (t.selectable)
-                {
-                    //make tile green
-                    ActivePlayer.moveToTile(t);
-                    halfActions--;
-                    AttackOfOppertunity();
-                    ActivePlayer.RemoveSelectableTiles();
-
-                    if(ActivePlayerStats.hasCondition("Braced"))
-                    {
-                    CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                    PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                    ActivePlayerStats.RemoveCondition("Braced");
-                    }
-                } 
-                else if (t.selectableRunning)
-                {
-                    //make tile green
-                    ActivePlayer.moveToTile(t);
-                    halfActions = 0;
-                    AttackOfOppertunity();
-                    ActivePlayer.RemoveSelectableTiles();
-
-                    if(ActivePlayerStats.hasCondition("Braced"))
-                    {
-                    CombatLog.Log("By moving, " + ActivePlayerStats.GetName() + " loses their Brace Condition");
-                    PopUpText.CreateText("Unbraced!", Color.red, ActivePlayerStats.gameObject);
-                    ActivePlayerStats.RemoveCondition("Braced");
-                    }
-                }
-                */
-            }
-            break;
         case "Attack":
             if (ServerHitObject.tag == "Player")
             {
                 RollToHit(ServerHitObject.GetComponent<PlayerStats>(), FireRate, ActiveWeapon, ActivePlayerStats);
             }
-            break;
-        case "CM":
-            if (ServerHitObject.tag == "Player")
-            {
-                PlayerStats CMtarget = ServerHitObject.GetComponent<PlayerStats>();
-                if(FireRate.Equals("Grapple"))
-                {
-                    RollToGrapple(CMtarget, ActivePlayerStats);
-                }
-            }
-            break;
-        default:
             break;
         }
     }
@@ -232,7 +185,7 @@ public class TurnManager : TurnActionsSR
             halfActions = 2;
             freeActions = 1;
             ActivePlayerStats.ResetActions();
-            ActivePlayer.ResetMove();
+            ActivePlayer.OnTurnStart();
             ApplyConditions();
             Cancel();
             PrintInitiative();
@@ -380,6 +333,7 @@ public class TurnManager : TurnActionsSR
     }
 
     public void EndTurn(){
+        ActivePlayerStats.OnTurnEnd();
         float newInitative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1] - 10;
         if(Mathf.FloorToInt(newInitative) < 1)
         {
@@ -487,6 +441,17 @@ public class TurnManager : TurnActionsSR
             }
         }
     }
+
+    public void FallComplete(TacticsMovement tm, int distance)
+    {
+        TokenDragBehavior.ToggleMovement(true);
+        PlayerStats fallingPlayer = tm.GetComponent<PlayerStats>();
+        if(distance > 3)
+        {
+            CombatLog.Log(fallingPlayer.GetName() + " falls " + distance + " meters and must resist fall damage equal to the distance fallen!");       
+            AttackQueue.Enqueue(new AttackSequence(fallingPlayer, distance, 4));
+        }
+    }   
 
     public void RollToGrapple(PlayerStats target, PlayerStats attacker)
     {

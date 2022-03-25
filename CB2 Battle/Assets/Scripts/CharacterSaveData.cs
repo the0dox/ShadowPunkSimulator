@@ -249,6 +249,15 @@ public class CharacterSaveData
         return skillSpecialization[skillKey] == SpecializationIndex+1;
     }
 
+    public int GetSpecializationIndex(string skillKey)
+    {
+        if(!skillSpecialization.ContainsKey(skillKey))
+        {
+            skillSpecialization.Add(skillKey,0);
+        }
+        return skillSpecialization[skillKey];
+    }
+
     // Converts Equipment and EquipmentSize into a readable list of Item objects
     public Dictionary<string,int> GetEquipment()
     {
@@ -303,10 +312,10 @@ public class CharacterSaveData
 
     public void AddItem(Item item)
     {
-        // if this object is already owned by the player
+        // if an item needs to be stacked
         if(item.Stackable())
         {
-            // if 
+            // if a player already has one of these items, stack exisiting item and discard the new one
             if(equipmentObjects.Contains(item))
             {
                 foreach(Item i in equipmentObjects)
@@ -318,10 +327,11 @@ public class CharacterSaveData
                 }
             }
             else
-            {   
+            {
                 equipmentObjects.Add(item);   
             }
         }
+        // unstackable items can be directly added to the inventory
         else 
         {
             equipmentObjects.Add(item);

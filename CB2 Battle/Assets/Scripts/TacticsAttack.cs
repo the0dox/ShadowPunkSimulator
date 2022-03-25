@@ -68,8 +68,8 @@ public static class TacticsAttack
     public static void DealDamage(AttackSequence currentAttack)
     {
         int damageBonus = currentAttack.GetNetHits() - currentAttack.soakRoll.GetHits();
-        int weaponDamage = currentAttack.ActiveWeapon.GetDamage();
-        if(currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        int weaponDamage = currentAttack.GetWeaponDamage();
+        if(currentAttack.ActiveWeapon != null && currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
         {
             weaponDamage += currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
         }
@@ -78,18 +78,56 @@ public static class TacticsAttack
         {
             totalDamage = 0;
         }
-        if(currentAttack.ActiveWeapon.Template.Lethal)
-        {
-            currentAttack.target.takeDamage(totalDamage);
-            PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.red, currentAttack.target.gameObject); 
-        }
-        else
+        if(currentAttack.ActiveWeapon != null && !currentAttack.ActiveWeapon.Template.Lethal)
         {
             currentAttack.target.takeStun(totalDamage);
             PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.cyan, currentAttack.target.gameObject); 
         }
+        else
+        {
+            currentAttack.target.takeDamage(totalDamage);
+            PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.red, currentAttack.target.gameObject); 
+        }
         CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + currentAttack.GetNetHits() + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
-        
+        ApplyCalledShots(currentAttack);
+    }
+
+    public static void ApplyCalledShots(AttackSequence currentAttack)
+    {
+        if(currentAttack.attacker.hasCondition(Condition.Disarm))
+        {
+            string popuptext = " has no weapon to disarm";
+            if(currentAttack.target.PrimaryWeapon != null)
+            {
+                popuptext = "'s " + currentAttack.target.PrimaryWeapon.GetName() + " is dropped!";
+                currentAttack.target.Unequip(currentAttack.target.PrimaryWeapon);
+            }
+            else if(currentAttack.attacker.SecondaryWeapon != null)
+            {
+                popuptext = "'s " + currentAttack.target.SecondaryWeapon.GetName() + " is dropped!";
+                currentAttack.target.Unequip(currentAttack.target.SecondaryWeapon);
+            }
+            CombatLog.Log(currentAttack.target.GetName() + popuptext); 
+        }
+        else if(currentAttack.attacker.hasCondition(Condition.ShakeUp))
+        {
+            TurnManager.instance.SubtractIniative(currentAttack.target, 5);
+            PopUpText.CreateText("Shaken!", Color.yellow, currentAttack.target.gameObject);
+            CombatLog.Log(currentAttack.target.GetName() + " loses 5 initative");
+        }
+        else if(currentAttack.attacker.hasCondition(Condition.KnockDown) && currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            int attackerKnockHits = currentAttack.attackRoll.GetDOF() + currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
+            int defenderKnockLimit = currentAttack.target.myData.GetAttribute(AttributeKey.PhysicalLimit);
+            CombatLog.Log("(Strength + hits) = " + attackerKnockHits + "(physical limit) = " + defenderKnockLimit);
+            if(attackerKnockHits >= defenderKnockLimit)
+            {
+                currentAttack.target.SetCondition(Condition.Prone, 0, true);
+                CombatLog.Log("prone attack exceeds physical limit and knocks " + currentAttack.target.GetName() + " prone");
+            }
+            PopUpText.CreateText("Resisted", Color.yellow, currentAttack.target.gameObject);    
+            CombatLog.Log("prone attack fails to reach physical limit");
+        }
     }
 
     public static void DealDamage(PlayerStats target, PlayerStats myStats, string hitBodyPart, Weapon w)
@@ -392,6 +430,7 @@ public static class TacticsAttack
         modifiers.Add(" from prone condition", GetPronePenalty(thisAttack,type));
         modifiers.Add(" from prone target", GetProneTargetPenalty(thisAttack,type));
         modifiers.Add(" from full defense", GetFulldefenseBonus(thisAttack, type));
+        modifiers.Add(" from called shot",GetCalledShotPenalty(thisAttack,type));
         return modifiers;
     }
 
@@ -573,5 +612,14 @@ public static class TacticsAttack
             return "target threshold: >2";
         }
         return "target threshold: >0";
+    }
+
+    private static int GetCalledShotPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && (thisAttack.attacker.hasCondition(Condition.Disarm) || thisAttack.attacker.hasCondition(Condition.ShakeUp) || thisAttack.attacker.hasCondition(Condition.KnockDown)))
+        {
+            return -4;
+        }
+        return 0;
     }
 }

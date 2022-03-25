@@ -27,7 +27,7 @@ public class SkillScript : MonoBehaviour
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
         Dropdown.OptionData baseResponse = new Dropdown.OptionData();
         baseResponse.text = "None";
-        int specializationIndex = myData.skillSpecialization[mySkill.name];
+        int specializationIndex = myData.GetSpecializationIndex(mySkill.name);
         results.Add(baseResponse);
         foreach(string Key in mySkill.Specializations)
         {
@@ -87,9 +87,9 @@ public class SkillScript : MonoBehaviour
         UpdateValue();
     }
 
-    public string GetSkill()
+    public SkillTemplate GetSkill()
     {
-        return mySkill.name;
+        return mySkill;
     }
 
     public void SkillCheck()

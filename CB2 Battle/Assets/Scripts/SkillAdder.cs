@@ -116,7 +116,7 @@ public class SkillAdder : MonoBehaviour
                 return false;
             }
         }
-        return true;
+        return true; 
     }
 
     // Adds button prefabs to SContent to represent all the skills the player can have 

@@ -31,7 +31,6 @@ public class Armor : Item
 
     public int GetAP()
     {
-        Debug.Log("my ap is " + AP);
         return AP;
     }
 

@@ -32,7 +32,6 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     void RPC_Start()
     {
         Debug.Log("Built");
-        
     }
 
     //Loads a level onto the board stage

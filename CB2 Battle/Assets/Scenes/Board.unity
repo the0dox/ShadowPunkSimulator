@@ -1184,6 +1184,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 506ac8d11809f274cab83d3315dbf750, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  pv: {fileID: 1986102356}
   ActivePlayer: {fileID: 0}
   DefaultActions:
   - Combat

@@ -33,8 +33,6 @@ public class WeaponDH : Item
     [SerializeField] private int clip;
     //damage type for determining critical table
     [SerializeField] private string damageType;
-    // Ranged weapons can become jammed, preventing them from being fired until repaired
-    [SerializeField] private bool jammed = false;
     // Some weapons consume items in order to be reloaded
     [SerializeField] private ItemTemplate AmmoSource;
     // Class determines how the weapon functions, wether it is ranged, or melee

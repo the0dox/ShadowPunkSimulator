@@ -16,12 +16,12 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
    public bool moving = false;
    public bool finishedMove = false;
    public int jumpHeight = 2;
+   public float fallSpeed = 4;
    public float moveSpeed = 4; 
    public Weapon activeWeapon;
    Vector3 velocity = new Vector3();
    Vector3 heading = new Vector3();
    float halfHeight = 0;
-
    Vector3 jumpTick = new Vector3(0,1,0);
    [SerializeField] private PhotonView pv;
    
@@ -66,6 +66,35 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
          currentTile.current = true; 
          currentTile.UpdateIndictator();
       }
+   }
+
+   public void FallingCheck()
+   {
+      RaycastHit Hit;
+      Physics.Raycast(transform.position, Vector3.down, out Hit, 50, LayerMask.GetMask("Obstacle"));
+      if(Hit.collider != null) 
+      {
+         Vector3 fallTarget = BoardBehavior.GetClosestTile(Hit.point);
+         int fallDistance = Mathf.FloorToInt(Vector3.Distance(transform.position, fallTarget));
+         if(fallDistance > 1)
+         {
+            TokenDragBehavior.ToggleMovement(false);
+            CombatLog.Log(GetComponent<PlayerStats>().GetName() + "falls!");
+            //changetoPun
+            pv.RPC("RPC_FallDelay",RpcTarget.All, fallTarget, fallDistance);
+         }
+      }
+      else
+      {
+         Debug.Log("error: player has fallen off the map");
+         TurnManager.instance.RemovePlayer(gameObject);
+      } 
+   }
+
+   [PunRPC]
+   void RPC_FallDelay(Vector3 fallTarget, int distance)
+   {
+      StartCoroutine(fallDelay(fallTarget, distance));
    }
 
    public Tile GetTargetTile(GameObject target)
@@ -154,6 +183,30 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
       }
    }
 
+   IEnumerator fallDelay(Vector3 fallTarget, int distance)
+   {
+      bool falling = true;
+      fallTarget.y += 1.5f;
+      Vector3 fallDir = new Vector3(0, fallSpeed, 0);
+      while(falling)
+      {
+         if(Mathf.Abs(transform.position.y - fallTarget.y) >= 0.05f)
+         {
+            transform.position -= fallDir * Time.deltaTime; 
+         }
+         else
+         {
+            transform.position = fallTarget;
+            falling = false;
+         }
+         yield return new WaitForEndOfFrame();
+      }
+      if(pv.IsMine)
+      {
+         TurnManager.instance.FallComplete(this,distance);
+      }
+   }
+
    public void Move()
    {
       //if our stack still has move orders, we can move
@@ -227,6 +280,8 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
          finishedMove = true;
       }
    }
+
+
 
    public void RemoveSelectableTiles()
    {
@@ -327,6 +382,13 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
    public void ResetMove()
    {
       finishedMove = false;
+   }
+
+   public void OnTurnStart()
+   {
+      GetCurrentTile();
+      ResetMove();
+      FallingCheck();
    }
 
    public bool finishedMoving()

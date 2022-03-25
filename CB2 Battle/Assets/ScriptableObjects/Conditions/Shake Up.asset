@@ -10,11 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1f0852cd1f52964cb2d51f6f0398d13, type: 3}
-  m_Name: GuardedAttack
+  m_Name: Shake Up
   m_EditorClassIdentifier: 
-  Stats:
-  - Parry
-  - WS
-  Modifiers: 14000000f6ffffff
+  IgnoreKey: 
+  Modifiers: 0
   duration: 0
-  clearOnStart: 1
+  clearOnTurnStart: 0
+  clearOnMove: 0
+  conditionKey: 10

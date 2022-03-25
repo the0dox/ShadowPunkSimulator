@@ -91,7 +91,7 @@ public class ThreatCone : MonoBehaviour
             {
                 if(!validCover.Contains(currentTransform))
                 {
-                    Debug.Log("adding tile at " + collision.gameObject.transform.position);
+                    //Debug.Log("adding tile at " + collision.gameObject.transform.position);
                     validCover.Add(currentTransform);
                 }
             }

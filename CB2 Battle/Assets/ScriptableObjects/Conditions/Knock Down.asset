@@ -10,10 +10,11 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: f1f0852cd1f52964cb2d51f6f0398d13, type: 3}
-  m_Name: Called
+  m_Name: Knock Down
   m_EditorClassIdentifier: 
   IgnoreKey: 
   Modifiers: 0
   duration: 0
-  clearOnStart: 0
-  conditionKey: 4
+  clearOnTurnEnd: 0
+  clearOnMove: 0
+  conditionKey: 9

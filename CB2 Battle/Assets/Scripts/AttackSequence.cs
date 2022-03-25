@@ -28,6 +28,20 @@ public class AttackSequence
     public Tile CoverTile;
     public int coverRange = 0;
     private bool skipAttack = false;
+    int flatDamage = 0;
+    int flatAP = 0;
+
+    // creates an attack sequence of damage being dealt directly to player with no attacker
+    public AttackSequence(PlayerStats target, int damage, int AP)
+    {
+        this.target = target;   
+        attackRolled = true;
+        reactionRolled = true;
+        skipAttack = true;
+        flatDamage = damage;
+        flatAP = AP;
+        SoakRoll();
+    }
 
     // creates an attack sequence without specifying a hitlocation
     public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks, bool skipAttack)
@@ -80,8 +94,12 @@ public class AttackSequence
 
     public void SoakRoll()
     {
+        int armorPen = flatAP;
+        if(ActiveWeapon != null)
+        {
+            armorPen = ActiveWeapon.GetAP();
+        }
         int armorMod = target.GetAP();
-        int armorPen = ActiveWeapon.GetAP();
         if(armorMod > 0)
         {
             armorMod -= armorPen;
@@ -113,6 +131,15 @@ public class AttackSequence
             return 0;
         }
         return attackRoll.GetHits() - reactionRoll.GetHits();
+    }
+
+    public int GetWeaponDamage()
+    {
+        if(ActiveWeapon != null)
+        {
+            return ActiveWeapon.Template.damageBonus;
+        }
+        return flatDamage;
     }
 
     public void SoakRollComplete()

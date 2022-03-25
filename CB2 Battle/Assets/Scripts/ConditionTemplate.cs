@@ -11,7 +11,7 @@ public class ConditionTemplate : ScriptableObject
     [SerializeField] public string IgnoreKey;
     [SerializeField] public int Modifiers;
     [SerializeField] public int duration;
-    [SerializeField] public bool clearOnStart;  
+    [SerializeField] public bool clearOnTurnEnd;  
     [SerializeField] public bool clearOnMove;
     [SerializeField] public Condition conditionKey;
     

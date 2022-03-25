@@ -4,13 +4,8 @@ using UnityEngine;
 using Photon.Pun;
 public class UIButtonManager : MonoBehaviourPunCallbacks
 {
-    protected private PhotonView pv;
+    [SerializeField] protected private PhotonView pv;
     private Vector3 StartingLine = new Vector3(-300,80,0);
-
-    void Awake()
-    {
-        pv = GetComponent<PhotonView>();
-    }
 
     //creates a set of interactable buttons can key = text value = method called
     public void ConstructActions(Dictionary<string, string> d)

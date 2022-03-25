@@ -70,6 +70,10 @@ public class TrackerSheet : MonoBehaviour
     public void IncrementValue()
     {
         MyResource++;
+        if(MyResource > ResourceMaximum && EnforceMaximum)
+        {
+            MyResource = ResourceMaximum;
+        }
         UpdateTokens();
     }
 

@@ -518,6 +518,22 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         }
     }
 
+    public void OnTurnEnd()
+    {
+        List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
+        foreach(ConditionTemplate Key in Conditions.Keys)
+        {
+            if(Key.clearOnTurnEnd)
+            {
+                removedKeys.Add(Key);
+            }
+        }
+        foreach(ConditionTemplate key in removedKeys)
+        {
+            Conditions.Remove(key);
+        }
+    }
+
     public int GetDefensePenality()
     {
         return -(defensePenality);
@@ -542,6 +558,19 @@ public class PlayerStats : MonoBehaviourPunCallbacks
                 SecondaryWeapon = null;
             }
         }
+    }
+
+    public bool ThreateningMelee()
+    {
+        if(PrimaryWeapon != null && PrimaryWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            return true;
+        }
+        if(SecondaryWeapon != null && SecondaryWeapon.IsWeaponClass(WeaponClass.melee))
+        {
+            return true;
+        }
+        return false;
     }
 
     public void PaintTarget(bool painted)

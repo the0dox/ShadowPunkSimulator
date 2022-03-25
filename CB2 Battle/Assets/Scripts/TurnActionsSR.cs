@@ -38,6 +38,7 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
         }
+        d.Add("Called Shot", "CalledShot");
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
@@ -99,112 +100,6 @@ public class TurnActionsSR : UIButtonManager
         Dictionary<string,string> d = ActiveWeapon.GetWeaponActions(halfActions > 1);
         d.Add("Cancel","Combat");
         ConstructActions(d);
-        /*
-        //only melee weapons can be used on charge 
-        if(!ActivePlayerStats.ValidAction("Charge"))
-        {
-            d.Add("Standard","ChargeAttack");
-            if(ActiveWeapon.HasWeaponAttribute("Unarmed"))
-            {
-                d.Add("Grapple","GrappleAttack");    
-            }
-        }
-        else if(ActivePlayerStats.ValidAction("Attack") && halfActions > 0)
-        {
-            if(ActiveWeapon.HasWeaponAttribute("Unarmed"))
-            {
-                ActivePlayer.RemoveSelectableTiles();
-                ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-                d.Add("Standard","StandardAttack");
-                d.Add("Knock-Down","KnockDown");
-                if(halfActions > 1)
-                {
-                    d.Add("Stun","Stun");
-                    d.Add("Grapple","GrappleAttack");
-                }
-            }
-            else if(ActiveWeapon.IsWeaponClass("Melee"))
-            {
-                d.Add("Standard","StandardAttack");
-                d.Add("Called","CalledShot");
-                d.Add("Feint","Feint");
-                if(halfActions > 1)
-                {
-                    d.Add("Guarded","GuardedAttack");
-                    d.Add("All Out","AllOut");
-                }
-                
-            }
-            else if(ActivePlayerStats.ValidAction("Attack"))
-            {
-                if(!ActiveWeapon.HasWeaponAttribute("Heavy") || (ActiveWeapon.HasWeaponAttribute("Heavy") && !ActivePlayerStats.IsDualWielding()))
-                    {
-                    if (ActiveWeapon.CanFire("S"))
-                    {
-                        if(ActiveWeapon.HasWeaponAttribute("Flame"))
-                        {
-                            d.Add("Standard","FlameAttack");
-                        }
-                        else if(ActiveWeapon.HasWeaponAttribute("Blast"))
-                        {
-                            d.Add("Standard","BlastAttack");
-                        }
-                        else{
-                        d.Add("Standard","StandardAttack");
-                        d.Add("Called","CalledShot");
-                        }
-                    }
-                    // Heavy weapons cannot be fired in semi or full automatic unless a character braces
-                    if(ActiveWeapon.IsWeaponClass("Heavy") && !ActivePlayerStats.hasCondition("Braced"))
-                    {
-                        d.Add("Brace (cover)","Brace");
-                        d.Add("Brace (prone)","BraceProne");
-                    }
-                    else
-                    {
-                        if (ActiveWeapon.CanFire("Semi"))
-                        {
-                            d.Add("Semi Auto","SemiAuto");
-                        }
-                        if(ActiveWeapon.CanFire("Auto"))
-                        {
-                            d.Add("Full Auto","FullAuto");
-                        }
-                        if (( ActiveWeapon.CanFire("Semi") || ActiveWeapon.CanFire("Auto")) && halfActions > 1 )
-                        {
-                            d.Add("Overwatch","Overwatch");
-                            d.Add("Supression","SupressingFire");
-                        }
-                    }
-                }
-                if(ActiveWeapon.isJammed() && halfActions > 1)
-                {
-                    d.Add("Unjam","Unjam");
-                }
-            }
-        }
-        */
-    }
-
-    public void Feint()
-    {
-        currentAction = "CM";
-        FireRate = "Feint";
-        ConstructActions(new List<string>{"Cancel"});
-    }
-
-    public void Stun()
-    {
-        currentAction = "CM";
-        FireRate = "Stun";
-        ConstructActions(new List<string>{"Cancel"});
-    }
-    
-    public void KnockDown()
-    {
-        currentAction = "CM";
-        FireRate = "Knock";
-        ConstructActions(new List<string>{"Cancel"});
     }
 
     public void Charge()
@@ -227,6 +122,41 @@ public class TurnActionsSR : UIButtonManager
         FireRate = "Grapple";
         ConstructActions(new List<string>{"Cancel"});
     } 
+
+    public void CalledShot()
+    {
+        Dictionary<string,string> d = new Dictionary<string, string>();
+        if(!ActivePlayerStats.hasCondition(Condition.Disarm) && !ActivePlayerStats.hasCondition(Condition.KnockDown) && !ActivePlayerStats.hasCondition(Condition.ShakeUp))
+        {
+            d.Add("Disarm","Disarm");
+            d.Add("Shake Up","ShakeUp");
+            if(ActivePlayerStats.ThreateningMelee())
+            {
+                d.Add("Knock Down","KnockDown");
+            }
+        }
+        ConstructActions(d);
+    }
+
+    public void Disarm()
+    {
+        ActivePlayerStats.SetCondition(Condition.Disarm,1,true);
+        SpendFreeAction();
+        Cancel();
+    }
+
+    public void ShakeUp()
+    {
+        ActivePlayerStats.SetCondition(Condition.ShakeUp,1,true);
+        SpendFreeAction();
+        Cancel();
+    }
+    public void KnockDown()
+    {
+        ActivePlayerStats.SetCondition(Condition.KnockDown,1,true);
+        SpendFreeAction();
+        Cancel();
+    }
 
     public void Unjam()
     {
@@ -485,19 +415,6 @@ public class TurnActionsSR : UIButtonManager
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Cancel","Combat");
-        ConstructActions(d);
-    }
-    public void CalledShot()
-    {
-        Dictionary<string, string> d = new Dictionary<string, string>();
-        d.Add("Head", "Head");
-        d.Add("Right Arm","RightArm");
-        d.Add("Left Arm","LeftArm");
-        d.Add("Body","Body");
-        d.Add("Right Leg","RightLeg");
-        d.Add("Left Leg","LeftLeg");
-        d.Add("Cancel","Cancel");
-        currentAction = null;
         ConstructActions(d);
     }
 
