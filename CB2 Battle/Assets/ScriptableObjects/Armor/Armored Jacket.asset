@@ -20,7 +20,7 @@ MonoBehaviour:
     But \r\ndon\u2019t think of wearing one to a dinner party"
   unique: 1
   rating: 2
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: bb5415af396a8084a95ffbdae4df802b, type: 3}
   upgrades: []
   AP: 12
   Attributes: []

@@ -584,7 +584,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             GetComponentInChildren<MeshRenderer>().material = DefaultColor;
         }
     }
-
+    
     public void SetGrappler(PlayerStats attacker)
     {
         grappleTarget = null;

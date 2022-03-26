@@ -7,33 +7,55 @@ public class ItemInputField : MonoBehaviour
 {
     [SerializeField] private Text displayText;
     [SerializeField] private TooltipTrigger tooltipContent;
+    [SerializeField] private GameObject popUpMenu;
+    [SerializeField] private Image displayImage;
+    [SerializeField] private Sprite EmptyImage;
     private CharacterSaveData owner;
     private Item myData;
-    
+
     public void DownloadCharacter(CharacterSaveData owner, Item myData)
     {
         this.owner = owner;
-        this.myData = myData;
+        if(myData != null)
+        {
+            this.myData = myData;
+            displayImage.sprite = myData.GetSprite();
+            if(!myData.Stackable())
+            {
+                displayText.text = "";
+            }
+        }
+        else
+        {
+            this.myData = null;
+            displayText.text = "";
+            displayImage.sprite = EmptyImage;  
+            TooltipSystem.hide();
+        }
     }
 
     void Update()
     {
-        displayText.text = myData.GetName() + " x " + myData.GetStacks();
-        tooltipContent.content = myData.getTooltip();
-        tooltipContent.header = myData.GetName();
+        if(myData != null)
+        {
+            displayText.text = "x" + myData.GetStacks();
+            tooltipContent.content = myData.getTooltip();
+            tooltipContent.header = myData.GetName();
+        }
     }
 
     public void Reduce()
     {
-        owner.RemoveItem(myData);
-        if(!owner.equipmentObjects.Contains(myData))
-        {
-            Destroy(gameObject);
-        }
+        owner.ReduceItemInventory(myData);
     }
 
-    public void displayTooltip()
+    public Item GetItem()
     {
-        Debug.Log(myData.getTooltip());
+        return myData;
+    }
+
+    public void OnButtonPressed()
+    {
+        ItemAdder.OnItemClicked(this);
     }
 }

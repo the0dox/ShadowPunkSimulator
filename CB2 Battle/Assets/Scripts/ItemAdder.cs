@@ -9,9 +9,11 @@ public class ItemAdder : MonoBehaviour
 {
     // Non static references to UI objects
     [SerializeField] private Transform DisplayRef;
-    [SerializeField] private GameObject ItemFieldRef;
     [SerializeField] private Transform AdderContentRef;
     [SerializeField] private GameObject ButtonRef;
+    [SerializeField] private List<ItemInputField> itemInputFieldInitalizer;
+    [SerializeField] private GameObject PopupObject;
+    [SerializeField] private static ItemInputField[] ItemSlots;  
     // Static references to objects
     // Display for skill adder
     private static Transform SAdderContent;
@@ -23,24 +25,39 @@ public class ItemAdder : MonoBehaviour
     private static GameObject SButton;
     // Reference to the player being edited
     private static CharacterSaveData owner;
+    // Last empty item box used to add new items at the end of the chain
+    private static int lastIndex;
+    // popup that is used to interact with a specific item
+    private static GameObject SPopupObject;
+    // last item box to be clicked that the popup box interacts with
+    private static ItemInputField activePopupfield;
     
     // Saves the static references
     void Awake()
     {
         SDisplay = DisplayRef;
-        ItemInput = ItemFieldRef;
         SAdderContent = AdderContentRef;
         SButton = ButtonRef;
+        SPopupObject = PopupObject;
+        int index = 0;
+        ItemSlots = new ItemInputField[20];
+        foreach(ItemInputField iif in itemInputFieldInitalizer)
+        {
+            ItemSlots[index] = iif;
+            index++;
+        }
     }
 
     // Given newowner savedata, creates Skillinputs for each skill the player already knows
     public static void DownloadOwner(CharacterSaveData newonwer)
     { 
+        lastIndex = 0;
         owner = newonwer;
         foreach(Item item in newonwer.equipmentObjects)
         {
             AddItem(item,false);
         } 
+        Debug.Log("i have "+ newonwer.equipmentObjects.Count);
         UpdateAdderContent();
     }
     
@@ -55,26 +72,61 @@ public class ItemAdder : MonoBehaviour
         }
         if(!add || oldCount != owner.equipmentObjects.Count)
         {
-            ItemInputField indicator = Instantiate(ItemInput as GameObject).GetComponent<ItemInputField>();
-            indicator.DownloadCharacter(owner, newItem);
-            indicator.transform.SetParent(SDisplay);
-            indicator.transform.localScale = Vector3.one;
+            ItemSlots[lastIndex].DownloadCharacter(owner,newItem);
+            lastIndex++;
         }
     }
 
-    /* Depreciated Destroys the corresponding Skillinput and removes the skill from the player
-    public static void RemoveSkill(string skillName)
+    // Called from the edited player when their item is reduced to 0, removes said item from the box
+    public static void RemoveItem(Item removedItem)
     {
-        owner.skills.Remove(skillName);
-        owner.skillSpecialization.Remove(skillName);
-        SkillScript removedSkill = null;
-        Destroy(removedSkill.gameObject);
+        lastIndex--;
+        bool incrementPosition = false;
+        for(int i = 0; i < ItemSlots.Length; i++)
+        {
+            if(removedItem == ItemSlots[i].GetItem())
+            {
+                incrementPosition = true;
+            }
+            if(incrementPosition && i < ItemSlots.Length-1)
+            {
+                Item nextItem = ItemSlots[i+1].GetItem();
+                ItemSlots[i].DownloadCharacter(owner, nextItem);
+            }
+        }
+        ClearPopup();
     }
-    */
 
-    // If one of my buttons was clicked, check if I already own that skill
-    // If I don't own it, create it
-    // If I already own it, remove it
+    public static void OnItemClicked(ItemInputField clickedItemField)
+    {
+        // if this has already been clicked
+        if(activePopupfield == clickedItemField || clickedItemField.GetItem() == null)
+        {
+            ClearPopup();
+        }
+        // if this is a new item that hasn't been picked yet
+        else
+        {
+            activePopupfield = clickedItemField;
+            SPopupObject.SetActive(true);
+            SPopupObject.transform.position = activePopupfield.transform.position + new Vector3(60,0,0);
+        }
+    }
+
+    public static void RemoveItem()
+    {
+        if(activePopupfield != null)
+        {
+            activePopupfield.Reduce();
+        }
+    }
+
+    public static void ClearPopup()
+    {
+        activePopupfield = null;
+        SPopupObject.SetActive(false);
+    }
+
     public void OnClicked()
     {
         string name = EventSystem.current.currentSelectedGameObject.name;

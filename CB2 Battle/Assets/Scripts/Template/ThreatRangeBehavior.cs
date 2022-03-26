@@ -6,7 +6,7 @@ using Photon.Pun;
 
 // The main behavior of threat range objects, note that this is seperate from the threat cone script.
 // Where that script managed basic functions, this script knows what kind of threat range it is
-public class ThreatRangeBehavior : MonoBehaviour
+public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
 {
     // The threat cone this script uses to find targets
     [SerializeField]
@@ -103,7 +103,6 @@ public class ThreatRangeBehavior : MonoBehaviour
                 if(!pv.IsMine)
                 {
                     myRange.DestroyToken();
-                    Destroy(this);
                 }
             }
         }
@@ -178,31 +177,41 @@ public class ThreatRangeBehavior : MonoBehaviour
         origin = attacker.transform.position; 
         this.attacker = attacker;
         this.w = w;
-        pv.RPC("RPC_Parameter",RpcTarget.Others, dimensions, type, attacker.GetID(), ThrowRange);
+        Photon.Realtime.Player clientTarget = DmMenu.GetOwner(attacker);
+        //send additional info to owner of the attacker
+        pv.RPC("RPC_Parameter",RpcTarget.Others, dimensions, type, attacker.GetID(), ThrowRange, clientTarget.ActorNumber);
     }
 
     [PunRPC]
-    void RPC_Parameter(Vector3 scale, string type, int attackerID, int ThrowRange)
+    void RPC_Parameter(Vector3 scale, string type, int attackerID, int ThrowRange, int ownerID)
     {
-        PlayerStats attacker = PlayerSpawner.IDtoPlayer(attackerID);
-        this.origin = attacker.transform.position;
-        this.ThrowRange = ThrowRange;
-        threatType = type;
-        if(type.Equals("Blast"))
+        Photon.Realtime.Player owningPlayer = PhotonNetwork.CurrentRoom.GetPlayer(ownerID);
+        if(PhotonNetwork.LocalPlayer == owningPlayer)
         {
-            Destroy(ConeToken);
-            BlastToken.SetActive(true);
-            myRange = BlastToken.GetComponent<ThreatCone>();
-            myRange.StrictLOS = true;
-            BlastToken.transform.localScale = scale;
+            PlayerStats attacker = PlayerSpawner.IDtoPlayer(attackerID);
+            this.origin = attacker.transform.position;
+            this.ThrowRange = ThrowRange;
+            threatType = type;
+            if(type.Equals("Blast"))
+            {
+                Destroy(ConeToken);
+                BlastToken.SetActive(true);
+                myRange = BlastToken.GetComponent<ThreatCone>();
+                myRange.StrictLOS = true;
+                BlastToken.transform.localScale = scale;
+            }
+            else
+            {
+                Destroy(BlastToken);
+                ConeToken.SetActive(true);
+                ConeToken.transform.localScale = scale;
+                myRange = ConeToken.GetComponent<ThreatCone>();
+                myRange.avoidOwner = attacker.transform;
+            }
         }
         else
         {
-            Destroy(BlastToken);
-            ConeToken.SetActive(true);
-            ConeToken.transform.localScale = scale;
-            myRange = ConeToken.GetComponent<ThreatCone>();
-            myRange.avoidOwner = attacker.transform;
+            Destroy(gameObject);
         }
     }
 
@@ -210,6 +219,7 @@ public class ThreatRangeBehavior : MonoBehaviour
     {
         if(owner == attacker)
         {
+            myRange.Clear();
             PhotonNetwork.Destroy(gameObject);
         }
     }
@@ -231,8 +241,9 @@ public class ThreatRangeBehavior : MonoBehaviour
                 distance = 0;
             }
             transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
-            gameObject.transform.Translate(transform.forward.normalized * distance);
-            pv.RPC("RPC_ScatterMove",RpcTarget.Others, transform.position);
+            gameObject.transform.Translate(transform.forward.normalized * distance); 
+            Photon.Realtime.Player clientTarget = DmMenu.GetOwner(attacker);
+            pv.RPC("RPC_ScatterMove",clientTarget, transform.position);
             CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");    
         }
         yield return new WaitForSeconds (0.2f);
@@ -252,5 +263,6 @@ public class ThreatRangeBehavior : MonoBehaviour
     public void RPC_ScatterMove(Vector3 pos)
     {
         transform.position = pos;
+        myRange.Clear();
     }
 }

@@ -18,7 +18,7 @@ MonoBehaviour:
   description: 
   unique: 0
   rating: 0
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 48d161e3ac5e7d14b8e80b69faef3798, type: 3}
   upgrades: []
   Attributes: []
   damageBonus: 8

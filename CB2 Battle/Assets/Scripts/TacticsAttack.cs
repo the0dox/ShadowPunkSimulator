@@ -88,8 +88,15 @@ public static class TacticsAttack
             currentAttack.target.takeDamage(totalDamage);
             PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.red, currentAttack.target.gameObject); 
         }
-        CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + currentAttack.GetNetHits() + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
-        ApplyCalledShots(currentAttack);
+        if(currentAttack.ActiveWeapon != null)
+        {
+            CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + currentAttack.GetNetHits() + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
+            ApplyCalledShots(currentAttack);
+        }
+        else
+        {
+            CombatLog.Log("incoming base damage:\n "+ weaponDamage + "\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
+        }
     }
 
     public static void ApplyCalledShots(AttackSequence currentAttack)

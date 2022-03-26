@@ -154,6 +154,17 @@ public class ThreatCone : MonoBehaviour
     // used by behavior class to destroy the visual component of the token
     public void DestroyToken()
     {
+        Clear();
         Destroy(gameObject);
+    }
+
+    public void Clear()
+    {
+        foreach(Transform t in visibleTargets)
+        {
+            PlayerStats ps = t.GetComponent<PlayerStats>();
+            Debug.Log(ps.GetName());
+            ps.PaintTarget(false);
+        }
     }
 }

@@ -23,7 +23,7 @@ public class SceneSaveData
             if(entity.tag.Equals("Tile"))
             {
                 TileLocations.Add(PosString,entity.name.Split('(')[0]);
-                Debug.Log(entity.name.Split('(')[0] + ": " + entity.name + "x: " + PosString.Split(',')[0] + "y: " + PosString.Split(',')[1] + "z: " + PosString.Split(',')[2]);
+                //Debug.Log(entity.name.Split('(')[0] + ": " + entity.name + "x: " + PosString.Split(',')[0] + "y: " + PosString.Split(',')[1] + "z: " + PosString.Split(',')[2]);
             }
             else if(entity.tag.Equals("Player"))
             {

@@ -65,6 +65,7 @@ public class Weapon : Item
         this.clip = this.clipMax;
         this.damageType = template.damageType;
         
+        
         upgrades = new Dictionary<ItemTemplate, bool>();
         foreach(ItemTemplate ug in template.upgrades)
         {
@@ -451,6 +452,15 @@ public class Weapon : Item
     public int GetDamage()
     {
         return Template.damageBonus;
+    }
+    public override Sprite GetSprite()
+    {
+        if(Template.icon != null)
+        {
+            return Template.icon;
+        }
+        return Resources.Load<Sprite>("Assets/Resources/Materials/Icons/Items/Pistol.png");
+    
     }
 
     public override void UpdateTooltip()

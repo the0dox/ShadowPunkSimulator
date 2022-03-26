@@ -18,7 +18,7 @@ MonoBehaviour:
   description: Go ahead, go medieval.
   unique: 1
   rating: 12
-  icon: {fileID: 0}
+  icon: {fileID: 21300000, guid: 44217e1759eab0c4f929e9d56d9b3846, type: 3}
   upgrades: []
   Attributes: []
   damageBonus: 5
@@ -39,3 +39,4 @@ MonoBehaviour:
   weaponClass: 0
   Lethal: 1
   debugAddAllUpgrades: 0
+  blastClass: 0

@@ -77,6 +77,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         if(GM.TryGetComponent<TurnManager>(out TurnManager tm))
         {
             tm.StartNewRound();
+            pv.RPC("RPC_FinishedLoading",RpcTarget.All);
         }
         else if (GM.TryGetComponent<LevelEditor>(out LevelEditor le))
         {
@@ -132,5 +133,12 @@ public class GlobalManager : MonoBehaviourPunCallbacks
             newEntity.transform.position = pos;
         }
         BoardBehavior.Init();
+    }
+
+    [PunRPC]
+    void RPC_FinishedLoading()
+    {
+        CameraButtons.UIFreeze(false);
+        LoadingScreenBehavior.FinishedLoading();
     }
 }

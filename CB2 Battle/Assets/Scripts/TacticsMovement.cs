@@ -190,7 +190,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
       Vector3 fallDir = new Vector3(0, fallSpeed, 0);
       while(falling)
       {
-         if(Mathf.Abs(transform.position.y - fallTarget.y) >= 0.05f)
+         if((transform.position.y - fallTarget.y) >= 0.05f)
          {
             transform.position -= fallDir * Time.deltaTime; 
          }

@@ -11,10 +11,10 @@ public class DmMenu : MonoBehaviourPunCallbacks
     static private Dictionary<int, Photon.Realtime.Player> CharacterPermissions;
     static private Dictionary<int, bool> ActiveCharacterSheets;
     [SerializeField] private GameObject PlayerScreen;
-    [SerializeField] private GameObject ClientScreen;
     [SerializeField] private GameObject SelectorButton;
     [SerializeField] private GameObject SceneButton;
     [SerializeField] private Text MDRtoggleStatus;
+    [SerializeField] private GameObject ClientDisplay;
     [SerializeField] private PhotonView pv;
     private static GameObject DisplayInstance;
     private static GameObject PlayerScreenInstance;
@@ -119,15 +119,13 @@ public class DmMenu : MonoBehaviourPunCallbacks
     // A player client can either ask for available sheets if they don't have an avatar or call for their avatar's sheet
     public void SinglePlayerToggle()
     {   
-        CameraButtons.UIFreeze(!PlayerScreenInstance.activeInHierarchy);
-        if(PlayerScreenInstance.activeInHierarchy)
-        {
-            PlayerScreenInstance.SetActive(false);
-        }
-        else
-        {
-            pv.RPC("RPC_ClientDisplay", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
-        }
+        CameraButtons.UIFreeze(!ClientDisplay.activeInHierarchy);
+        ClientDisplay.SetActive(!ClientDisplay.activeInHierarchy);
+    }
+
+    public void SinglePLayerCharacterSheet()
+    {
+        pv.RPC("RPC_ClientDisplay", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
     }
 
     public static void Toggle()
@@ -159,10 +157,14 @@ public class DmMenu : MonoBehaviourPunCallbacks
 
     public void Quit()
     {
-        foreach(int index in SavedCharacters.Keys)
+        if(pv.IsMine)
         {
-            SavedCharacters[index].Quit();
+            foreach(int index in SavedCharacters.Keys)
+            {
+                SavedCharacters[index].Quit();
+            }
         }
+        Application.Quit();
     }
 
     //smart view of all character sheets for DM only!
@@ -342,11 +344,13 @@ public class DmMenu : MonoBehaviourPunCallbacks
                     int index = kvp.Key;
                     if(CharacterPermissions.ContainsKey(index) && CharacterPermissions[index] != null)
                     {
+                        Debug.Log("player " + player.GetName() + " is owned by player " + CharacterPermissions[index]);
                         return CharacterPermissions[index];
                     }
                 }
             }
         }
+        Debug.Log("player " + player.GetName() + " is owned by the server");
         return PhotonNetwork.LocalPlayer;
     }
 

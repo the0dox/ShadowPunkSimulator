@@ -12,7 +12,7 @@ public class LoadingManager : MonoBehaviourPunCallbacks
 
     private void Start()
     {
-        descriptionTextObject.text = description + UnityEditor.PlayerSettings.bundleVersion;
+        descriptionTextObject.text = description + Application.version;
         PhotonNetwork.OfflineMode = offlineMode;
         if(offlineMode)
         {

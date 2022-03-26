@@ -71,7 +71,6 @@ public class PopUpText : MonoBehaviourPunCallbacks
             {
                 if(DisplayQueue[location].Count != 0)
                 {
-                    Debug.Log("setting active");
                     DisplayQueue[location].Peek().SetActive(true);
                 }
             }

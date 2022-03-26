@@ -186,10 +186,14 @@ public class Item
     {
         return tooltip;
     }
-
-    public bool SameTemplate(Item other)
+    
+    public virtual Sprite GetSprite()
     {
-        return(this.Template == other.Template);
+        if(Template.icon != null)
+        {
+            return Template.icon;
+        }
+        return Resources.Load<Sprite>("Assets/Resources/Materials/Icons/Items/Default.png");
     }
 
     public override bool Equals(object obj)
@@ -198,12 +202,35 @@ public class Item
         {
             return false;
         }
-        if (!(obj is Item))
+        if(this.GetType().Equals(typeof(Weapon)))
         {
-            return false;
+            if(!(obj is Weapon))
+            {
+                return false;
+            }
+            Weapon otherWeapon = (Weapon)obj;
+            Weapon thisWeapon = (Weapon)this;
+            return(thisWeapon.Template == otherWeapon.Template);
         }
-        Item other = (Item)obj;
-        return this.Template == other.Template;
+        else if (this.GetType().Equals(typeof(Armor)))
+        {
+            if(!(obj is Armor))
+            {
+                return false;
+            }
+            Armor otherArmor = (Armor)obj;
+            Armor thisArmor = (Armor)this;
+            return(otherArmor.Template == thisArmor.Template);
+        }
+        else
+        {
+            if (!(obj is Item))
+            {
+                return false;
+            }
+            Item other = (Item)obj;
+            return (this.Template == other.Template);
+        }
     }
 }
 

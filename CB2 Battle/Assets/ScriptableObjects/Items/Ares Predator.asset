@@ -19,7 +19,7 @@ MonoBehaviour:
     of efficiency and brutality.
   unique: 1
   rating: 1
-  icon: {fileID: 21300000, guid: ed34c39c541849c4789886b4ffc4de42, type: 3}
+  icon: {fileID: 21300000, guid: 3243b6e208486c54999d9a2a7f01dff2, type: 3}
   upgrades:
   - {fileID: 11400000, guid: 3c7ae887e4a50fe488b80b3aff5a121b, type: 2}
   Attributes: []
@@ -41,3 +41,4 @@ MonoBehaviour:
   weaponClass: 1
   Lethal: 1
   debugAddAllUpgrades: 0
+  blastClass: 0

@@ -15,4 +15,5 @@ public class ItemTemplate : ScriptableObject
     [SerializeField] public int rating;
     [SerializeField] public Sprite icon;
     [SerializeField] public List<ItemTemplate> upgrades;
+
 }

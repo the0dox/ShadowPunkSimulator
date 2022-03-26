@@ -561,6 +561,7 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
+
     public void FlameAttack()
     {
         currentAction = "ThreatRange";
@@ -779,7 +780,10 @@ public class TurnActionsSR : UIButtonManager
     public void ResolveHit()
     {
         TacticsAttack.DealDamage(CurrentAttack);
-        CurrentAttack.attacker.RemoveCondition(Condition.Aiming);
+        if(CurrentAttack.attacker != null)
+        {
+            CurrentAttack.attacker.RemoveCondition(Condition.Aiming);
+        }
         CurrentAttack = null;
         Cancel();
     }

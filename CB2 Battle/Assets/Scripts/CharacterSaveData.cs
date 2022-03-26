@@ -103,6 +103,7 @@ public class CharacterSaveData
 
     public void decompileEquipment(List<string> newequipmentcode)
     {
+        equipmentObjects.Clear();
         foreach(string code in newequipmentcode)
         {
             string[] codeDecompiled = code.Split('|');
@@ -195,7 +196,7 @@ public class CharacterSaveData
         // Astral initative = Intuition * 2
         SetAttribute(AttributeKey.InitativeAstral, GetAttribute(AttributeKey.Intuition) * 2, false);
         // Matrix initative = Data processing + Intuition
-        // SetAttribute(AttributeKey.InitativeMatrix, Dataprocessing + GetAttribute(AttributeKey.Intuition));
+        SetAttribute(AttributeKey.InitativeMatrix, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Intuition),false);
         // Mental Limit = [(Logic x 2) + Intuition + Willpower] / 3
         float MentalLimit = (float)(GetAttribute(AttributeKey.Logic) * 2 + GetAttribute(AttributeKey.Intuition) + GetAttribute(AttributeKey.Willpower));
         MentalLimit /= 3f;
@@ -217,7 +218,7 @@ public class CharacterSaveData
         SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) * 2,false);
         SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.Agility) * 4, false);
         // COMPOSURE (CHA + WIL)
-        SetAttribute(AttributeKey.Composure, GetAttribute(AttributeKey.Agility) + GetAttribute(AttributeKey.Willpower),false);
+        SetAttribute(AttributeKey.Composure, GetAttribute(AttributeKey.Charisma) + GetAttribute(AttributeKey.Willpower),false);
         // JUDGE INTENTIONS (CHA + INT)
         SetAttribute(AttributeKey.JudgeIntentions, GetAttribute(AttributeKey.Charisma) + GetAttribute(AttributeKey.Intuition),false);
         // LIFTING/CARRYING (BOD + STR)
@@ -328,6 +329,7 @@ public class CharacterSaveData
             }
             else
             {
+                Debug.Log("needs to add");
                 equipmentObjects.Add(item);   
             }
         }
@@ -364,6 +366,15 @@ public class CharacterSaveData
             {
                 equipmentObjects.Remove(item);
             }
+        }
+    }
+
+    public void ReduceItemInventory(Item item)
+    {
+        RemoveItem(item);
+        if(item.IsConsumed())
+        {
+            ItemAdder.RemoveItem(item);
         }
     }
 

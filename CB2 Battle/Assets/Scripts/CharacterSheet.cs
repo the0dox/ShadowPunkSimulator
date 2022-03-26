@@ -240,13 +240,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         return newEntry;
     }
 
-    public void AddItem(string name)
-    {
-        string[] dummyTest = new string[1];
-        dummyTest[0] = "1";
-        ActivePlayer.AddItem(ItemReference.GetItem(name,1,dummyTest));
-    }
-
     // Master sends this to the client to be edited
     [PunRPC]
     void RPC_SyncStats(string name, string[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth)

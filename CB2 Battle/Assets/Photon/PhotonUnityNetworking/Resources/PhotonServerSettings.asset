@@ -99,6 +99,9 @@ MonoBehaviour:
   - RPC_ClientDisplay
   - RPC_StartTurn
   - RPC_ResetBoard
+  - RPC_FallDelay
+  - RPC_ClearTargets
+  - RPC_FinishedLoading
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

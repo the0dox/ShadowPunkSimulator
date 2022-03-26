@@ -21,6 +21,7 @@ public class Armor : Item
         this.description = template.description;
         this.Attribues = template.Attributes; 
         this.AP = template.AP;
+        this.Template = template;
         
         upgrades = new Dictionary<ItemTemplate, bool>();
         foreach(ItemTemplate ug in template.upgrades)
@@ -32,6 +33,16 @@ public class Armor : Item
     public int GetAP()
     {
         return AP;
+    }
+
+    public override Sprite GetSprite()
+    {
+        if(Template.icon != null)
+        {
+            return Template.icon;
+        }
+        return Resources.Load<Sprite>("Assets/Resources/Materials/Icons/Items/Vest.png");
+    
     }
 
     public override void UpdateTooltip()
