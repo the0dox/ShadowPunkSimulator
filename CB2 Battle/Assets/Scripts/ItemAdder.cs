@@ -40,12 +40,13 @@ public class ItemAdder : MonoBehaviour
         SButton = ButtonRef;
         SPopupObject = PopupObject;
         int index = 0;
-        ItemSlots = new ItemInputField[20];
+        ItemSlots = new ItemInputField[17];
         foreach(ItemInputField iif in itemInputFieldInitalizer)
         {
             ItemSlots[index] = iif;
             index++;
         }
+        ItemSlots[16] = new ItemInputField();
     }
 
     // Given newowner savedata, creates Skillinputs for each skill the player already knows
@@ -57,7 +58,6 @@ public class ItemAdder : MonoBehaviour
         {
             AddItem(item,false);
         } 
-        Debug.Log("i have "+ newonwer.equipmentObjects.Count);
         UpdateAdderContent();
     }
     
@@ -80,21 +80,25 @@ public class ItemAdder : MonoBehaviour
     // Called from the edited player when their item is reduced to 0, removes said item from the box
     public static void RemoveItem(Item removedItem)
     {
+        ClearPopup();
         lastIndex--;
         bool incrementPosition = false;
-        for(int i = 0; i < ItemSlots.Length; i++)
+        for(int i = 0; i < ItemSlots.Length-1; i++)
         {
             if(removedItem == ItemSlots[i].GetItem())
             {
                 incrementPosition = true;
             }
-            if(incrementPosition && i < ItemSlots.Length-1)
+            if(incrementPosition && i < ItemSlots.Length)
             {
-                Item nextItem = ItemSlots[i+1].GetItem();
-                ItemSlots[i].DownloadCharacter(owner, nextItem);
+                ItemInputField nextInputfield = ItemSlots[i+1];
+                if(nextInputfield != null)
+                {
+                    Item nextItem = ItemSlots[i+1].GetItem();
+                    ItemSlots[i].DownloadCharacter(owner, nextItem);
+                }
             }
         }
-        ClearPopup();
     }
 
     public static void OnItemClicked(ItemInputField clickedItemField)

@@ -74,7 +74,6 @@ public class Item
     {
         if(stacks < 1)
         {
-            Debug.Log("im fully consumed");
             return true;
         }
         else

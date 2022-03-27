@@ -8,7 +8,7 @@ public class TileGround : MonoBehaviour
     private static GameObject STileRef;
     private static Dictionary<Vector3,GameObject> myTiles = new Dictionary<Vector3, GameObject>();
 
-    void Start()
+    void Awake()
     {
         STileRef = TileRef;
         transform.position = new Vector3(0,0.5f,0);
