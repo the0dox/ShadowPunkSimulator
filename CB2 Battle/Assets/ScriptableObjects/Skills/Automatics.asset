@@ -19,4 +19,8 @@ MonoBehaviour:
   Descriptor: []
   displayText: 
   limit: 0
-  Specializations: []
+  Specializations:
+  - Assault Rifles
+  - Cyber Implants
+  - Machine Pistols
+  - Submachine Guns

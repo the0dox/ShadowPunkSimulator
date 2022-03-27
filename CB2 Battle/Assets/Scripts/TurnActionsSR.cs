@@ -552,6 +552,7 @@ public class TurnActionsSR : UIButtonManager
     public void BlastAttack(List<Transform> targets)
     {
         ActivePlayerStats.RemoveItem(ActiveWeapon);
+        ActivePlayerStats.Unequip(ActiveWeapon);
         foreach(Transform t in targets)
         {
             AttackQueue.Enqueue(new AttackSequence(t.GetComponent<PlayerStats>(), ActivePlayerStats, ActiveWeapon,FireRate,1,true));

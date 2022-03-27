@@ -1,0 +1,42 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
+  m_Name: Combat Axe
+  m_EditorClassIdentifier: 
+  weight: 0
+  cost: 4000
+  availablity: 
+  description: Go ahead, go medieval.
+  unique: 1
+  rating: 12
+  icon: {fileID: 21300000, guid: 44217e1759eab0c4f929e9d56d9b3846, type: 3}
+  upgrades: []
+  Attributes: []
+  damageBonus: 5
+  rangeClass: {fileID: 11400000, guid: aa38a9dfa4bbabc42a4e7f4313df4148, type: 2}
+  pen: 4
+  SingleShot: 0
+  SemiAuto: 0
+  BurstFire: 0
+  FullAuto: 0
+  WeaponSkill: {fileID: 11400000, guid: db421b279dacfda428b1a3d1be678922, type: 2}
+  WeaponSpecialization: 0
+  accuracy: 0
+  clipMax: 0
+  damageType: 
+  blast: 0
+  AmmoSource: {fileID: 0}
+  clipType: 0
+  weaponClass: 0
+  Lethal: 1
+  debugAddAllUpgrades: 0
+  blastClass: 0
