@@ -125,6 +125,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
 
     public void SinglePLayerCharacterSheet()
     {
+        ClientDisplay.SetActive(false);
         pv.RPC("RPC_ClientDisplay", RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber);
     }
 
@@ -332,9 +333,13 @@ public class DmMenu : MonoBehaviourPunCallbacks
         spv.RPC("RPC_AssignCharacter",RpcTarget.MasterClient,StatsID,myID);
     }
 
-    public static Photon.Realtime.Player GetOwner(PlayerStats player)
+    public static Photon.Realtime.Player GetOwner(PlayerStats Player)
     {
-        CharacterSaveData csd = player.myData;
+        return GetOwner(Player.myData);
+    }
+
+    public static Photon.Realtime.Player GetOwner(CharacterSaveData csd)
+    {
         if(SavedCharacters.ContainsValue(csd))
         {
             foreach(KeyValuePair<int,CharacterSaveData> kvp in SavedCharacters)
@@ -344,13 +349,13 @@ public class DmMenu : MonoBehaviourPunCallbacks
                     int index = kvp.Key;
                     if(CharacterPermissions.ContainsKey(index) && CharacterPermissions[index] != null)
                     {
-                        Debug.Log("player " + player.GetName() + " is owned by player " + CharacterPermissions[index]);
+                        //Debug.Log("player " + player.GetName() + " is owned by player " + CharacterPermissions[index]);
                         return CharacterPermissions[index];
                     }
                 }
             }
         }
-        Debug.Log("player " + player.GetName() + " is owned by the server");
+        //Debug.Log("player " + player.GetName() + " is owned by the server");
         return PhotonNetwork.LocalPlayer;
     }
 

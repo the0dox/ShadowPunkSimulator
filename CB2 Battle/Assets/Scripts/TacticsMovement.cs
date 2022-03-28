@@ -23,6 +23,7 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
    Vector3 heading = new Vector3();
    float halfHeight = 0;
    Vector3 jumpTick = new Vector3(0,1,0);
+   public bool draggable = true;
    [SerializeField] private PhotonView pv;
    
    void Start()

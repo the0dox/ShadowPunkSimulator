@@ -102,6 +102,8 @@ MonoBehaviour:
   - RPC_FallDelay
   - RPC_ClearTargets
   - RPC_FinishedLoading
+  - RPC_ShowActionsOnly
+  - RPC_ShowAllInfo
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

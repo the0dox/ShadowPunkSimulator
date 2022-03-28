@@ -99,6 +99,7 @@ MonoBehaviour:
   draw: 1
   StrictLOS: 0
   avoidOwner: {fileID: 0}
+  raisedDistance: 0.3
 --- !u!54 &1733315104578707126
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -333,3 +334,4 @@ MonoBehaviour:
   draw: 1
   StrictLOS: 0
   avoidOwner: {fileID: 0}
+  raisedDistance: 0.3

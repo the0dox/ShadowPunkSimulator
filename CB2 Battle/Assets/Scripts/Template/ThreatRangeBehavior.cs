@@ -243,7 +243,6 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
             transform.rotation = Quaternion.Euler(0, Random.Range(0,360),0);
             gameObject.transform.Translate(transform.forward.normalized * distance); 
             Photon.Realtime.Player clientTarget = DmMenu.GetOwner(attacker);
-            pv.RPC("RPC_ScatterMove",clientTarget, transform.position);
             CombatLog.Log("By failing the ballistic test, " + attacker.GetName() +"'s " + w.GetName() + " scatters in a random direction!");    
         }
         yield return new WaitForSeconds (0.2f);
@@ -257,12 +256,5 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
                 currentTile.HitCover(w);
             }
         }
-    }
-
-    [PunRPC]
-    public void RPC_ScatterMove(Vector3 pos)
-    {
-        transform.position = pos;
-        myRange.Clear();
     }
 }

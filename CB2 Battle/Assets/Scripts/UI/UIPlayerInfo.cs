@@ -22,6 +22,7 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     [SerializeField] private Image HealthBar;
     [SerializeField] private Image MoveBar;
     [SerializeField] private GameObject display;
+    [SerializeField] private GameObject actiondisplay;
     private static UIPlayerInfo instance;
     
     void Awake()
@@ -98,23 +99,47 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         WeaponTwo.text = WeaponTwoText;
     }
 
-    public static void StartTurn(PlayerStats activePlayer)
+    public static void ShowAllInfo(PlayerStats activePlayer)
     {
         Photon.Realtime.Player activePlayerOwner = DmMenu.GetOwner(activePlayer);
-        instance.pv.RPC("RPC_StartTurn",RpcTarget.All, activePlayerOwner.ActorNumber);
+        instance.pv.RPC("RPC_ShowAllInfo",RpcTarget.All, activePlayerOwner.ActorNumber);
+    }
+
+    public static void ShowActionsOnly(PlayerStats activePlayer)
+    {
+        Photon.Realtime.Player activePlayerOwner = DmMenu.GetOwner(activePlayer);
+        instance.pv.RPC("RPC_ShowActionsOnly",RpcTarget.All, activePlayerOwner.ActorNumber);
     }
 
     [PunRPC]
-    void RPC_StartTurn(int PlayerID)
+    void RPC_ShowActionsOnly(int PlayerID)
+    {
+        Photon.Realtime.Player defendingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(PlayerID);
+        if(pv.IsMine || PhotonNetwork.LocalPlayer == defendingPlayer)
+        {
+            instance.display.SetActive(false);
+            instance.actiondisplay.SetActive(true);
+        }
+        else
+        {
+            instance.display.SetActive(false);
+            instance.actiondisplay.SetActive(false);
+        }
+    }
+
+    [PunRPC]
+    void RPC_ShowAllInfo(int PlayerID)
     {
         Photon.Realtime.Player activePlayer = PhotonNetwork.CurrentRoom.GetPlayer(PlayerID);
         if(pv.IsMine || PhotonNetwork.LocalPlayer == activePlayer)
         {   
             instance.display.SetActive(true);
+            instance.actiondisplay.SetActive(true);
         }
         else
         {
             instance.display.SetActive(false);
+            instance.actiondisplay.SetActive(false);
         }
     }
 }

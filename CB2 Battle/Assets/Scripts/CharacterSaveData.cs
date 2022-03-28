@@ -329,7 +329,6 @@ public class CharacterSaveData
             }
             else
             {
-                Debug.Log("needs to add");
                 equipmentObjects.Add(item);   
             }
         }

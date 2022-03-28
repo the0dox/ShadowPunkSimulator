@@ -180,7 +180,7 @@ public class TurnManager : TurnActionsSR
         if (IntiativeActiveActors.Count > 0) 
         {
             ActivePlayerStats = IntiativeActiveActors[IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1]];
-            UIPlayerInfo.StartTurn(ActivePlayerStats);
+            UIPlayerInfo.ShowAllInfo(ActivePlayerStats);
             ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
             halfActions = 2;
             freeActions = 1;
@@ -251,6 +251,11 @@ public class TurnManager : TurnActionsSR
             IntiativeActiveActors.RemoveAt(indexOf);
             if(newInitative < 1)
             {
+                newInitative = 0;
+                while(IntiativeFinishedActors.ContainsKey(newInitative))
+                {
+                    newInitative += 0.01f;
+                }
                 IntiativeFinishedActors.Add(0, player);
             } 
             else
@@ -266,6 +271,10 @@ public class TurnManager : TurnActionsSR
             if(newInitative < 1)
             {
                 newInitative = 0;
+            }
+            while(IntiativeFinishedActors.ContainsKey(newInitative))
+            {
+                newInitative += 0.01f;
             }
             IntiativeFinishedActors.Add(newInitative,player);
         }

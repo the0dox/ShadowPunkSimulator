@@ -34,6 +34,7 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
 
     public static void CreatePlayer(string csdname,Vector3 pos, bool controlable)
     {
+
         pv.RPC("RPC_CreatePlayer",RpcTarget.MasterClient,csdname,pos,controlable);
     }
 
@@ -57,7 +58,9 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
         // Initalize the player 
         int ID = IDs.Count;
-        EmptyPlayer.GetComponent<PlayerStats>().DownloadSaveData(csd, ID);
+        // Assign playerowner
+        int ownerID = DmMenu.GetOwner(csd).ActorNumber;
+        EmptyPlayer.GetComponent<PlayerStats>().DownloadSaveData(csd, ID, ownerID);
         EmptyPlayer.GetComponent<TacticsMovement>().Init();
         IDs.Add(ID,EmptyPlayer.GetComponent<PlayerStats>());
 

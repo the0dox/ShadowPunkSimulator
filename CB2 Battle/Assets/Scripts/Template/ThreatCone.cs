@@ -19,6 +19,8 @@ public class ThreatCone : MonoBehaviour
     Mesh MyMesh;
     // In certain threat ranges, the owner cannot be targeted, in which case their transform is saved here so that the cone knows to exclude it
     public Transform avoidOwner;
+    // In certain threat ranges, LOS is drawn from the ground, raisedDistance draws the raycast a bit further up as to increase chances to hit targets
+    public float raisedDistance = 0.3f;
 
     // Called on first frame, starts a delayed check to save memory
     void Start()
@@ -77,14 +79,10 @@ public class ThreatCone : MonoBehaviour
             // los is expensive and should only be called on players
             if(contact.otherCollider.tag == "Player")
             {
-                // checks los between players so long as they aren't excluded
-                if( ValidContact(currentTransform) && currentTransform != avoidOwner)
+                // LOS isn't checked here as a player can be within a range and still behind cover!
+                if(currentTransform != avoidOwner && !visibleTargets.Contains(currentTransform))
                 {
-                    if(!visibleTargets.Contains(currentTransform))
-                    {
-                        
-                        visibleTargets.Add(currentTransform);
-                    }
+                    visibleTargets.Add(currentTransform);
                 }
             }
             else if(contact.otherCollider.tag == "Tile")
@@ -115,7 +113,6 @@ public class ThreatCone : MonoBehaviour
         {
             if(validCover.Contains(myTrans))
             {
-                Debug.Log("removing tile at " + collision.gameObject.transform.position);
                 Transform myTile = collision.transform;
                 validCover.Remove(myTile);
             }
@@ -126,7 +123,7 @@ public class ThreatCone : MonoBehaviour
     {
         if(StrictLOS || avoidOwner == null)
         {
-            return !Physics.Linecast(gameObject.transform.position, target.position, LayerMask.GetMask("Obstacle"));
+            return !Physics.Linecast(gameObject.transform.position + new Vector3(0,raisedDistance,0), target.position, LayerMask.GetMask("Obstacle"));
         }
         else
         {
@@ -138,10 +135,6 @@ public class ThreatCone : MonoBehaviour
     public List<Transform> GetTargets()
     {
         CheckLOS();
-        foreach(Transform t in visibleTargets)
-        {
-            t.GetComponent<PlayerStats>().PaintTarget(false);
-        }
         return visibleTargets;
     }
 

@@ -30,7 +30,7 @@ public class OverworldManager : UIButtonManager
         {
             d.Add(playerName,playerName);
         }
-        d.Add("Fast Forward","FastForward");
+        //d.Add("Fast Forward","FastForward");
         ConstructActions(d);
     }
 

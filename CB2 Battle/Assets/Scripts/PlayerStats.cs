@@ -40,34 +40,28 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public int remainingMove;
     private int defensePenality = 0;
     private int TotalBulletsFired;
-
+    
     [SerializeField] private HealthBar HealthBar;
     [SerializeField] private FatigueBar FatigueBar;
 
     // given a charactersavedata copies all the values onto the playerstats
-    public void DownloadSaveData(CharacterSaveData myData, int id)
+    public void DownloadSaveData(CharacterSaveData myData, int ID, int ownerID)
     {   
         this.myData = myData;
         this.playername = myData.playername;
         this.team = myData.team;    
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
-        Init(id);
-    }
-
-    // Calculates bonuses from armor and stats
-    public void Init(int id)
-    {
         pv = GetComponent<PhotonView>();
-        SetID(id);
+        SetID(ID);
         if(pv.IsMine)
         {
-            pv.RPC("RPC_Init",RpcTarget.OthersBuffered, myData.team,myData.Model, id);
+            pv.RPC("RPC_Init",RpcTarget.Others, myData.team, myData.Model, ID, ownerID);
         }
         OnDownload();
     }
 
     [PunRPC]
-    void RPC_Init(int team, string model, int ID)
+    void RPC_Init(int team, string model, int ID, int ownerID)
     {
         NPCHealth = 0;
         NPCStun = 0;
@@ -81,6 +75,10 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         else
         {
             GetComponentInChildren<MeshRenderer>().material = PlayerSpawner.SNPCMaterial;   
+        }
+        if(PhotonNetwork.LocalPlayer != PhotonNetwork.CurrentRoom.GetPlayer(ownerID))
+        {
+            GetComponent<TacticsMovement>().draggable = false;
         }
         PlayerSpawner.ClientUpdateIDs(this);
         GetComponentInChildren<MeshFilter>().mesh = PlayerSpawner.GetPlayers()[model];

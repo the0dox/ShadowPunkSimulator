@@ -66,6 +66,7 @@ public class AttackSequence
     }
     public void ReactionRollComplete()
     {
+        UIPlayerInfo.ShowAllInfo(attacker);
         reactionRolled = true;
         // See compare hits between attack and defense roll
         int netHits = attackRoll.GetHits();

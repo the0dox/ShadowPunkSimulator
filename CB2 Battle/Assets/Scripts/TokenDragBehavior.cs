@@ -89,9 +89,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         if(startingPos != previousPosition)
         {
             
-            ClearIndicators();
-
-            myPath.Clear();
+            ClearPreviousPath();
             
             if(next.parent != null)
             {
@@ -146,7 +144,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
     private void AddToken(GameObject player)
     {
         TacticsMovement newToken = player.GetComponent<TacticsMovement>();
-        if(!newToken.moving)
+        if(!newToken.moving && newToken.draggable)
         {
             myToken = newToken;
             myPath.Clear();
@@ -158,19 +156,23 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
     }
 
     // Clears all of the path indicators
-    private void ClearIndicators()
+    private void ClearPreviousPath()
     {
         foreach(Vector3 tilepos in myPath)
         {
             Tile oldTile = BoardBehavior.GetTile(tilepos);
-            oldTile.OnScrolled(false);
+            if(oldTile != null)
+            {
+                oldTile.OnScrolled(false);
+            }
         }
+        myPath.Clear();
     }
 
     // Clears the previously held player
     private void ClearToken()
     {
-        ClearIndicators();
+        ClearPreviousPath();
         TooltipSystem.hide();
         myToken = null;
         myFilter.mesh = null;

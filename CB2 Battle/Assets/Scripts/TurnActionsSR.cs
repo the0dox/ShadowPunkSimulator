@@ -38,7 +38,7 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
         }
-        d.Add("Called Shot", "CalledShot");
+        //d.Add("Called Shot", "CalledShot");
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
@@ -757,7 +757,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void TryReaction()
     {
-        //CurrentAttack.attacker.GetComponent<TacticsMovement>().RemoveSelectableTiles();
+        UIPlayerInfo.ShowActionsOnly(CurrentAttack.target);
         CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
         if(!CurrentAttack.AttackMissed)
         {
@@ -783,6 +783,7 @@ public class TurnActionsSR : UIButtonManager
         TacticsAttack.DealDamage(CurrentAttack);
         if(CurrentAttack.attacker != null)
         {
+            UIPlayerInfo.ShowAllInfo(CurrentAttack.attacker);
             CurrentAttack.attacker.RemoveCondition(Condition.Aiming);
         }
         CurrentAttack = null;
