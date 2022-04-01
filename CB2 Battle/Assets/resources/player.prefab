@@ -563,6 +563,7 @@ MonoBehaviour:
   jumpHeight: 2
   fallSpeed: 8
   moveSpeed: 4
+  draggable: 1
   pv: {fileID: 6456403412706441088}
 --- !u!114 &6456403412706441088
 MonoBehaviour:

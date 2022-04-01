@@ -1,0 +1,24 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e9b4cee9722b340a3e714a0d739400, type: 3}
+  m_Name: Rook
+  m_EditorClassIdentifier: 
+  key: 3
+  description: 'Immovable. Implacable. You are the bulwark.
+
+
+    You gain the ''Rook
+    action'' allowing you to position your shield as directional cover for you and
+    your allies as a full action.'
+  prerequisites: 00000000
+  conflictsWith: 
+  Icon: {fileID: 21300000, guid: 3d1b24a664c881b43a301a8ad34ae8e1, type: 3}

@@ -44,7 +44,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         // if this is called client side send my changes to the server
         if(!pv.IsMine)
         {
-            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber, NameField.text, ActivePlayer.CompileStats(), ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStatsOut",RpcTarget.MasterClient, PhotonNetwork.LocalPlayer.ActorNumber, NameField.text, ActivePlayer.CompileStats(), ActivePlayer.skillSpecialization, ActivePlayer.compileEquipment().ToArray(), NPCHealth, ActivePlayer.CompileTalents());
         }
         // if this is server side apply the changes
         else 
@@ -99,7 +99,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         // client side edit, transfer charactershetet
         else
         { 
-            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.CompileStats(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth);
+            pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.CompileStats(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth, input.CompileTalents());
         }
     }
     // Generic info that both kinds of download needs to know
@@ -126,6 +126,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         //AddItem("Cyberdeck");
         SkillAdder.DownloadOwner(ActivePlayer);
         ItemAdder.DownloadOwner(ActivePlayer);
+        TalentAdder.DownloadOwner(ActivePlayer);
         page2.SetActive(false);
     }
 
@@ -242,14 +243,14 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Master sends this to the client to be edited
     [PunRPC]
-    void RPC_SyncStats(string name, string[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth)
+    void RPC_SyncStats(string name, string[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth, Dictionary<int,bool> newTalents)
     {
         List<string> convertedArray = new List<string>();
         for(int i = 0; i < equipment.Length; i++)
         {
             convertedArray.Add(equipment[i]);
         }
-        ActivePlayer = new CharacterSaveData(name, characteristics, specalizations, convertedArray);
+        ActivePlayer = new CharacterSaveData(name, characteristics, specalizations, convertedArray,newTalents);
         if(newNPCHealth >= 0)
         {
             Debug.Log("Unique npc health" + newNPCHealth);
@@ -260,7 +261,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     // Client sends this to the master to be saved 
     [PunRPC]
-    void RPC_SyncStatsOut(int callingPlayerID, string newName, string[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth)
+    void RPC_SyncStatsOut(int callingPlayerID, string newName, string[] newCharacteristics, Dictionary<string,int> newSpecalizations, string[] newequipment, int newNPCHealth, Dictionary<int,bool> newTalents)
     {
         DmMenu.RemoveClientSheet(callingPlayerID);
         ActivePlayer.playername = newName;
@@ -272,6 +273,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         }
         ActivePlayer.decompileEquipment(convertedArray);
         ActivePlayer.DecompileStats(newCharacteristics);
+        ActivePlayer.DecompileTalents(newTalents);
         NPCHealth = newNPCHealth;
         UpdateStatsOut();
     }

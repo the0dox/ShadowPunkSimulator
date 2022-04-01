@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e9b4cee9722b340a3e714a0d739400, type: 3}
+  m_Name: Momentum
+  m_EditorClassIdentifier: 
+  key: 13
+  description: 'Adepts use their environment to gain bursts of unnatural speed.
+
+
+    ''Momentum''
+    is a free action where the adept makes an acrobatics check to preform a movement
+    trick described by the player. The threshold can be made easier or harder depending
+    on the senario. If successful, the adept enters a state of momentum, a defensive
+    buff that can be spent on special adept manuevers'
+  prerequisites: 0c000000
+  conflictsWith: 
+  Icon: {fileID: 21300000, guid: 5db07e9f657ceba44b4e95af66c9d1f2, type: 3}

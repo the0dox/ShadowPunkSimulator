@@ -9,6 +9,7 @@ public class CharacterSaveData
 {
     // Basic character stats Shadowrunner
     public int[] attribues = new int[100]; 
+    public bool[] talents = new bool[100];
     
     // Skills Shadowrunner
     public Dictionary<string, int> skillSpecialization = new Dictionary<string, int>();
@@ -52,12 +53,13 @@ public class CharacterSaveData
         CalculateCharacteristics();
     }
 
-    public CharacterSaveData(string playername, string[] attribues, Dictionary<string,int> specalizations, List<string> newequipment)
+    public CharacterSaveData(string playername, string[] attribues, Dictionary<string,int> specalizations, List<string> newequipment, Dictionary<int, bool> newTalents)
     {
         this.playername = playername;
         this.skillSpecialization = specalizations;
         DecompileStats(attribues);
         decompileEquipment(newequipment);
+        DecompileTalents(newTalents);
     }
 
     public void OnLoad()
@@ -167,20 +169,19 @@ public class CharacterSaveData
         }
     }
 
+    public void SetTalent(TalentKey key, bool value)
+    {
+        talents[(int)key] = value;
+    }
+
     public int GetAttribute(AttributeKey key)
     {
         return attribues[(int)key];
     }
 
-    public int GetAttribute(SkillTemplate skill)
+    public bool hasTalent(TalentKey key)
     {
-        int index = (int)skill.derrivedAttribute;
-        int levels = attribues[index];
-        if(levels < 1 && skill.defaultable)
-        {
-            return -1;
-        }
-        return levels;
+        return talents[(int)key];
     }
 
     public RollResult AbilityCheck(AttributeKey skillKey, int threshold = 0, int modifier = 0)
@@ -280,34 +281,22 @@ public class CharacterSaveData
         return output;
     }
 
-    // Resets all Items, used when charactersheet is editing equipment
-    public void ClearEquipment()
+    // Converts talents into readable code for PUN
+    public Dictionary<int, bool> CompileTalents()
     {
-        equipment = new string[20];
-        equipmentSize = new int[20];
+        Dictionary<int,bool> output = new Dictionary<int, bool>();
+        for(int i = 0; i < talents.Length; i++) 
+        {
+            output.Add(i, talents[i]);
+        }
+        return output;
     }
 
-    // Takes a series of Gameobjects and converts them back into basic datastructures
-    public void AddEquipment(Dictionary<string,int> input)
+    public void DecompileTalents(Dictionary<int, bool> input)
     {
-        ClearEquipment();
-        int newIndex = 0;
-        foreach(KeyValuePair<string,int> kvp in input)
+        foreach(KeyValuePair<int,bool> kvp in input)
         {
-            equipment[newIndex] = kvp.Key;
-            equipmentSize[newIndex] = kvp.Value;
-            newIndex++;
-        }
-    }
-    public void AddEquipment(List<Item> input)
-    {
-        ClearEquipment();
-        int newIndex = 0;
-        foreach(Item i in input)
-        {
-            equipment[newIndex] = i.GetName();
-            equipmentSize[newIndex] = i.GetStacks();
-            newIndex++;
+            talents[kvp.Key] = kvp.Value;
         }
     }
 
@@ -380,12 +369,12 @@ public class CharacterSaveData
     // Saves my data on to the computer for later play sessions
     public void Quit()
     {
-        UploadSaveData();
+        //UploadSaveData();
         SaveSystem.SavePlayer(this);
     }
 
-    // If this is a player character with a single map token, save the stats of the map token instead
-    // Not done for NPCs because there can be multiple copies of them
+    // Depreciated Save method
+    /* Not done for NPCs because there can be multiple copies of them
     public void UploadSaveData()
     {
         if(team == 0)
@@ -418,7 +407,8 @@ public class CharacterSaveData
                 ClearEquipment();
                 AddEquipment(myPlayer.equipment);
             }
-            */
+            
         }
     }
+    */
 }
