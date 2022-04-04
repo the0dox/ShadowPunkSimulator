@@ -23,8 +23,7 @@ public class UIButtonManager : MonoBehaviourPunCallbacks
             foreach (KeyValuePair<string, string> kvp in d)
             {
                 GameObject newButton = PhotonNetwork.Instantiate("ActionButton", Vector3.one, Quaternion.identity);
-                newButton.GetComponent<ActionButtonScript>().SetAction(kvp.Value);
-                newButton.GetComponent<ActionButtonScript>().SetText(kvp.Key);
+                newButton.GetComponent<ActionButtonScript>().DownloadButton(kvp.Key, kvp.Value);
                 displacement += 150;
             }
         }

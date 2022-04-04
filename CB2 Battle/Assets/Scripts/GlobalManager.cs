@@ -13,6 +13,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     [SerializeField] private TileReference tr;
     [SerializeField] private ConditionsReference cr;
     [SerializeField] private TalentReference talr;
+    [SerializeField] private ActionReference ar;
     [SerializeField] private PlayerSpawner ps;
     [SerializeField] private PhotonView pv;
     public static SceneSaveData LoadedScene;
@@ -28,6 +29,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         talr.Init();
         cr.Init();
         ps.Init();  
+        ar.Init();
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
     [PunRPC]

@@ -89,6 +89,11 @@ public class Weapon : Item
 
     public bool IsWeaponClass(WeaponClass DesiredClass)
     {
+        // shields are considered melee for most purposes 
+        if(DesiredClass == WeaponClass.melee && Template.weaponClass == WeaponClass.shield)
+        {
+            return true;
+        }
         return DesiredClass.Equals(Template.weaponClass);
     }
 
@@ -127,7 +132,7 @@ public class Weapon : Item
     public Dictionary<string, string> GetWeaponActions(bool complex)
     {
         Dictionary<string, string> output = new Dictionary<string, string>();
-        if(IsWeaponClass(WeaponClass.melee))
+        if(IsWeaponClass(WeaponClass.melee) || IsWeaponClass(WeaponClass.shield))
         {
             if(complex)
             {
@@ -238,7 +243,7 @@ public class Weapon : Item
     //whether of not to display this weapon on the reload screen
     public bool CanReload(PlayerStats owner)
     {
-        if(IsWeaponClass((WeaponClass.melee)))
+        if(!IsWeaponClass(WeaponClass.ranged))
         {
             return false;
         }
@@ -274,7 +279,7 @@ public class Weapon : Item
 
     public override string ToString()
     {
-        if(IsWeaponClass(WeaponClass.melee))
+        if(!IsWeaponClass(WeaponClass.ranged))
         {
             return GetName();
         }

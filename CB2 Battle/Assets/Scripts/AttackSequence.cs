@@ -25,7 +25,7 @@ public class AttackSequence
     public RollResult soakRoll;
     public bool soakRolled = false;
     public bool AttackMissed = false;
-    public Tile CoverTile;
+    public GameObject interceptingGameobject;
     public int coverRange = 0;
     private bool skipAttack = false;
     int flatDamage = 0;
@@ -84,7 +84,6 @@ public class AttackSequence
         else if(netHits <= coverRange)
         {
             HitCover();
-            AttackMissed = true;
         }
         // If attack hits, start a soak roll
         else
@@ -101,6 +100,10 @@ public class AttackSequence
             armorPen = ActiveWeapon.GetAP();
         }
         int armorMod = target.GetAP();
+        if(TacticsAttack.TargetIsBlocking(attacker,target))
+        {
+            armorMod += 8; 
+        }
         if(armorMod > 0)
         {
             armorMod -= armorPen;
@@ -114,14 +117,27 @@ public class AttackSequence
 
     private void HitCover()
     {
-        if(CoverTile != null && target.hasCondition(Condition.Covered))
+        if(interceptingGameobject != null)
         {
-            CoverTile.HitCover(this);
+            Tile interceptingTile = interceptingGameobject.GetComponent<Tile>();
+            PlayerStats interceptingPlayer = interceptingGameobject.GetComponent<PlayerStats>();
+            if(interceptingTile != null)
+            {
+                interceptingTile.HitCover(this);
+                AttackMissed = true;
+            }
+            else if(interceptingPlayer != null)
+            {   
+                CombatLog.Log("by getting 0-4 hits, " + target.GetName() + " intercepts the hit!");
+                target = interceptingPlayer;
+                SoakRoll();
+            }
         }
         else
         {
             CombatLog.Log("by getting 0 hits, " + target.GetName() + " suffers a grazing hit!");
             PopUpText.CreateText("Grazed!", Color.yellow, target.gameObject);
+            AttackMissed = true;
         }
     }
     

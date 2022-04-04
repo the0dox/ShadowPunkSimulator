@@ -24,6 +24,7 @@ public class TurnActionsSR : UIButtonManager
     public List<PlayerStats> ValidTargets;
     protected Queue<AttackSequence> AttackQueue = new Queue<AttackSequence>();
     protected AttackSequence CurrentAttack;
+    public Vector3 DirectionPointerInfo;
 
     public void Combat()
     {
@@ -277,6 +278,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void Misc()
     {
+        TokenDragBehavior.ToggleMovement(false);
         currentAction = null;
         Dictionary<string,string> d = new Dictionary<string, string>();
         if(halfActions > 0)
@@ -288,8 +290,120 @@ public class TurnActionsSR : UIButtonManager
                 d.Add("Take Cover","takecover");
             }
         }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Adrenaline) && !ActivePlayerStats.hasCondition(Condition.Winded))
+        {
+            d.Add("Adrenaline","Adrenaline");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Presence))
+        {
+            d.Add("Presence","Presence");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Rook))
+        {
+            d.Add("Rook","Rook");
+        }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
+    }
+
+    // Sam skills
+    public void Rook()
+    {
+        GameObject indicator = PhotonNetwork.Instantiate("DirectionPointer", ActivePlayerStats.transform.position, Quaternion.identity);
+        indicator.GetComponent<DirectionSelectorBehavior>().SetLocation(ActivePlayerStats.transform.position, DmMenu.GetOwner(ActivePlayerStats));
+        StartCoroutine(RookDelay());
+        ConstructActions();
+        Dictionary<string,string> d = new Dictionary<string, string>();
+        d.Add("Cancel","CancelRook");
+        ConstructActions(d);
+    }
+
+    IEnumerator RookDelay()
+    {
+        while(DirectionPointerInfo == Vector3.one)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        ActivePlayerStats.RemoveCondition(Condition.RookUp);
+        ActivePlayerStats.RemoveCondition(Condition.RookRight);
+        ActivePlayerStats.RemoveCondition(Condition.RookDown);
+        ActivePlayerStats.RemoveCondition(Condition.RookLeft);
+        float y = DirectionPointerInfo.y;
+        if(y >= 315 || y < 45)
+        {
+            ActivePlayerStats.SetCondition(Condition.RookUp, 0, false);
+        }
+        else if(y > 45 && y < 135)
+        {
+            ActivePlayerStats.SetCondition(Condition.RookRight, 0, false);
+        }
+        else if(y > 135 && y < 225)
+        {
+            ActivePlayerStats.SetCondition(Condition.RookDown, 0, false);
+        }
+        else
+        {
+            ActivePlayerStats.SetCondition(Condition.RookLeft, 0, false);
+        }
+        PopUpText.CreateText("Blocking!", Color.green, ActivePlayerStats.gameObject);
+        CombatLog.Log(ActivePlayerStats.GetName() + " readies their shield in a specific direction!");
+        halfActions -= 2;
+        Cancel();
+    }
+
+    public void CancelRook()
+    {
+        DirectionSelectorBehavior.RemovePointer();
+        Cancel();
+    }
+
+    public void Adrenaline()
+    {
+        SpendFreeAction();
+        halfActions = 2;
+        CombatLog.Log(ActivePlayerStats.GetName() + " uses Adrenaline to make an additional attack this turn!");
+        PopUpText.CreateText("Adrenaline!", Color.red, ActivePlayerStats.gameObject);
+        ActivePlayerStats.SetCondition(Condition.Winded, 0, false);
+        Cancel();
+    }
+
+    public void Presence()
+    {
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        currentAction = "SelectSingleEnemy";
+        StartCoroutine(PresenceDelay());
+        ConstructActions(new List<string>{"Cancel"});
+    }
+
+    IEnumerator PresenceDelay()
+    {
+        while(target == null)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        ClearActions();
+        RollResult IntimidationRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Intimidation, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+        IntimidationRoll.OpposedRoll( new RollResult(target.myData, AttributeKey.Willpower, AttributeKey.Charisma, AttributeKey.MentalLimit, 0,0));
+        while(!IntimidationRoll.Completed())
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        int Hits = IntimidationRoll.GetHits();
+        if(Hits > 0)
+        {
+            CombatLog.Log("By exceeding enemy hits, " + ActivePlayerStats.GetName() + " asserts their Presence!");
+            PopUpText.CreateText("Presence!", Color.green, ActivePlayerStats.gameObject);
+            ActivePlayerStats.SetCondition(Condition.Presence, Hits, false);
+            PopUpText.CreateText("Intimidated!", Color.red, target.gameObject);
+            target.SetCondition(Condition.Intimidated, Hits, false);
+        }
+        else
+        {
+            CombatLog.Log("By failing to exceed enemy hits, " + ActivePlayerStats.GetName() + " is unable to assert their Presence!");
+            PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
+        }
+        halfActions-= 2;
+        Cancel();
     }
 
     public void Reload()
@@ -622,6 +736,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void Ready()
     {
+        TokenDragBehavior.ToggleMovement(false);
         currentAction = null;
         Dictionary<string,string> d = new Dictionary<string, string>();
         
@@ -913,11 +1028,12 @@ public class TurnActionsSR : UIButtonManager
         FireRate = null;
         target = null;
         ValidTargets = null;
-        RepeatedAttacks = 0;
+        DirectionPointerInfo = Vector3.one;
         attacks = 0;
         UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
         PushToolTips();
         GlobalManager.ClearBoard();
+        StopAllCoroutines();
         if(ActivePlayer != null)
         {
             ActivePlayer.PaintCurrentTile("current");

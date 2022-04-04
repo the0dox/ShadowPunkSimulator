@@ -145,14 +145,21 @@ public class TurnManager : TurnActionsSR
     
     void ServerLeftClick(GameObject ServerHitObject)
     {
-        switch(currentAction)
+        if (ServerHitObject.tag == "Player")
         {
-        case "Attack":
-            if (ServerHitObject.tag == "Player")
+            switch(currentAction)
             {
-                RollToHit(ServerHitObject.GetComponent<PlayerStats>(), FireRate, ActiveWeapon, ActivePlayerStats);
+                case "Attack":
+                    RollToHit(ServerHitObject.GetComponent<PlayerStats>(), FireRate, ActiveWeapon, ActivePlayerStats);
+                break;
+                case "SelectSingleEnemy":
+                    PlayerStats ps = ServerHitObject.GetComponent<PlayerStats>();
+                    if(ps.GetTeam() != ActivePlayerStats.GetTeam())
+                    {
+                        target = ps;
+                    }
+                break;
             }
-            break;
         }
     }
 
@@ -215,7 +222,8 @@ public class TurnManager : TurnActionsSR
 
         foreach (KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors) 
         {
-            float initative = kvp.Key;
+            // NEW INITATIVE STYLE SUBTRACT ON PASS NOT ON TURN END
+            float initative = kvp.Key - 10;
             if(Mathf.FloorToInt(initative) >= 1)
             {
                 IntiativeActiveActors.Add(initative, kvp.Value);
@@ -256,7 +264,7 @@ public class TurnManager : TurnActionsSR
                 {
                     newInitative += 0.01f;
                 }
-                IntiativeFinishedActors.Add(0, player);
+                IntiativeFinishedActors.Add(newInitative, player);
             } 
             else
             {   
@@ -302,18 +310,45 @@ public class TurnManager : TurnActionsSR
         {
             PlayerStats ps = p.GetComponent<PlayerStats>();
             ps.StartRound();
-            float initiative = ps.RollInitaitve() + (float)ps.GetStat(AttributeKey.Agility)/10f;
-            while(IntiativeActiveActors.ContainsKey(initiative))
+            float initiative = RollInitaitve(ps);
+            if(Mathf.FloorToInt(initiative) >= 1)
             {
-                initiative += 0.01f;
+                while(IntiativeActiveActors.ContainsKey(initiative))
+                {
+                    initiative += 0.01f;
+                }
+                IntiativeActiveActors.Add(initiative,ps);
             }
-            IntiativeActiveActors.Add(initiative,ps);
+            else
+            {
+                while(IntiativeFinishedActors.ContainsKey(initiative))
+                {
+                    initiative += 0.01f;
+                }
+                IntiativeFinishedActors.Add(initiative,ps);
+            }
         }
 
         if(IntiativeActiveActors.Count > 0)
         {
             StartTurn();
         }
+    }
+
+    private float RollInitaitve(PlayerStats ps)
+    {
+        float initiative = ps.RollInitaitve() + (float)ps.GetStat(AttributeKey.Agility)/10f;
+        if(ps.hasCondition(Condition.Winded))
+        {
+            PopUpText.CreateText("Winded!", Color.yellow, ps.gameObject);
+            ps.RemoveCondition(Condition.Winded);
+            initiative -= 10;
+            if(initiative < 0)
+            {
+                initiative = 0; 
+            }
+        }
+        return initiative;
     }
 
     public GameObject GetActivePlayer()
@@ -343,16 +378,19 @@ public class TurnManager : TurnActionsSR
 
     public void EndTurn(){
         ActivePlayerStats.OnTurnEnd();
+        float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1];
+        /* OLD STYLE MAYBE BRING BACK?
         float newInitative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1] - 10;
         if(Mathf.FloorToInt(newInitative) < 1)
         {
             newInitative = 0;
             while(IntiativeFinishedActors.ContainsKey(newInitative))
             {
-                newInitative += 0.001f;
+                newInitative += 0.01f;
             }
         }
-        IntiativeFinishedActors.Add(newInitative,ActivePlayerStats);
+        */
+        IntiativeFinishedActors.Add(initative,ActivePlayerStats);
         IntiativeActiveActors.RemoveAt(IntiativeActiveActors.Count-1);
         StartTurn();
     }
@@ -426,6 +464,11 @@ public class TurnManager : TurnActionsSR
             CombatLog.Log(ActivePlayerStats.GetName() + " is able to act while on fire!");
         }
         Cancel();
+    }
+
+    public void HitCharacter()
+    {
+
     }
 
     public void RollToHit(PlayerStats target, string ROF, Weapon w, PlayerStats attacker)

@@ -104,6 +104,9 @@ MonoBehaviour:
   - RPC_FinishedLoading
   - RPC_ShowActionsOnly
   - RPC_ShowAllInfo
+  - RPC_SetLocation
+  - RPC_Send_Direction_Info
+  - RPC_SetSpecialEffect
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

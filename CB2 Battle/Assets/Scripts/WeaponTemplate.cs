@@ -75,4 +75,5 @@ public enum WeaponClass
     melee,
     ranged,
     thrown,
+    shield
 }

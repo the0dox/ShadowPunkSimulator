@@ -43,6 +43,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     
     [SerializeField] private HealthBar HealthBar;
     [SerializeField] private FatigueBar FatigueBar;
+    [SerializeField] private List<GameObject> specialEffects;
 
     // given a charactersavedata copies all the values onto the playerstats
     public void DownloadSaveData(CharacterSaveData myData, int ID, int ownerID)
@@ -199,7 +200,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         foreach(ConditionTemplate ct in removeKey)
         {
             CombatLog.Log("By moving: " + playername + " loses their " + ct.name + " condition!");
-            Conditions.Remove(ct);
+            RemoveCondition(ct.conditionKey);
         }
     }
 
@@ -396,6 +397,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             Debug.Log("Added" + key.ToString() + "Condition!");
             Conditions.Add(currentTemplate,duration);
         }
+        // if the condition has an associated effect, activate it
+        if(currentTemplate.effectKey != EffectKey.None)
+        {
+            SetSpecialEffect(currentTemplate.effectKey,true);
+        }
     }
     public bool hasCondition(Condition key)
     {
@@ -408,6 +414,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         if(Conditions.ContainsKey(templateKey))
         {
             Conditions.Remove(templateKey);   
+            // if the condition has an associated effect, remove it
+            if(templateKey.effectKey != EffectKey.None)
+            {
+                SetSpecialEffect(templateKey.effectKey,false);
+            }
         }
     }
 
@@ -511,8 +522,8 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         }
         foreach(ConditionTemplate Key in removedKeys)
         {
-            Debug.Log(Key.name + " condition removed");
-            Conditions.Remove(Key);
+            CombatLog.Log(GetName() + "'s " + Key.name + " condition has expired");
+            RemoveCondition(Key.conditionKey);
         }
     }
 
@@ -668,5 +679,15 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         gameObject.AddComponent<OverworldMovement>();
         //HealthBar.gameObject.SetActive(false);
         //FatigueBar.gameObject.SetActive(false);
+    }
+
+    public void SetSpecialEffect(EffectKey effect, bool enabled)
+    {
+        pv.RPC("RPC_SetSpecialEffect",RpcTarget.All, (int)effect, enabled);
+    }
+    [PunRPC] 
+    void RPC_SetSpecialEffect(int effectIndex, bool enabled)
+    {
+        specialEffects[effectIndex-1].SetActive(enabled);
     }
 }

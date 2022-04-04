@@ -50,4 +50,11 @@ public enum Condition
     Disarm,
     KnockDown,
     ShakeUp,
+    Winded,
+    Intimidated,
+    Presence,
+    RookUp,
+    RookLeft,
+    RookDown,
+    RookRight
 }

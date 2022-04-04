@@ -18,7 +18,7 @@ public class UITileSelector : MonoBehaviour
         foreach(string s in DisplayTiles.Keys)
         {
             GameObject button = PhotonNetwork.Instantiate("ActionButton", new Vector3(), Quaternion.identity) as GameObject;
-            button.GetComponent<ActionButtonScript>().SetAction(s);
+            button.GetComponent<ActionButtonScript>().DownloadButton(s,s);
             button.transform.SetParent(gameObject.transform);
             button.transform.localScale = new Vector3(0.5f,0.5f,0.5f);
             button.transform.localPosition = new Vector3(CurrentPos.x, CurrentPos.y, CurrentPos.z + 59);

@@ -34,10 +34,11 @@ public static class TacticsAttack
         }
 
         // Save cover 
-        output.CoverTile = GetCoverTile(myStats.transform.position, target.transform.position, true);
-        if(output.CoverTile != null)
+        Tile interceptingTile = GetCoverTile(myStats.transform.position, target.transform.position, true);
+        PlayerStats interceptingPlayer = IsDefendedByRook(myStats, target);
+        if(interceptingTile != null)
         {
-            if(output.CoverTile.IsStackedTile())
+            if(interceptingTile.IsStackedTile())
             {
                 output.coverRange = 4;
             }
@@ -45,6 +46,12 @@ public static class TacticsAttack
             {
                 output.coverRange = 2;
             }
+            output.interceptingGameobject = interceptingTile.gameObject;
+        }
+        else if(interceptingPlayer != null)
+        {
+            output.coverRange = 4;
+            output.interceptingGameobject = interceptingPlayer.gameObject;
         }
 
         RollResult attackRoll = new RollResult(myStats.myData, w, totalModifiers);
@@ -235,10 +242,46 @@ public static class TacticsAttack
         return true;
     }
 
+    public static bool TargetIsBlocking(PlayerStats attacker, PlayerStats target)
+    {
+        Vector3 targetnormpos = new Vector3(target.transform.position.x, Mathf.FloorToInt(target.transform.position.y) + 1, target.transform.position.z);
+        Vector3 relative = target.transform.InverseTransformPoint(attacker.transform.position);
+        float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+        int roundedAngle = Mathf.RoundToInt(angle);
+        if (target.hasCondition(Condition.RookLeft))
+        {
+            if (roundedAngle < 0)
+            {                
+                return true;
+            }
+        }
+        if (target.hasCondition(Condition.RookRight))
+        {
+            if (roundedAngle > 0 && roundedAngle < 180)
+            {                
+                return true;
+            }
+        }
+        if (target.hasCondition(Condition.RookUp))
+        {
+            if (roundedAngle > -90 && roundedAngle < 90 )
+            {                
+                return true;
+            }
+        }
+        if (target.hasCondition(Condition.RookDown))
+        {
+            if (roundedAngle < -90 || roundedAngle > 90)
+            {                
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     public static Tile GetCoverTile(Vector3 attacker,  Vector3 target, bool repeat)
     {
-
         RaycastHit hit;
         Tile tile;
         Vector3 targetnormpos = new Vector3(target.x, Mathf.FloorToInt(target.y) + 1, target.z);
@@ -334,6 +377,16 @@ public static class TacticsAttack
         else
         {
             Stack<string> outputStack = new Stack<string>();
+
+            if(TargetIsBlocking(myStats,target))
+            {
+                outputStack.Push("TargetBlocking");
+            }
+            if(IsDefendedByRook(myStats,target))
+            {
+                outputStack.Push("Defended by Rook");
+            }
+
             int attackDice = 0;
             int defenseDice = 0;
             // bonus from attribute
@@ -384,6 +437,74 @@ public static class TacticsAttack
             }    
         }
         return output;
+    }
+
+    public static PlayerStats IsDefendedByRook(PlayerStats attacker, PlayerStats target)
+    {
+        RaycastHit hit;
+        PlayerStats interceptingPlayer;
+        Vector3 targetnormpos = new Vector3(target.transform.position.x, Mathf.FloorToInt(target.transform.position.y) + 1, target.transform.position.z);
+        if (Physics.Raycast(targetnormpos, Vector3.left, out hit, 1))
+        {
+            interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
+            if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookLeft))
+            {
+                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
+                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+                int roundedAngle = Mathf.RoundToInt(angle);
+
+                if (roundedAngle < 0)
+                {                
+                    return interceptingPlayer;
+                }
+            }
+        }
+        if (Physics.Raycast(targetnormpos, Vector3.right, out hit, 1))
+        {
+            interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
+            if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookRight))
+            {
+                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
+                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+                int roundedAngle = Mathf.RoundToInt(angle);
+
+                if (roundedAngle > 0 && roundedAngle < 180)
+                {                
+                    return interceptingPlayer;
+                }
+            }
+        }
+        if (Physics.Raycast(targetnormpos, Vector3.forward, out hit, 1))
+        {
+            interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
+            if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookUp))
+            {
+                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
+                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+                int roundedAngle = Mathf.RoundToInt(angle);
+
+                if (roundedAngle > -90 && roundedAngle < 90 )
+                {                
+                    return interceptingPlayer;
+                }
+            }
+        }
+        if (Physics.Raycast(targetnormpos, Vector3.back, out hit, 1))
+        {
+            interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
+            if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookDown))
+            {
+                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
+                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+                int roundedAngle = Mathf.RoundToInt(angle);
+
+                if (roundedAngle < -90 || roundedAngle > 90)
+                {                
+                    return interceptingPlayer;
+                }
+            }
+        }
+        return null;
     }
 
     public static int adjacencyBonus(PlayerStats target, PlayerStats attacker, Weapon w)
@@ -438,6 +559,7 @@ public static class TacticsAttack
         modifiers.Add(" from prone target", GetProneTargetPenalty(thisAttack,type));
         modifiers.Add(" from full defense", GetFulldefenseBonus(thisAttack, type));
         modifiers.Add(" from called shot",GetCalledShotPenalty(thisAttack,type));
+        modifiers.Add(" from presence", GetIntimidationPenalty(thisAttack, type));
         return modifiers;
     }
 
@@ -448,7 +570,6 @@ public static class TacticsAttack
             return 0;
         }
         int distance = Mathf.RoundToInt(Vector3.Distance(thisAttack.attacker.transform.position, thisAttack.target.transform.position));
-        Debug.Log("distance " + distance);
         return thisAttack.ActiveWeapon.Template.rangeClass.GetRangePenalty(distance);
     }
 
@@ -618,6 +739,10 @@ public static class TacticsAttack
             }
             return "target threshold: >2";
         }
+        if(IsDefendedByRook(thisAttack.attacker, thisAttack.target))
+        {
+            return "target threshold: >4";
+        }
         return "target threshold: >0";
     }
 
@@ -626,6 +751,15 @@ public static class TacticsAttack
         if(attack && (thisAttack.attacker.hasCondition(Condition.Disarm) || thisAttack.attacker.hasCondition(Condition.ShakeUp) || thisAttack.attacker.hasCondition(Condition.KnockDown)))
         {
             return -4;
+        }
+        return 0;
+    }
+
+    private static int GetIntimidationPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.hasCondition(Condition.Intimidated) && !thisAttack.target.hasCondition(Condition.Presence))
+        {
+            return -3;
         }
         return 0;
     }
