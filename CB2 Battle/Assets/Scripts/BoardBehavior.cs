@@ -105,6 +105,17 @@ public class BoardBehavior : MonoBehaviour
         removedTile.DestroyMe();
     }
 
+    public static void CreateTile(Vector3 locationKey, string TileName)
+    {
+        GameObject newTileReference = TileReference.Tile(TileName);
+        if(newTileReference != null && !Tiles.ContainsKey(locationKey))
+        {
+            GameObject newTile = Instantiate(newTileReference, locationKey, Quaternion.identity);
+            Tile newTileScript = newTile.GetComponent<Tile>();
+            Tiles.Add(locationKey, newTileScript);
+        }
+    }
+
     public static void ComputeAdjacencyLists(int jumpHeight)
     {
       foreach(Vector3 key in Tiles.Keys)

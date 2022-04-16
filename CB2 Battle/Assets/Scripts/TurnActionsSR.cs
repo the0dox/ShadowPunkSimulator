@@ -16,11 +16,10 @@ public class TurnActionsSR : UIButtonManager
     protected int freeActions;
     protected string FireRate;
     protected PlayerStats target;
-    protected int attacks;
-    public GameObject ThreatRangePrefab;
+    protected int multipleTargetsLimit;
+    protected List<GameObject> multipleTargets = new List<GameObject>();
     public WeaponTemplate unarmed;
     int RepeatedAttacks;
-    protected string InteruptedAction;
     public List<PlayerStats> ValidTargets;
     protected Queue<AttackSequence> AttackQueue = new Queue<AttackSequence>();
     protected AttackSequence CurrentAttack;
@@ -285,10 +284,6 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Aim","Aim");
             d.Add("Reload","Reload");
-            if(BoardBehavior.InCover(ActivePlayerStats.gameObject))
-            {
-                d.Add("Take Cover","takecover");
-            }
         }
         if(ActivePlayerStats.myData.hasTalent(TalentKey.Adrenaline) && !ActivePlayerStats.hasCondition(Condition.Winded))
         {
@@ -298,9 +293,33 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Presence","Presence");
         }
-        if(ActivePlayerStats.myData.hasTalent(TalentKey.Rook))
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Rook) && ActivePlayerStats.HoldingWeaponClass(WeaponClass.shield))
         {
             d.Add("Rook","Rook");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Direct))
+        {
+            d.Add("Direct","Direct");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Inspire))
+        {
+            d.Add("Inspire","Inspire");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.SingleOut))
+        {
+            d.Add("Tactics Focus: Flanking","FlankingStyle");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.SpellTerrainProjectile))
+        {
+            d.Add("Lob Terrain","SpellLob");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.SpellWall))
+        {
+            d.Add("Create Barrier", "SpellWall");
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.SpellTerrainArmor))
+        {
+            d.Add("Industrial Armor","SpellArmor");
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
@@ -312,7 +331,6 @@ public class TurnActionsSR : UIButtonManager
         GameObject indicator = PhotonNetwork.Instantiate("DirectionPointer", ActivePlayerStats.transform.position, Quaternion.identity);
         indicator.GetComponent<DirectionSelectorBehavior>().SetLocation(ActivePlayerStats.transform.position, DmMenu.GetOwner(ActivePlayerStats));
         StartCoroutine(RookDelay());
-        ConstructActions();
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Cancel","CancelRook");
         ConstructActions(d);
@@ -370,13 +388,13 @@ public class TurnActionsSR : UIButtonManager
     public void Presence()
     {
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
-        currentAction = "SelectSingleEnemy";
         StartCoroutine(PresenceDelay());
         ConstructActions(new List<string>{"Cancel"});
     }
 
     IEnumerator PresenceDelay()
     {
+        currentAction = "SelectSingleEnemy";
         while(target == null)
         {
             yield return new WaitForSeconds(0.2f);
@@ -402,6 +420,231 @@ public class TurnActionsSR : UIButtonManager
             CombatLog.Log("By failing to exceed enemy hits, " + ActivePlayerStats.GetName() + " is unable to assert their Presence!");
             PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
         }
+        halfActions-= 2;
+        Cancel();
+    }
+
+    // Face Skills
+    public void Direct()
+    {
+        ActivePlayer.GetValidAllys();
+        StartCoroutine(DirectDelay());
+        ConstructActions(new List<string>{"Cancel"});
+    }
+
+    IEnumerator DirectDelay()
+    {
+        currentAction = "SelectSingleAlly";
+        while(target == null)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        ClearActions();
+        RollResult DirectRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+        while(!DirectRoll.Completed())
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        if(DirectRoll.Passed())
+        {
+            int hits = DirectRoll.GetHits();
+            PopUpText.CreateText("Assisted!", Color.green, target.gameObject);
+            target.SetCondition(Condition.Direction,hits,false);
+            CombatLog.Log(ActivePlayerStats.GetName() + " assists their ally!");
+        }
+        else
+        {
+            PopUpText.CreateText("Assist Failed!", Color.red, target.gameObject);
+            CombatLog.Log(ActivePlayerStats.GetName() + " fails to assist their ally!");
+        }
+        halfActions--;
+        Cancel();
+    }
+
+    public void Inspire()
+    {
+        StartCoroutine(InspireDelay());
+    }
+
+    IEnumerator InspireDelay()
+    {
+        RollResult InspireRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+        while(!InspireRoll.Completed())
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        if(InspireRoll.Passed())
+        {
+            int hits = Mathf.CeilToInt((float)InspireRoll.GetHits()/2f);
+            int myTeam = ActivePlayerStats.GetTeam();
+            GameObject[] allPlayers = GameObject.FindGameObjectsWithTag("Player");
+            for(int i = 0; i < allPlayers.Length; i++)
+            {
+                PlayerStats currentPlayer = allPlayers[i].GetComponent<PlayerStats>();
+                if(currentPlayer.GetTeam() == myTeam && currentPlayer != ActivePlayerStats)
+                {
+                    TurnManager.instance.IncreaseInitiative(currentPlayer,hits);
+                    PopUpText.CreateText("Inspired!", Color.green, currentPlayer.gameObject);
+                }
+            }
+            CombatLog.Log(ActivePlayerStats.GetName() + " adds half their hits rounding up (" + hits + ") to their team's Initiative!");
+        }
+        else
+        {
+            PopUpText.CreateText("Inspire Failed!", Color.red, ActivePlayerStats.gameObject);
+            CombatLog.Log(ActivePlayerStats.GetName() + " fails to inspire their team!");
+        }
+        halfActions-= 2;
+        Cancel();
+    }
+
+    public void FlankingStyle()
+    {
+        StartCoroutine(FlankingStyleDelay());
+    }
+
+    IEnumerator FlankingStyleDelay()
+    {
+    RollResult InspireRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+    while(!InspireRoll.Completed())
+    {
+        yield return new WaitForSeconds(0.2f);
+    }
+    if(InspireRoll.Passed())
+    {
+        int hits = Mathf.CeilToInt((float)InspireRoll.GetHits()/2f);
+        int myTeam = ActivePlayerStats.GetTeam();
+        GameObject[] allPlayers = GameObject.FindGameObjectsWithTag("Player");
+        for(int i = 0; i < allPlayers.Length; i++)
+        {
+            PlayerStats currentPlayer = allPlayers[i].GetComponent<PlayerStats>();
+            if(currentPlayer.GetTeam() == myTeam)
+            {
+                currentPlayer.SetCondition(Condition.FocusFlank, hits, false);
+                PopUpText.CreateText("Focus: Flanking!", Color.green, currentPlayer.gameObject);
+            }
+        }
+        CombatLog.Log(ActivePlayerStats.GetName() + "'s team gains a bonus to flanking for their hits rounding up (" + hits + ") turns!");
+    }
+    else
+    {
+        PopUpText.CreateText("Inspire Failed!", Color.red, ActivePlayerStats.gameObject);
+        CombatLog.Log(ActivePlayerStats.GetName() + " fails to lead their team!");
+    }
+    halfActions-= 2;
+    Cancel();
+    }
+
+    // Industrialist Mage
+    public void SpellLob()
+    {
+        multipleTargetsLimit = 3;
+        currentAction = "SelectTargetsTiles";
+        Dictionary<string,string> d = new Dictionary<string, string>();
+        d.Add("Attack", "SpellLobFinished");
+        d.Add("Cancel","Cancel");
+        ConstructActions(d);
+    }
+
+    public void SpellLobFinished()
+    {
+        int numTiles = 0;
+        foreach(GameObject g in multipleTargets)
+        {
+            numTiles++;
+        }
+        if(numTiles > 0)
+        {
+            Weapon SpellAttack = (Weapon)ItemReference.GetItem("TerrainLob");
+            SpellAttack.SetAP(numTiles);
+            SpellAttack.SetDamage((numTiles * 2) + 2);
+            ActiveWeapon = SpellAttack;
+            fireSS();
+        }
+        else
+        {
+            Cancel();
+        }
+    }
+
+    public void SpellWall()
+    {
+        StartCoroutine(SpellWallDelay());
+    }
+
+    IEnumerator SpellWallDelay()
+    {
+        RollResult SpellRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Artisan, AttributeKey.Magic, 0, 0);
+        while(!SpellRoll.Completed())
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        if(SpellRoll.Passed())
+        {
+            ClearActions();
+            GameObject dragToken = PhotonNetwork.Instantiate("LineDragToken", ActivePlayerStats.transform.position, Quaternion.identity);
+            LineDragBehavior line = dragToken.GetComponent<LineDragBehavior>();
+            line.SetParameters(SpellRoll.GetHits(), Vector3.one, DmMenu.GetOwner(ActivePlayerStats));
+            while(!line.finished)
+            {
+                yield return new WaitForSeconds(0.2f);
+            }
+            List<Vector3> path = line.GetPath();
+            foreach(Vector3 location in path)
+            {
+                GlobalManager.CreateTile(location + Vector3.up,"TileIndustrail01");
+                GlobalManager.CreateTile(location + new Vector3(0,2,0),"TileIndustrail01");
+            }
+            line.RemoveLine();
+            halfActions -= 2;
+            Cancel();
+        }
+        else
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " fails to manifest their spell!");
+            Cancel();
+        }
+    }
+
+    public void SpellArmor()
+    {
+        multipleTargetsLimit = 5;
+        currentAction = "SelectTargetsTiles";
+        Dictionary<string,string> d = new Dictionary<string, string>();
+        d.Add("Finished", "SpellArmorFinished");
+        d.Add("Cancel","Cancel");
+        ConstructActions(d);
+        ActivePlayer.GetValidAllys();
+    }
+
+    public void SpellArmorFinished()
+    {
+        if(multipleTargets.Count > 0)
+        {
+            ClearActions();
+            StartCoroutine(SpellArmorDelay());
+        }
+        else
+        {
+            Cancel();
+        }
+    }
+
+    IEnumerator SpellArmorDelay()
+    {
+        int armorBonus = 0;
+        foreach(GameObject g in multipleTargets)
+        {
+            armorBonus++;
+        }
+        currentAction = "SelectSingleAlly";
+        while(target == null)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        target.SetCondition(Condition.TerrainArmor, armorBonus,true);
+        CombatLog.Log(ActivePlayerStats.GetName() + " creates armor out of terrain for (" + armorBonus + ") turns!");
+        ClearTiles();
         halfActions-= 2;
         Cancel();
     }
@@ -472,10 +715,7 @@ public class TurnActionsSR : UIButtonManager
         else{
             foreach(string s in DefaultActions)
             {
-                if(s.Equals("Attack") || ActivePlayerStats.ValidAction(s))
-                {
-                    d.Add(s,s);
-                }
+                d.Add(s,s);
             }
         }
         d.Add("End Turn","EndTurn");
@@ -967,7 +1207,19 @@ public class TurnActionsSR : UIButtonManager
         GameObject[] oldButtons = GameObject.FindGameObjectsWithTag("ActionInput");
         foreach(GameObject g in oldButtons)
         {
-            g.GetComponent<ActionButtonScript>().DestroyMe();
+            PhotonNetwork.Destroy(g);
+        }
+    }
+
+    public void ClearTiles()
+    {
+        foreach(GameObject g in multipleTargets)
+        {
+            Tile selectedTile;
+            if(g.TryGetComponent<Tile>(out selectedTile))
+            {
+                GlobalManager.RemoveTile(selectedTile);
+            }
         }
     }
 
@@ -1029,7 +1281,8 @@ public class TurnActionsSR : UIButtonManager
         target = null;
         ValidTargets = null;
         DirectionPointerInfo = Vector3.one;
-        attacks = 0;
+        multipleTargetsLimit = 0;
+        multipleTargets = new List<GameObject>();
         UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
         PushToolTips();
         GlobalManager.ClearBoard();

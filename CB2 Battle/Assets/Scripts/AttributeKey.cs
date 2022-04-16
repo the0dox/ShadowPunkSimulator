@@ -95,7 +95,9 @@ public static class AttribueReference
     AttributeKey.Swindle,
     AttributeKey.ThrowingWeapons,
     AttributeKey.Tracking,
-    AttributeKey.UnarmedCombat
+    AttributeKey.UnarmedCombat,
+    AttributeKey.ExoticWeapons,
+    AttributeKey.Spellcasting,
     };
 }
 
@@ -191,5 +193,7 @@ public enum AttributeKey
     Swindle,
     ThrowingWeapons,
     Tracking,
-    UnarmedCombat
+    UnarmedCombat,
+    ExoticWeapons,
+    Spellcasting
 }

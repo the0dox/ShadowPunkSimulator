@@ -230,6 +230,8 @@ public class CharacterSaveData
         SetAttribute(AttributeKey.Defense, GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
         // RECOILCOMP = 1 + S/3
         SetAttribute(AttributeKey.RecoilComp, 1 + Mathf.CeilToInt(GetAttribute(AttributeKey.Strength)/3),false);
+        // ESSENSE = 6 - penalties
+        SetAttribute(AttributeKey.Essense, 6, false);
     }
 
     public void setSpecialization(string skillKey, int SpecializationIndex)
@@ -247,7 +249,7 @@ public class CharacterSaveData
         {
             skillSpecialization.Add(skillKey,0);
         }
-        Debug.Log("my index: " + skillSpecialization[skillKey] + " desired index " + SpecializationIndex);
+        //Debug.Log("my index: " + skillSpecialization[skillKey] + " desired index " + SpecializationIndex);
         return skillSpecialization[skillKey] == SpecializationIndex+1;
     }
 

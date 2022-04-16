@@ -154,7 +154,7 @@ public class AttackSequence
     {
         if(ActiveWeapon != null)
         {
-            return ActiveWeapon.Template.damageBonus;
+            return ActiveWeapon.GetDamage();
         }
         return flatDamage;
     }

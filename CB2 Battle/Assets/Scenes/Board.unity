@@ -1368,9 +1368,9 @@ MonoBehaviour:
   ActivePlayerStats: {fileID: 0}
   Canvas: {fileID: 1327566055}
   ActionUIButton: {fileID: 8945126263117831706, guid: ad72cf5f1bf4abb42861c425bd912620, type: 3}
-  ThreatRangePrefab: {fileID: 2263249932784633610, guid: 8f336e06b9b805442bdb7c12b28e191c, type: 3}
-  unarmed: {fileID: 11400000, guid: 40611e16a88e3d649938e85c4a348620, type: 2}
+  unarmed: {fileID: 0}
   ValidTargets: []
+  DirectionPointerInfo: {x: 0, y: 0, z: 0}
   DebugToolTipReference: {fileID: 7214250352856652416, guid: f427a4f03b4337743ae888f3cb4dc4b7, type: 3}
   It: {fileID: 407047822}
 --- !u!4 &1986102355

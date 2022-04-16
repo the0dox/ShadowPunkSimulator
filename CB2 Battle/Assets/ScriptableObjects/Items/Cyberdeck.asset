@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da0ad1fd625bcd45832633e9540655c, type: 3}
   m_Name: Cyberdeck
   m_EditorClassIdentifier: 
-  weight: 5
+  weight: 1
   cost: 10000
   availablity: 
   description: The cyberdeck is a necessity for the modern hacker. Cyberdecks are

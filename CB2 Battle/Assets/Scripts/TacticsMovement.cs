@@ -331,6 +331,23 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
       }
    }
 
+   public void GetValidAllys()
+   {
+      RemoveSelectableTiles();
+      ComputeAdjacencyLists();
+      GetCurrentTile();
+      GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+      PlayerStats myStats = gameObject.GetComponent<PlayerStats>();
+      foreach (GameObject p in players)
+      {
+         PlayerStats target = p.GetComponent<PlayerStats>();
+         if(target.GetTeam() == myStats.GetTeam() && target != myStats)
+         {
+            p.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
+         }
+      }
+   }
+
 
    public void GetGrapplePartner(PlayerStats myStats)
    {

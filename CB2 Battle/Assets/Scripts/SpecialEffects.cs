@@ -8,5 +8,6 @@ public enum EffectKey
     RookUp,
     RookRight,
     RookDown,
-    RookLeft
+    RookLeft,
+    Armor,
 }

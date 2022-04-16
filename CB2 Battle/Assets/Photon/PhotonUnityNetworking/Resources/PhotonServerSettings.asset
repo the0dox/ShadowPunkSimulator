@@ -107,6 +107,9 @@ MonoBehaviour:
   - RPC_SetLocation
   - RPC_Send_Direction_Info
   - RPC_SetSpecialEffect
+  - RPC_SetParameters
+  - RPC_FinishedDrag
+  - RPC_CreateTile
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

@@ -244,10 +244,8 @@ public static class TacticsAttack
 
     public static bool TargetIsBlocking(PlayerStats attacker, PlayerStats target)
     {
-        Vector3 targetnormpos = new Vector3(target.transform.position.x, Mathf.FloorToInt(target.transform.position.y) + 1, target.transform.position.z);
-        Vector3 relative = target.transform.InverseTransformPoint(attacker.transform.position);
-        float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-        int roundedAngle = Mathf.RoundToInt(angle);
+        // inveresetransform point is inconsistent if the rotation is off, 
+        int roundedAngle = GetRelativeAngle(attacker.transform.position, target.transform);
         if (target.hasCondition(Condition.RookLeft))
         {
             if (roundedAngle < 0)
@@ -290,10 +288,8 @@ public static class TacticsAttack
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
             {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+                int roundedAngle = GetRelativeAngle(attacker, tile.transform);;
+                Debug.Log(roundedAngle);
                 if (roundedAngle < 0)
                 {                
                     return tile;
@@ -304,11 +300,8 @@ public static class TacticsAttack
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
-            {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+            {   
+                int roundedAngle = GetRelativeAngle(attacker, tile.transform);;
                 if (roundedAngle > 0 && roundedAngle < 180)
                 {                
                     return tile;
@@ -319,11 +312,8 @@ public static class TacticsAttack
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
-            {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+            {   
+                int roundedAngle = GetRelativeAngle(attacker, tile.transform);;
                 if (roundedAngle > -90 && roundedAngle < 90 )
                 {                
                     return tile;
@@ -334,11 +324,8 @@ public static class TacticsAttack
         {
             tile = hit.collider.GetComponent<Tile>(); 
             if (tile != null)
-            {
-                Vector3 relative = tile.transform.InverseTransformPoint(attacker);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+            {    
+                int roundedAngle = GetRelativeAngle(attacker, tile.transform);;
                 if (roundedAngle < -90 || roundedAngle > 90)
                 {                
                     return tile;
@@ -418,15 +405,10 @@ public static class TacticsAttack
             }
             // bonus from attribute
             int attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derrivedAttribute);
-            outputStack.Push("+" + attributeDice + " from " + w.Template.WeaponSkill.derrivedAttribute + " attribute");
-            attackDice += attributeDice;
             // bonus from skill
             int skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.skillKey);
-            outputStack.Push("+" + skillDice + " from " + w.Template.WeaponSkill.name + " skill");
-            attackDice += skillDice;
-
-            
-
+            outputStack.Push("Base Attack Pool: " + (attributeDice + skillDice));
+            attackDice += (attributeDice + skillDice);
             outputStack.Push("Accuracy Limit: " + w.Template.accuracy);
             outputStack.Push("Opposed by Defense: " + defenseDice);
             outputStack.Push("Total Attack Dice: " + attackDice);
@@ -446,13 +428,11 @@ public static class TacticsAttack
         Vector3 targetnormpos = new Vector3(target.transform.position.x, Mathf.FloorToInt(target.transform.position.y) + 1, target.transform.position.z);
         if (Physics.Raycast(targetnormpos, Vector3.left, out hit, 1))
         {
+            //Debug.Log("hit something to my left");
             interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
             if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookLeft))
             {
-                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+                int roundedAngle = GetRelativeAngle(attacker.transform.position, interceptingPlayer.transform);
                 if (roundedAngle < 0)
                 {                
                     return interceptingPlayer;
@@ -461,13 +441,11 @@ public static class TacticsAttack
         }
         if (Physics.Raycast(targetnormpos, Vector3.right, out hit, 1))
         {
+            //Debug.Log("hit something to my right");
             interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
             if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookRight))
             {
-                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+                int roundedAngle = GetRelativeAngle(attacker.transform.position, interceptingPlayer.transform);
                 if (roundedAngle > 0 && roundedAngle < 180)
                 {                
                     return interceptingPlayer;
@@ -476,13 +454,12 @@ public static class TacticsAttack
         }
         if (Physics.Raycast(targetnormpos, Vector3.forward, out hit, 1))
         {
+            //Debug.Log("hit something to my up");
             interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
             if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookUp))
             {
-                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+                int roundedAngle = GetRelativeAngle(attacker.transform.position, interceptingPlayer.transform);
+                //Debug.Log("incoming angle: " + roundedAngle);
                 if (roundedAngle > -90 && roundedAngle < 90 )
                 {                
                     return interceptingPlayer;
@@ -491,13 +468,11 @@ public static class TacticsAttack
         }
         if (Physics.Raycast(targetnormpos, Vector3.back, out hit, 1))
         {
+            //Debug.Log("hit something to my down");
             interceptingPlayer = hit.collider.GetComponent<PlayerStats>(); 
             if (interceptingPlayer != null && interceptingPlayer.GetTeam() == target.GetTeam() && interceptingPlayer.hasCondition(Condition.RookDown))
             {
-                Vector3 relative = interceptingPlayer.transform.InverseTransformPoint(attacker.transform.position);
-                float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
-                int roundedAngle = Mathf.RoundToInt(angle);
-
+                int roundedAngle = GetRelativeAngle(attacker.transform.position, interceptingPlayer.transform);
                 if (roundedAngle < -90 || roundedAngle > 90)
                 {                
                     return interceptingPlayer;
@@ -543,23 +518,35 @@ public static class TacticsAttack
         return 0;
     }
 
+    private static int GetRelativeAngle(Vector3 incomingposition, Transform defendingtransform)
+    {
+        Vector3 prevRotation = defendingtransform.transform.eulerAngles;
+        defendingtransform.transform.eulerAngles = Vector3.zero;
+        Vector3 relative = defendingtransform.transform.InverseTransformPoint(incomingposition);
+        defendingtransform.transform.eulerAngles = prevRotation;
+        float angle = Mathf.Atan2(relative.x, relative.z) * Mathf.Rad2Deg;
+        return Mathf.RoundToInt(angle);
+    }
+
     private static Dictionary<string,int> ApplyModifiers(AttackSequence thisAttack, bool type)
     {
         Dictionary<string,int> modifiers = new Dictionary<string, int>();
-        modifiers.Add(" from enemy fire rate", ROFDefensePenalty(thisAttack,type));
-        modifiers.Add(" from recoil", recoilPenalty(thisAttack,type));
-        modifiers.Add(" from specialization", fromSpecialization(thisAttack,type));
-        modifiers.Add(" from defense penalty", GetDefensePenality(thisAttack,type));
-        modifiers.Add(" from range", rangePenalty(thisAttack,type));
-        modifiers.Add(" from aiming", fromAiming(thisAttack,type));
-        modifiers.Add(" from low ammo", InsufficientBulletPenalty(thisAttack,type));
-        modifiers.Add(" from reach", GetReachBonus(thisAttack,type));
-        modifiers.Add(" from running", GetChargingBonus(thisAttack,type));
-        modifiers.Add(" from prone condition", GetPronePenalty(thisAttack,type));
-        modifiers.Add(" from prone target", GetProneTargetPenalty(thisAttack,type));
-        modifiers.Add(" from full defense", GetFulldefenseBonus(thisAttack, type));
-        modifiers.Add(" from called shot",GetCalledShotPenalty(thisAttack,type));
-        modifiers.Add(" from presence", GetIntimidationPenalty(thisAttack, type));
+        modifiers.Add("enemy fire rate", ROFDefensePenalty(thisAttack,type));
+        modifiers.Add("recoil", recoilPenalty(thisAttack,type));
+        modifiers.Add("specialization", fromSpecialization(thisAttack,type));
+        modifiers.Add("defense penalty", GetDefensePenality(thisAttack,type));
+        modifiers.Add("range", rangePenalty(thisAttack,type));
+        modifiers.Add("aiming", fromAiming(thisAttack,type));
+        modifiers.Add("low ammo", InsufficientBulletPenalty(thisAttack,type));
+        modifiers.Add("reach", GetReachBonus(thisAttack,type));
+        modifiers.Add("running", GetChargingBonus(thisAttack,type));
+        modifiers.Add("prone", GetPronePenalty(thisAttack,type));
+        modifiers.Add("prone target", GetProneTargetPenalty(thisAttack,type));
+        modifiers.Add("full defense", GetFulldefenseBonus(thisAttack, type));
+        modifiers.Add("called shot",GetCalledShotPenalty(thisAttack,type));
+        modifiers.Add("presence", GetIntimidationPenalty(thisAttack, type));
+        modifiers.Add("direct", GetDirectBonus(thisAttack,type));
+        modifiers.Add("flanking",GetFlankingPenalty(thisAttack,type));
         return modifiers;
     }
 
@@ -730,7 +717,7 @@ public static class TacticsAttack
     private static string GetCoverTooltip(AttackSequence thisAttack)
     {
         Tile cover = GetCoverTile(thisAttack.attacker.transform.position, thisAttack.target.transform.position, true);
-        if(thisAttack.target.hasCondition(Condition.Covered) && cover != null)
+        if(cover != null)
         {
             // stacked cover provides more of a bonus
             if(cover.IsStackedTile())
@@ -760,6 +747,29 @@ public static class TacticsAttack
         if(attack && thisAttack.attacker.hasCondition(Condition.Intimidated) && !thisAttack.target.hasCondition(Condition.Presence))
         {
             return -3;
+        }
+        return 0;
+    }
+
+    private static int GetDirectBonus(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.hasCondition(Condition.Direction))
+        {
+            ConditionTemplate directionTemplate = ConditionsReference.GetTemplate(Condition.Direction);
+            return thisAttack.attacker.Conditions[directionTemplate];
+        }
+        return 0;
+    }
+
+    private static int GetFlankingPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(!attack && thisAttack.ActiveWeapon.IsWeaponClass(WeaponClass.ranged) && thisAttack.attacker.hasCondition(Condition.FocusFlank))
+        {
+            // if the target is up against cover AND is not covered from the incomming attack
+            if(BoardBehavior.InCover(thisAttack.target.gameObject) && thisAttack.coverRange == 0)
+            {
+                return -2;
+            }
         }
         return 0;
     }

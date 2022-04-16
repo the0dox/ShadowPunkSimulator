@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6da0ad1fd625bcd45832633e9540655c, type: 3}
   m_Name: Bullets
   m_EditorClassIdentifier: 
-  weight: 0.1
+  weight: 0.01
   cost: 1
   availablity: 
   description: 'Gun food. '

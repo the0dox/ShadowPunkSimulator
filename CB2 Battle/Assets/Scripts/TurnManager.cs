@@ -147,19 +147,40 @@ public class TurnManager : TurnActionsSR
     {
         if (ServerHitObject.tag == "Player")
         {
+            PlayerStats ps = ServerHitObject.GetComponent<PlayerStats>();
             switch(currentAction)
             {
                 case "Attack":
-                    RollToHit(ServerHitObject.GetComponent<PlayerStats>(), FireRate, ActiveWeapon, ActivePlayerStats);
+                RollToHit(ps, FireRate, ActiveWeapon, ActivePlayerStats);
+                ClearTiles();
                 break;
                 case "SelectSingleEnemy":
-                    PlayerStats ps = ServerHitObject.GetComponent<PlayerStats>();
-                    if(ps.GetTeam() != ActivePlayerStats.GetTeam())
-                    {
-                        target = ps;
-                    }
+                if(ps.GetTeam() != ActivePlayerStats.GetTeam())
+                {
+                    target = ps;
+                }
+                break;
+                case "SelectSingleAlly":
+                if(ps.GetTeam() == ActivePlayerStats.GetTeam())
+                {
+                    target = ps;
+                }
                 break;
             }
+        }
+        else if(ServerHitObject.tag == "Tile")
+        {
+            switch(currentAction)
+            {
+                case "SelectTargetsTiles":
+                if(multipleTargets.Count < multipleTargetsLimit && !multipleTargets.Contains(ServerHitObject) && !ServerHitObject.GetComponent<Tile>().blank)
+                {
+                    CombatLog.Log("Selected tile at " + ServerHitObject.transform.position);
+                    multipleTargets.Add(ServerHitObject);
+                }
+                break;
+            }
+            
         }
     }
 
@@ -294,6 +315,41 @@ public class TurnManager : TurnActionsSR
     }
 
 
+    public void IncreaseInitiative(PlayerStats player, int initative)
+    {
+        if(IntiativeActiveActors.ContainsValue(player))
+        {
+            int indexOf = IntiativeActiveActors.IndexOfValue(player);
+            float newInitative = IntiativeActiveActors.Keys[indexOf] + initative;
+            IntiativeActiveActors.RemoveAt(indexOf);
+            while(IntiativeActiveActors.ContainsKey(newInitative))
+            {
+                newInitative += 0.01f;
+            }
+            IntiativeActiveActors.Add(newInitative, player);
+        }
+        else if(IntiativeFinishedActors.ContainsValue(player))
+        {
+            int indexOf = IntiativeFinishedActors.IndexOfValue(player);
+            // only add initative to those who haven't been bumped off initative yet
+            if(IntiativeFinishedActors.Keys[indexOf] >= 1)
+            {
+                float newInitative = IntiativeFinishedActors.Keys[indexOf] + initative;
+                IntiativeFinishedActors.RemoveAt(indexOf);
+                while(IntiativeFinishedActors.ContainsKey(newInitative))
+                {
+                    newInitative += 0.01f;
+                }
+                IntiativeFinishedActors.Add(newInitative,player);
+            }
+        }
+        else
+        {
+            Debug.LogError("Error: player not present in initative order!");
+        }
+        PrintInitiative();   
+    }
+
     //sorts initative order at the start of the new round. Rounds are larger than passes 
     public void StartNewRound()
     {
@@ -378,7 +434,7 @@ public class TurnManager : TurnActionsSR
 
     public void EndTurn(){
         ActivePlayerStats.OnTurnEnd();
-        float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1];
+        float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
         /* OLD STYLE MAYBE BRING BACK?
         float newInitative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1] - 10;
         if(Mathf.FloorToInt(newInitative) < 1)
@@ -391,7 +447,7 @@ public class TurnManager : TurnActionsSR
         }
         */
         IntiativeFinishedActors.Add(initative,ActivePlayerStats);
-        IntiativeActiveActors.RemoveAt(IntiativeActiveActors.Count-1);
+        IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(ActivePlayerStats));
         StartTurn();
     }
 
@@ -492,6 +548,7 @@ public class TurnManager : TurnActionsSR
                 }
             }
         }
+
     }
 
     public void FallComplete(TacticsMovement tm, int distance)

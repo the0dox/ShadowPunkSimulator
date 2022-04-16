@@ -26,6 +26,8 @@ public class Weapon : Item
     [SerializeField] private bool jammed = false;
     // Some weapons consume items in order to be reloaded
     [SerializeField] private ItemTemplate AmmoSource;
+    [SerializeField] private int damage;
+    [SerializeField] private int AP;
     // Special weapons with the recharge abilitiy use this to determine if they can fire this turn or not
     private bool clipEjected = false;
     new public WeaponTemplate Template;
@@ -41,6 +43,8 @@ public class Weapon : Item
         this.rating = template.rating;
         this.stacks = 1;
         this.unique = template.unique;
+        this.damage = template.damageBonus;
+        this.AP = template.pen;
         if(Template.SingleShot)
         {
             FireRate = "SS";
@@ -104,7 +108,7 @@ public class Weapon : Item
 
     public int GetAP()
     {
-        return Template.pen;
+        return AP;
     }
 
     public Dictionary<string, string> GetSelectableFireRates()
@@ -341,7 +345,7 @@ public class Weapon : Item
 
     public string DisplayDamageRange()
     {
-        string DB = "" + Template.damageBonus;
+        string DB = "" + damage;
         if(IsWeaponClass(WeaponClass.melee))
         {
             DB += " + SB";
@@ -456,7 +460,7 @@ public class Weapon : Item
 
     public int GetDamage()
     {
-        return Template.damageBonus;
+        return damage;
     }
     public override Sprite GetSprite()
     {
@@ -490,7 +494,10 @@ public class Weapon : Item
             tooltip += "\nReload: " + ReloadString();
             tooltip += "\nRate of Fire: " + ROFtoString(); 
             tooltip += "\nClip: " + clip + "/" + clipMax;
-            tooltip += "\nAmmo type: " + AmmoSource.name;
+            if(AmmoSource != null)
+            {
+                tooltip += "\nAmmo type: " + AmmoSource.name;
+            }
         }
         tooltip += "\nupgrades:";
         string upgradedesc = " ";
@@ -631,5 +638,15 @@ public class Weapon : Item
             }
         }
         return 0;
+    }
+
+    public void SetAP(int newAP)
+    {
+        AP = newAP;
+    }
+
+    public void SetDamage(int newDamage)
+    {
+        damage = newDamage;
     }
 }

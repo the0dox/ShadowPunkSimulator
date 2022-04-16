@@ -110,7 +110,7 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         Photon.Realtime.Player activePlayerOwner = DmMenu.GetOwner(activePlayer);
         instance.pv.RPC("RPC_ShowActionsOnly",RpcTarget.All, activePlayerOwner.ActorNumber);
     }
-
+    
     [PunRPC]
     void RPC_ShowActionsOnly(int PlayerID)
     {

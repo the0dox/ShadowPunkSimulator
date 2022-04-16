@@ -336,6 +336,19 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return myData.GetAttribute(AttributeKey.InitativeStandard) + Random.Range(1,7);
     }
 
+    public bool HoldingWeaponClass(WeaponClass desiredClass)
+    {
+        if(PrimaryWeapon != null && PrimaryWeapon.IsWeaponClass(desiredClass))
+        {
+            return true;
+        }
+        if(SecondaryWeapon != null && SecondaryWeapon.IsWeaponClass(desiredClass))
+        {
+            return true;
+        }
+        return false;
+    }
+
     public string HealthToString()
     {
         int wounds;
@@ -465,6 +478,10 @@ public class PlayerStats : MonoBehaviourPunCallbacks
                     bestAP = currentAP;
                 }
             }
+        }
+        if(hasCondition(Condition.TerrainArmor))
+        {
+            bestAP += Conditions[ConditionsReference.GetTemplate(Condition.TerrainArmor)];
         }
         return bestAP;
     }

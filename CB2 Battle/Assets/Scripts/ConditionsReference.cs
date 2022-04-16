@@ -56,5 +56,8 @@ public enum Condition
     RookUp,
     RookLeft,
     RookDown,
-    RookRight
+    RookRight,
+    Direction,
+    FocusFlank,
+    TerrainArmor,
 }

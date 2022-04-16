@@ -70,8 +70,7 @@ public class CharacterSelectorButton : MonoBehaviour
     // creates a charactersheet from stored savedata for editing
     public void Edit()
     {
-        GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet",new Vector3(), Quaternion.identity);
-        newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(myData, PhotonNetwork.LocalPlayer.ActorNumber);
+        DmMenu.DMDisplay(myData);
         OnButtonPressed();
     }
 

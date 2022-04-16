@@ -19,8 +19,7 @@ MonoBehaviour:
 
     Lob Terrain is a simple action where you can make a spellcasting
     attack at an enemy within range. must select up to 3 adjacent tiles to the target
-    to create the projectile. The base DV of your attack is equal to tiles destroyed
-    x 2 '
+    to create the projectile. Every Tile destroyed improves the tile''s DV and AP '
   prerequisites: 08000000
   conflictsWith: 
   Icon: {fileID: 21300000, guid: f3d30d7ee2334c5409bc3b87fcd8780e, type: 3}

@@ -118,10 +118,21 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         Instance.pv.RPC("RPC_DestroyTile",RpcTarget.AllBuffered,destroyedTile.transform.position);
     }
 
+    public static void CreateTile(Vector3 location, string tileName)
+    {
+        Instance.pv.RPC("RPC_CreateTile",RpcTarget.AllBuffered, location, tileName);
+    }
+
     [PunRPC]
     void RPC_DestroyTile(Vector3 destroyKey)
     {
         BoardBehavior.RemoveTile(destroyKey);
+    }
+
+    [PunRPC]
+    void RPC_CreateTile(Vector3 location, string tileName)
+    {
+        BoardBehavior.CreateTile(location, tileName);
     }
 
     [PunRPC]

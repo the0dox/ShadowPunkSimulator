@@ -28,7 +28,7 @@ public class SceneSaveData
             else if(entity.tag.Equals("Player"))
             {
                 PlayerLocations.Add(PosString,entity.GetComponent<PlayerStats>().playername);
-                Debug.Log(PosString + ": " + entity.GetComponent<PlayerStats>().playername);
+                //Debug.Log(PosString + ": " + entity.GetComponent<PlayerStats>().playername);
             }
         }
     }

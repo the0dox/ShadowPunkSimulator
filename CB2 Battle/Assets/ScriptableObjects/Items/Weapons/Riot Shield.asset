@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
   m_Name: Riot Shield
   m_EditorClassIdentifier: 
-  weight: 0
+  weight: 3
   cost: 0
   availablity: 
   description: 'Due to increased demand, even consumer grade riot shields have been
@@ -31,7 +31,7 @@ MonoBehaviour:
   SemiAuto: 0
   BurstFire: 0
   FullAuto: 0
-  WeaponSkill: {fileID: 11400000, guid: 2e51ea77c62b1254087b45dc17da3b50, type: 2}
+  WeaponSkill: {fileID: 11400000, guid: a80b0b699b265824b972f5310ea9f88e, type: 2}
   WeaponSpecialization: 0
   accuracy: 4
   clipMax: 0

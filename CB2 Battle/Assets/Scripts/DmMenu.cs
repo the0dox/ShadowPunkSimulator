@@ -195,6 +195,20 @@ public class DmMenu : MonoBehaviourPunCallbacks
         
     }
 
+    public static void DMDisplay(CharacterSaveData csd)
+    {
+        Photon.Realtime.Player owner = GetOwner(csd);
+        if(ActiveCharacterSheets.ContainsKey(owner.ActorNumber) && ActiveCharacterSheets[owner.ActorNumber])
+        {
+            CombatLog.Log("can't access this sheet");
+        }
+        else
+        {   
+            GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet",new Vector3(), Quaternion.identity);
+            newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(csd, PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+    }
+
     // called on the master by a given client, sends back a charactersheet
     [PunRPC]
     void RPC_ClientDisplay(int callingPlayerID)
@@ -373,5 +387,10 @@ public class DmMenu : MonoBehaviourPunCallbacks
         {
             CombatLog.Log("Character " + SavedCharacters[StatsID].playername + " is already assigned!");
         }
+    }
+
+    void OnPhotonPlayerDisconnected()
+    {
+        Quit();
     }
 }
