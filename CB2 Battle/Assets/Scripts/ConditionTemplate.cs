@@ -13,6 +13,7 @@ public class ConditionTemplate : ScriptableObject
     [SerializeField] public int duration;
     [SerializeField] public bool clearOnTurnEnd;  
     [SerializeField] public bool clearOnMove;
+    [SerializeField] public bool clearOnAttack;
     [SerializeField] public Condition conditionKey;
     [SerializeField] public EffectKey effectKey;
     public int GetModifier(string key)

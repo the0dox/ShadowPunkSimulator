@@ -211,10 +211,10 @@ public class CharacterSaveData
         SocialLimit /= 3f;
         SetAttribute(AttributeKey.SocialLimit, Mathf.CeilToInt(SocialLimit), false);
         // Health max = [Physical / 2] + 8 
-        float healthBonus = (float)(GetAttribute(AttributeKey.Body)) / 2f;
+        float healthBonus = (float)(GetAttribute(AttributeKey.Body));
         SetAttribute(AttributeKey.PhysicalHealth, Mathf.CeilToInt(healthBonus) + 8, false);
         // Stun max = [Willpower / 2] + 8 
-        float StunBonus = (float)(GetAttribute(AttributeKey.Willpower)) / 2f;
+        float StunBonus = (float)(GetAttribute(AttributeKey.Willpower));
         SetAttribute(AttributeKey.StunHealth, Mathf.CeilToInt(StunBonus) + 8, false);
         SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) * 2,false);
         SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.Agility) * 4, false);

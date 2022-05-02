@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
 
+// used for drawing line effects such as creating walls or magic attacks
 public class LineDragBehavior : MonoBehaviour
 {
     // used for static reference
@@ -16,24 +17,45 @@ public class LineDragBehavior : MonoBehaviour
     private TacticsMovement myToken;
     // A reference to the previous mouse position
     private Vector3 previousPosition = new Vector3();
-    private float distance;
+    // the length of the line effect
+    private float length;
+    // beginning of the line, can be but is not the same as the owner
     Vector3 root;
+    // if a root hasn't been set, tells mouse to place a new root
     bool rootSet = false;
+    // read by turn actions to read targets
     public bool finished = false;
+    // Tile at the root location
     Tile rootTile; 
+    // if true, the line effect cannot cross over players
+    bool avoidPlayers = true;
+    // how far a root can be placed from the owner, set to -1 if there is no limit
+    int maxRootDistance = -1;
+    // reference to the owners location
+    Vector3 ownerLocation;
+    // reference to an indicator for the range 
+    [SerializeField] private GameObject rangeIndicator; 
 
     void Awake()
     {
         instance = this;
     }
 
-    // called when created, sets position on pos and creates
-    public void SetParameters(int maximumDistance, Vector3 root, Photon.Realtime.Player owner)
+    // set parameters for a line that originates from the owner
+    public void SetParameters(int maximumLength, Vector3 ownerLocation , bool avoidPlayers, Photon.Realtime.Player owner)
     {
         instance = this;
-        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumDistance, root, owner.ActorNumber);
+        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumLength, false, ownerLocation,  avoidPlayers, -1, owner.ActorNumber);
     }
 
+    // set parameters for a line that doesnt have a specified root
+    public void SetParameters(int maximumLength, Vector3 ownerLocation , bool avoidPlayers, int maxRootDistance, Photon.Realtime.Player owner)
+    {
+        instance = this;
+        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumLength, true, ownerLocation,  avoidPlayers, maxRootDistance, owner.ActorNumber);
+    }
+
+    // called by turn actions to delete this object
     public void RemoveLine()
     {
         ClearPreviousPath();
@@ -41,13 +63,24 @@ public class LineDragBehavior : MonoBehaviour
     }
 
     [PunRPC]
-    void RPC_SetParameters(int maximumDistance, Vector3 root, int actorID)
+    void RPC_SetParameters(int maximumLength, bool Freeroot, Vector3 ownerLocation, bool avoidPlayers, int maxDistance,int actorID)
     {
         // if this is my player let me control this
         if(PhotonNetwork.LocalPlayer.ActorNumber == actorID || pv.IsMine)
         {
-            SetRoot(root);
-            this.distance = maximumDistance;
+            this.ownerLocation = ownerLocation;
+            this.length = maximumLength;
+            this.avoidPlayers = avoidPlayers;
+            this.maxRootDistance = maxDistance;
+            if(!Freeroot)
+            {
+                SetRoot(ownerLocation,true);
+            }
+            else
+            {
+                rangeIndicator.SetActive(true);
+                rangeIndicator.transform.localScale = new Vector3((maxDistance*2) + 1f, 2, (maxDistance*2) + 1f);
+            }
         }
         // else hide me
         else
@@ -80,24 +113,25 @@ public class LineDragBehavior : MonoBehaviour
             viablePos.z = Mathf.RoundToInt(viablePos.z);  
             transform.position = viablePos;
 
+            rangeIndicator.transform.position = ownerLocation;
+
             // if a token is being held, draw a path
             if(rootSet)
             {
                 UpdatePath();
             }
 
-            // start drag on mouse down
-            if(Input.GetMouseButtonDown(0))
+            // start drag if a root isn't set on mouse click
+            if(Input.GetMouseButtonUp(0))
             {
                 if(!rootSet)
                 {
-                    // start drag
-                    SetRoot(viablePos);
+                    SetRoot(viablePos,false);
                 }
-            }
-            else if(rootSet && Input.GetMouseButtonUp(0))
-            {
-                FinishedDrag();
+                else
+                {
+                    FinishedDrag();
+                }
             }
         }
     }
@@ -113,7 +147,7 @@ public class LineDragBehavior : MonoBehaviour
             if(next.parent != null)
             {    
                 ClearPreviousPath();
-                distance = Mathf.CeilToInt(next.distance);
+                length = Mathf.CeilToInt(next.distance);
                 //TooltipSystem.show("     " + distance + " MP", "");
                 while (next != null)
                 {
@@ -125,7 +159,7 @@ public class LineDragBehavior : MonoBehaviour
             }   
             else
             {
-                distance = 0;
+                length = 0;
                 //TooltipSystem.show("Invalid move!", "");
             }         
         }
@@ -140,7 +174,7 @@ public class LineDragBehavior : MonoBehaviour
             PlayerStats myStats = myToken.GetComponent<PlayerStats>();
             myToken.GetComponent<TacticsMovement>().PaintCurrentTile("");
             int id = myStats.GetID();
-            pv.RPC("RPC_PlaceToken", RpcTarget.All, id, myPath.ToArray(), distance);
+            pv.RPC("RPC_PlaceToken", RpcTarget.All, id, myPath.ToArray(), length);
         }
     }
 
@@ -168,47 +202,59 @@ public class LineDragBehavior : MonoBehaviour
     }
 
     // On holding the mouse down, save the player and begin dragging them
-    private void SetRoot(Vector3 newRoot)
+    private void SetRoot(Vector3 newRoot, bool ownerRoot)
     {
+        // only take in valid locations
         if(newRoot != Vector3.one)
         {
-            Debug.Log("setting root at " + newRoot);
-            this.root = newRoot;
-            rootSet = true;
             Vector3 startingPos = BoardBehavior.GetClosestTile(transform.position);
-            //dont want to call this every frame, only calculate path if this position is different from last frame
-            rootTile = BoardBehavior.GetTile(startingPos);  
-            BoardBehavior.ComputeAdjacencyLists(1);
-            Queue<Tile> process = new Queue<Tile>();
-            process.Enqueue(rootTile);
-            if(rootTile != null)
+            // if a maxrootdistance is specified enforce distance
+            if(maxRootDistance < 0 || Mathf.FloorToInt(Vector3.Distance(startingPos, ownerLocation)) <= (maxRootDistance))
             {
-                rootTile.visited = true;
+                
+                rootTile = BoardBehavior.GetTile(startingPos);  
 
-                while (process.Count > 0) 
+                // only set if either I don't care to avoid players, or the tile selected is null
+                if(rootTile.GetOccupant() == null || !avoidPlayers || ownerRoot) 
                 {
-                    Tile t = process.Dequeue();
-                    if (t.distance < distance) 
-                    {    
-                        foreach (Tile tile in t.adjacencyList)
+                    Debug.Log("setting root at " + newRoot);
+                    this.root = startingPos;
+                    rootSet = true;
+                    //dont want to call this every frame, only calculate path if this position is different from last frame
+                    
+                    BoardBehavior.ComputeAdjacencyLists(1);
+                    Queue<Tile> process = new Queue<Tile>();
+                    process.Enqueue(rootTile);
+                    if(rootTile != null)
+                    {
+                        rootTile.visited = true;
+
+                        while (process.Count > 0) 
                         {
-                            PlayerStats occupant = tile.GetOccupant();
-                            if(occupant == null)
-                            { 
-                                if (!tile.visited)
+                            Tile t = process.Dequeue();
+                            if (t.distance < length) 
+                            {    
+                                foreach (Tile tile in t.adjacencyList)
                                 {
-                                    //selectableTiles.Add(t);
-                                    tile.visited = true;
-                                    float distanceCost = 1;
-                                    if(t.diagonalList.Contains(tile))
-                                    {
-                                    distanceCost = 1.5f;
-                                    }
-                                    tile.distance = distanceCost + t.distance;
-                                    if(tile.distance <= distance)
-                                    {
-                                    tile.parent = t;
-                                    process.Enqueue(tile);
+                                    PlayerStats occupant = tile.GetOccupant();
+                                    if(occupant == null && ValidTile(tile))
+                                    { 
+                                        if (!tile.visited)
+                                        {
+                                            //selectableTiles.Add(t);
+                                            tile.visited = true;
+                                            float distanceCost = 1;
+                                            if(t.diagonalList.Contains(tile))
+                                            {
+                                            distanceCost = 1.5f;
+                                            }
+                                            tile.distance = distanceCost + t.distance;
+                                            if(tile.distance <= length)
+                                            {
+                                            tile.parent = t;
+                                            process.Enqueue(tile);
+                                            }
+                                        }
                                     }
                                 }
                             }
@@ -219,6 +265,19 @@ public class LineDragBehavior : MonoBehaviour
         }
     }
 
+    // returns true if tile t is within maxmium length
+    public bool ValidTile(Tile t)
+    {
+        Vector3 normalizedOwner = new Vector3(ownerLocation.x, 0, ownerLocation.z);
+        Vector3 normalizedTarget = new Vector3(t.transform.position.x, 0, t.transform.position.z);
+        if(maxRootDistance == -1 || Mathf.FloorToInt(Vector3.Distance(normalizedOwner, normalizedTarget)) <= maxRootDistance)
+        {
+            return t.distance < length;
+        }
+        return false;
+    }
+
+    // tells turn actions that the action is finished
     private void FinishedDrag()
     {
         if(!pv.IsMine)

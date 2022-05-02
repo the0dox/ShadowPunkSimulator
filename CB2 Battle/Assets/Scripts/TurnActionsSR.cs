@@ -23,6 +23,7 @@ public class TurnActionsSR : UIButtonManager
     public List<PlayerStats> ValidTargets;
     protected Queue<AttackSequence> AttackQueue = new Queue<AttackSequence>();
     protected AttackSequence CurrentAttack;
+    protected int MaxSelectionRange;
     public Vector3 DirectionPointerInfo;
 
     public void Combat()
@@ -38,7 +39,7 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add(ActivePlayerStats.SecondaryWeapon.GetName() + " (Off Handed)","SecondaryWeapon");
         }
-        //d.Add("Called Shot", "CalledShot");
+        d.Add("Called Shot", "CalledShot");
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
@@ -64,6 +65,11 @@ public class TurnActionsSR : UIButtonManager
     public void Run()
     {
         ActivePlayerStats.Run();
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Adept))
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " enters a state of momentum!");
+            ActivePlayerStats.SetCondition(Condition.Momentum, -1, true);
+        }
         SpendFreeAction();
         Cancel();
     }
@@ -98,7 +104,7 @@ public class TurnActionsSR : UIButtonManager
     public void GetWeaponActions()
     {
         Dictionary<string,string> d = ActiveWeapon.GetWeaponActions(halfActions > 1);
-        d.Add("Cancel","Combat");
+        d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
 
@@ -135,6 +141,7 @@ public class TurnActionsSR : UIButtonManager
                 d.Add("Knock Down","KnockDown");
             }
         }
+        d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
 
@@ -321,6 +328,10 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Industrial Armor","SpellArmor");
         }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Desperado) && ActivePlayerStats.hasCondition(Condition.Momentum))
+        {
+            d.Add("Reposition","Reposition");
+        }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
@@ -427,7 +438,8 @@ public class TurnActionsSR : UIButtonManager
     // Face Skills
     public void Direct()
     {
-        ActivePlayer.GetValidAllys();
+        MaxSelectionRange = 10;
+        ActivePlayer.GetValidAllys(MaxSelectionRange);
         StartCoroutine(DirectDelay());
         ConstructActions(new List<string>{"Cancel"});
     }
@@ -539,6 +551,7 @@ public class TurnActionsSR : UIButtonManager
     public void SpellLob()
     {
         multipleTargetsLimit = 3;
+        MaxSelectionRange = 4;
         currentAction = "SelectTargetsTiles";
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Attack", "SpellLobFinished");
@@ -548,6 +561,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void SpellLobFinished()
     {
+        MaxSelectionRange = -1;
         int numTiles = 0;
         foreach(GameObject g in multipleTargets)
         {
@@ -557,8 +571,9 @@ public class TurnActionsSR : UIButtonManager
         {
             Weapon SpellAttack = (Weapon)ItemReference.GetItem("TerrainLob");
             SpellAttack.SetAP(numTiles);
-            SpellAttack.SetDamage((numTiles * 2) + 2);
+            SpellAttack.SetDamage(numTiles + 2);
             ActiveWeapon = SpellAttack;
+            ClearTiles();
             fireSS();
         }
         else
@@ -584,7 +599,7 @@ public class TurnActionsSR : UIButtonManager
             ClearActions();
             GameObject dragToken = PhotonNetwork.Instantiate("LineDragToken", ActivePlayerStats.transform.position, Quaternion.identity);
             LineDragBehavior line = dragToken.GetComponent<LineDragBehavior>();
-            line.SetParameters(SpellRoll.GetHits(), Vector3.one, DmMenu.GetOwner(ActivePlayerStats));
+            line.SetParameters(SpellRoll.GetHits(), ActivePlayerStats.transform.position, true, 10, DmMenu.GetOwner(ActivePlayerStats));
             while(!line.finished)
             {
                 yield return new WaitForSeconds(0.2f);
@@ -609,12 +624,13 @@ public class TurnActionsSR : UIButtonManager
     public void SpellArmor()
     {
         multipleTargetsLimit = 5;
+        MaxSelectionRange = 5;
         currentAction = "SelectTargetsTiles";
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Finished", "SpellArmorFinished");
         d.Add("Cancel","Cancel");
         ConstructActions(d);
-        ActivePlayer.GetValidAllys();
+        ActivePlayer.GetValidAllys(MaxSelectionRange);
     }
 
     public void SpellArmorFinished()
@@ -637,6 +653,7 @@ public class TurnActionsSR : UIButtonManager
         {
             armorBonus++;
         }
+        MaxSelectionRange = 10;
         currentAction = "SelectSingleAlly";
         while(target == null)
         {
@@ -646,6 +663,16 @@ public class TurnActionsSR : UIButtonManager
         CombatLog.Log(ActivePlayerStats.GetName() + " creates armor out of terrain for (" + armorBonus + ") turns!");
         ClearTiles();
         halfActions-= 2;
+        Cancel();
+    }
+
+    // adept powers
+
+    public void Reposition()
+    {
+        ActivePlayerStats.RemoveCondition(Condition.Momentum);
+        CombatLog.Log(ActivePlayerStats.GetName() + " uses their momentum to attack and reposition in the same turn!");
+        SpendFreeAction();
         Cancel();
     }
 
@@ -775,7 +802,7 @@ public class TurnActionsSR : UIButtonManager
     public void CalledCancel()
     {
         //to implement trait that avoids this penalty
-        ActivePlayerStats.RemoveCondition(Condition.CalledShot);
+        ActivePlayerStats.OnAttackFinished();
         Cancel();
     }
     
@@ -1114,28 +1141,24 @@ public class TurnActionsSR : UIButtonManager
     {
         UIPlayerInfo.ShowActionsOnly(CurrentAttack.target);
         CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
-        if(!CurrentAttack.AttackMissed)
+        CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
+        List<string> l = new List<string>();
+        l.Add("TotalDefense");
+        l.Add("Dodge");
+        if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
         {
-            CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
-            List<string> l = new List<string>();
-            l.Add("TotalDefense");
-            l.Add("Dodge");
-            if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+            if(CurrentAttack.target.CanParry())
             {
-                if(CurrentAttack.target.CanParry())
-                {
-                    l.Add("Parry");
-                }
-                l.Add("Block");
+                l.Add("Parry");
             }
-            l.Add("NoReaction");
-            ConstructActions(l);
+            l.Add("Block");
         }
+        l.Add("NoReaction");
+        ConstructActions(l);
     }
 
-    public void ResolveHit()
+    public void HitResolved()
     {
-        TacticsAttack.DealDamage(CurrentAttack);
         if(CurrentAttack.attacker != null)
         {
             UIPlayerInfo.ShowAllInfo(CurrentAttack.attacker);
@@ -1282,6 +1305,7 @@ public class TurnActionsSR : UIButtonManager
         ValidTargets = null;
         DirectionPointerInfo = Vector3.one;
         multipleTargetsLimit = 0;
+        MaxSelectionRange = -1;
         multipleTargets = new List<GameObject>();
         UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
         PushToolTips();

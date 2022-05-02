@@ -30,7 +30,10 @@ public static class TacticsAttack
         if(w.IsWeaponClass(WeaponClass.ranged))
         {
             w.ExpendAmmo(AmmoExpenditure[type]);
-            myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+            if(!w.HasWeaponAttribute("recoilless"))
+            {
+                myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+            }
         }
 
         // Save cover 
@@ -74,73 +77,142 @@ public static class TacticsAttack
 
     public static void DealDamage(AttackSequence currentAttack)
     {
-        int damageBonus = currentAttack.GetNetHits() - currentAttack.soakRoll.GetHits();
-        int weaponDamage = currentAttack.GetWeaponDamage();
-        if(currentAttack.ActiveWeapon != null && currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        int damage = 0;
+        int ap = 0;
+        string damageString = "";
+        if(currentAttack.ActiveWeapon == null)
         {
-            weaponDamage += currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
+            damage = currentAttack.flatDamage;
+            ap = currentAttack.flatAP;
+            damageString = " damage: " + damage;
         }
-        int totalDamage = damageBonus + weaponDamage;
-        if(totalDamage < 0)
+        else
         {
-            totalDamage = 0;
+            int roll = currentAttack.ActiveWeapon.RollDamage();
+            damage = roll;
+            ap = currentAttack.ActiveWeapon.GetAP();
+            if(currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+            {
+                int strengthBonus = currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
+                damage += strengthBonus;
+                damageString = " damage roll:\n " + currentAttack.ActiveWeapon.DisplayDamageRange() + " = <" + roll + "> + " + strengthBonus + " = " + damage;
+            }
+            else
+            {
+                damage += currentAttack.ActiveWeapon.GetDamageBonus();
+                damageString = " damage roll:\n " + currentAttack.ActiveWeapon.DisplayDamageRange() + " = <" + roll + "> + " + currentAttack.ActiveWeapon.GetDamageBonus() + " = " + damage;
+        
+            }
         }
+        // calculate armor
+        int damageSoak = CalculateSoak(currentAttack);
+        // subtract total damage by armor
+        damage -= damageSoak;
+        // damage can never be negative
+        if(damage  < 0)
+        {
+            damage = 0;
+        }
+        // apply damage
         if(currentAttack.ActiveWeapon != null && !currentAttack.ActiveWeapon.Template.Lethal)
         {
-            currentAttack.target.takeStun(totalDamage);
-            PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.cyan, currentAttack.target.gameObject); 
+            currentAttack.target.takeStun(damage);
+            PopUpText.CreateText("-" + (damage), Color.cyan, currentAttack.target.gameObject); 
         }
         else
         {
-            currentAttack.target.takeDamage(totalDamage);
-            PopUpText.CreateText("-" + (damageBonus + weaponDamage), Color.red, currentAttack.target.gameObject); 
+            currentAttack.target.takeDamage(damage);
+            PopUpText.CreateText("-" + (damage), Color.red, currentAttack.target.gameObject);
         }
+        CombatLog.Log(damageString + "\n -" + damageSoak + " from armor\n " + currentAttack.target.GetName() + " suffers " + damage + " damage");
+        ApplyCalledShots(currentAttack);
+    }
+
+    public static int CalculateSoak(AttackSequence currentAttack)
+    {
+        int armor = currentAttack.target.GetAP();
+        if(currentAttack.attacker != null && TargetIsBlocking(currentAttack.attacker,currentAttack.target))
+        {
+            armor += 3;
+        }
+        // calculate armor pen last
         if(currentAttack.ActiveWeapon != null)
         {
-            CombatLog.Log(currentAttack.ActiveWeapon.GetName() + " damage roll:\n "+ weaponDamage + " from base weapon damage\n +" + currentAttack.GetNetHits() + " from net attack hits\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
-            ApplyCalledShots(currentAttack);
+            int pen = currentAttack.ActiveWeapon.GetAP();
+            // if positive pen
+            if(pen > 0)
+            {
+                // if pen would make armor negative, set armor to 0
+                if(pen > armor)
+                {
+                    armor = 0;
+                }
+                // otherwise just subtrack
+                else
+                {
+                    armor -= pen;
+                }
+            }
+            // if negative pen and target has armor, add armor
+            else if (armor > 0)
+            {
+                armor -= pen;
+            }
         }
-        else
-        {
-            CombatLog.Log("incoming base damage:\n "+ weaponDamage + "\n -" + currentAttack.soakRoll.GetHits() + " from resist hits\n " + currentAttack.target.GetName() + " suffers " + totalDamage + " damage");
-        }
+        return armor;
     }
 
     public static void ApplyCalledShots(AttackSequence currentAttack)
     {
-        if(currentAttack.attacker.hasCondition(Condition.Disarm))
+        bool apply = false;
+        if(currentAttack.ActiveWeapon != null)
         {
-            string popuptext = " has no weapon to disarm";
-            if(currentAttack.target.PrimaryWeapon != null)
+            if(currentAttack.attacker.hasCondition(Condition.Disarm))
             {
-                popuptext = "'s " + currentAttack.target.PrimaryWeapon.GetName() + " is dropped!";
-                currentAttack.target.Unequip(currentAttack.target.PrimaryWeapon);
+                string popuptext = " has no weapon to disarm";
+                if(currentAttack.target.PrimaryWeapon != null)
+                {
+                    popuptext = "'s " + currentAttack.target.PrimaryWeapon.GetName() + " is dropped!";
+                    currentAttack.target.Unequip(currentAttack.target.PrimaryWeapon);
+                }
+                else if(currentAttack.attacker.SecondaryWeapon != null)
+                {
+                    popuptext = "'s " + currentAttack.target.SecondaryWeapon.GetName() + " is dropped!";
+                    currentAttack.target.Unequip(currentAttack.target.SecondaryWeapon);
+                }
+                CombatLog.Log(currentAttack.target.GetName() + popuptext); 
+                apply = true;
             }
-            else if(currentAttack.attacker.SecondaryWeapon != null)
+            else if(currentAttack.attacker.hasCondition(Condition.ShakeUp))
             {
-                popuptext = "'s " + currentAttack.target.SecondaryWeapon.GetName() + " is dropped!";
-                currentAttack.target.Unequip(currentAttack.target.SecondaryWeapon);
+                TurnManager.instance.SubtractIniative(currentAttack.target, 5);
+                PopUpText.CreateText("Shaken!", Color.yellow, currentAttack.target.gameObject);
+                CombatLog.Log(currentAttack.target.GetName() + " loses 5 initative");
+                apply = true;
             }
-            CombatLog.Log(currentAttack.target.GetName() + popuptext); 
+            else if(currentAttack.attacker.hasCondition(Condition.KnockDown) && currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+            {
+                int attackerKnockHits = currentAttack.attackRoll.GetDOF() + currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
+                int defenderKnockLimit = currentAttack.target.myData.GetAttribute(AttributeKey.PhysicalLimit);
+                CombatLog.Log("(Strength + hits) = " + attackerKnockHits + "(physical limit) = " + defenderKnockLimit);
+                if(attackerKnockHits >= defenderKnockLimit)
+                {
+                    currentAttack.target.SetCondition(Condition.Prone, 0, true);
+                    CombatLog.Log("prone attack exceeds physical limit and knocks " + currentAttack.target.GetName() + " prone");
+                }
+                PopUpText.CreateText("Resisted", Color.yellow, currentAttack.target.gameObject);    
+                CombatLog.Log("prone attack fails to reach physical limit");
+                apply = true;
+            }
         }
-        else if(currentAttack.attacker.hasCondition(Condition.ShakeUp))
+        // if they sucessfully land a calledshot
+        if(apply)
         {
-            TurnManager.instance.SubtractIniative(currentAttack.target, 5);
-            PopUpText.CreateText("Shaken!", Color.yellow, currentAttack.target.gameObject);
-            CombatLog.Log(currentAttack.target.GetName() + " loses 5 initative");
-        }
-        else if(currentAttack.attacker.hasCondition(Condition.KnockDown) && currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
-        {
-            int attackerKnockHits = currentAttack.attackRoll.GetDOF() + currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
-            int defenderKnockLimit = currentAttack.target.myData.GetAttribute(AttributeKey.PhysicalLimit);
-            CombatLog.Log("(Strength + hits) = " + attackerKnockHits + "(physical limit) = " + defenderKnockLimit);
-            if(attackerKnockHits >= defenderKnockLimit)
+            if(currentAttack.attacker.myData.hasTalent(TalentKey.Desperado))
             {
-                currentAttack.target.SetCondition(Condition.Prone, 0, true);
-                CombatLog.Log("prone attack exceeds physical limit and knocks " + currentAttack.target.GetName() + " prone");
+                CombatLog.Log("By landing a called shot " + currentAttack.attacker.GetName() + " enters momentum!");
+                currentAttack.attacker.SetCondition(Condition.Momentum, -1, true);
             }
-            PopUpText.CreateText("Resisted", Color.yellow, currentAttack.target.gameObject);    
-            CombatLog.Log("prone attack fails to reach physical limit");
         }
     }
 
@@ -547,6 +619,7 @@ public static class TacticsAttack
         modifiers.Add("presence", GetIntimidationPenalty(thisAttack, type));
         modifiers.Add("direct", GetDirectBonus(thisAttack,type));
         modifiers.Add("flanking",GetFlankingPenalty(thisAttack,type));
+        modifiers.Add("Momentum", GetMomentumPenalty(thisAttack, type));
         return modifiers;
     }
 
@@ -770,6 +843,15 @@ public static class TacticsAttack
             {
                 return -2;
             }
+        }
+        return 0;
+    }
+
+    private static int GetMomentumPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(!attack && thisAttack.target.hasCondition(Condition.Momentum))
+        {
+            return 4;
         }
         return 0;
     }

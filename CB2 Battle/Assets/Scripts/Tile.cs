@@ -144,7 +144,7 @@ public class Tile : MonoBehaviour
     {
         CombatLog.Log("by getting between 0-" + incomingAttack.coverRange +  " hits, " + incomingAttack.attacker.GetName() + " hits cover!");
 
-        int damage = incomingAttack.ActiveWeapon.GetDamage();
+        int damage = incomingAttack.ActiveWeapon.RollDamage() + incomingAttack.ActiveWeapon.GetDamageBonus();
         int AP = incomingAttack.ActiveWeapon.Template.pen;
 
         int armorDice = ArmorValue - AP;
@@ -174,26 +174,18 @@ public class Tile : MonoBehaviour
     // damage cover without spreading feature
     public void HitCover(Weapon incomingWeapon)
     {
-        int damage = incomingWeapon.GetDamage();
+        int damage = incomingWeapon.RollDamage() + incomingWeapon.GetDamageBonus();
         int AP = incomingWeapon.Template.pen;
-
-        int armorDice = ArmorValue - AP;
-
-        int successes = 0;
-
-        for(int i = 0; i < armorDice; i++)
+        int soak = ArmorValue - AP;
+        if(soak < 0)
         {
-            int result = Random.Range(1,7);
-            if(result > 4)
-            {
-                successes++;
-            }
+            soak = 0;
         }
-
-        if(damage > successes)
+        damage -= soak;
+        if(damage > 0)
         {
-            int strucutreDamage = incomingWeapon.GetDamage() * 2; 
-            if(strucutreDamage >= StructurePoints)
+            StructurePoints -= damage;
+            if(StructurePoints < 1)
             {
                 GlobalManager.RemoveTile(this);
             }

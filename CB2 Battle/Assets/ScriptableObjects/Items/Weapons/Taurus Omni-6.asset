@@ -22,12 +22,13 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 3243b6e208486c54999d9a2a7f01dff2, type: 3}
   upgrades: []
   Attributes: []
-  damageBonus: 6
+  diceSize: 2
+  damageBonus: 0
   rangeClass: {fileID: 11400000, guid: e33545b1087e3124ba75d142e868731c, type: 2}
   pen: 0
   SingleShot: 0
   SemiAuto: 1
-  BurstFire: 1
+  BurstFire: 0
   FullAuto: 0
   WeaponSkill: {fileID: 11400000, guid: ad37561d6fb94f34d806288ac8864dd5, type: 2}
   WeaponSpecialization: 1

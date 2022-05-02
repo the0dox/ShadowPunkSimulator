@@ -226,13 +226,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public void Prone()
     {
         SetCondition(Condition.Prone, 0, true);
-        pv.RPC("RPC_SetMove", RpcTarget.All, 0);
     }
 
     public void Stand()
     {
         RemoveCondition(Condition.Prone);
-        pv.RPC("RPC_SetMove", RpcTarget.All, remainingMove);
     }
 
     public void Unequip(Weapon w)
@@ -333,7 +331,23 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public float RollInitaitve()
     {
-        return myData.GetAttribute(AttributeKey.InitativeStandard) + Random.Range(1,7);
+        int roll = 0;
+        int initativeDice = 1;
+        // adept talent grants +1 initative dice
+        if(myData.hasTalent(TalentKey.ImprovedReflexes))
+        {
+            initativeDice++;
+        }
+        // wiredReflexes grants +1 initative dice
+        if(myData.equipmentObjects.Contains(ItemReference.GetItem("Wired Reflexes")))
+        {
+            initativeDice++;
+        }
+        for(int i = 0; i < initativeDice; i++)
+        {
+            roll += Random.Range(1,7);
+        }
+        return myData.GetAttribute(AttributeKey.InitativeStandard) + roll;
     }
 
     public bool HoldingWeaponClass(WeaponClass desiredClass)
@@ -510,15 +524,9 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     //calls at the beginning And end of turn each interger value refers to beginning and ending of turns 
     public void StartRound()
     {
+        ResetRecoilPenalty();
         defensePenality = 0;
-        if(!hasCondition(Condition.Prone))
-        {
-            pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.MoveWalk));
-        }
-        else
-        {
-            pv.RPC("RPC_SetMove", RpcTarget.All, 0);
-        }
+        pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.MoveWalk));
         List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
         List<ConditionTemplate> IncrementKeys = new List<ConditionTemplate>();
         foreach (ConditionTemplate Key in Conditions.Keys)
@@ -551,6 +559,23 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {
             if(Key.clearOnTurnEnd)
             {
+                removedKeys.Add(Key);
+            }
+        }
+        foreach(ConditionTemplate key in removedKeys)
+        {
+            Conditions.Remove(key);
+        }
+    }
+
+    public void OnAttackFinished()
+    {
+        List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
+        foreach(ConditionTemplate Key in Conditions.Keys)
+        {
+            if(Key.clearOnAttack)
+            {
+                Debug.Log(Key + " should be cleared");
                 removedKeys.Add(Key);
             }
         }

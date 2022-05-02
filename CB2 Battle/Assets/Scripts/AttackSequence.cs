@@ -22,14 +22,12 @@ public class AttackSequence
     public bool attackRolled = false;
     public RollResult reactionRoll;
     public bool reactionRolled = false;
-    public RollResult soakRoll;
-    public bool soakRolled = false;
-    public bool AttackMissed = false;
+    public bool Completed = false;
     public GameObject interceptingGameobject;
     public int coverRange = 0;
     private bool skipAttack = false;
-    int flatDamage = 0;
-    int flatAP = 0;
+    public int flatDamage = 0;
+    public int flatAP = 0;
 
     // creates an attack sequence of damage being dealt directly to player with no attacker
     public AttackSequence(PlayerStats target, int damage, int AP)
@@ -40,7 +38,7 @@ public class AttackSequence
         skipAttack = true;
         flatDamage = damage;
         flatAP = AP;
-        SoakRoll();
+        ResolveHit();
     }
 
     // creates an attack sequence without specifying a hitlocation
@@ -56,7 +54,7 @@ public class AttackSequence
             attackRolled = true;
             reactionRolled = true;
             this.skipAttack = true;
-            SoakRoll();
+            ResolveHit();
         }
     }
     
@@ -79,7 +77,7 @@ public class AttackSequence
         {
             CombatLog.Log(target.GetName() + " avoids the attack!");
             PopUpText.CreateText("Missed", Color.yellow, target.gameObject);
-            AttackMissed = true;
+            SequenceComplete();
         }
         else if(netHits <= coverRange)
         {
@@ -88,31 +86,14 @@ public class AttackSequence
         // If attack hits, start a soak roll
         else
         {
-            SoakRoll();    
+            ResolveHit();    
         }
     }
 
-    public void SoakRoll()
+    public void ResolveHit()
     {
-        int armorPen = flatAP;
-        if(ActiveWeapon != null)
-        {
-            armorPen = ActiveWeapon.GetAP();
-        }
-        int armorMod = target.GetAP();
-        if(TacticsAttack.TargetIsBlocking(attacker,target))
-        {
-            armorMod += 8; 
-        }
-        if(armorMod > 0)
-        {
-            armorMod -= armorPen;
-        }
-        if(armorMod < 0)
-        {
-            armorMod = 0;
-        }
-        soakRoll = target.AbilityCheck(AttributeKey.Body, AttributeKey.Empty, AttributeKey.Empty, "Armor", 0, armorMod);
+        TacticsAttack.DealDamage(this);
+        SequenceComplete();
     }
 
     private void HitCover()
@@ -124,20 +105,20 @@ public class AttackSequence
             if(interceptingTile != null)
             {
                 interceptingTile.HitCover(this);
-                AttackMissed = true;
+                SequenceComplete();
             }
             else if(interceptingPlayer != null)
             {   
                 CombatLog.Log("by getting 0-4 hits, " + target.GetName() + " intercepts the hit!");
                 target = interceptingPlayer;
-                SoakRoll();
+                ResolveHit();
             }
         }
         else
         {
             CombatLog.Log("by getting 0 hits, " + target.GetName() + " suffers a grazing hit!");
             PopUpText.CreateText("Grazed!", Color.yellow, target.gameObject);
-            AttackMissed = true;
+            SequenceComplete();
         }
     }
     
@@ -150,17 +131,12 @@ public class AttackSequence
         return attackRoll.GetHits() - reactionRoll.GetHits();
     }
 
-    public int GetWeaponDamage()
+    private void SequenceComplete()
     {
-        if(ActiveWeapon != null)
+        Completed = true; 
+        if(attacker != null)
         {
-            return ActiveWeapon.GetDamage();
+            attacker.OnAttackFinished();
         }
-        return flatDamage;
-    }
-
-    public void SoakRollComplete()
-    {
-        soakRolled = true;
     }
 }

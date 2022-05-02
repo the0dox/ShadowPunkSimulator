@@ -345,12 +345,25 @@ public class Weapon : Item
 
     public string DisplayDamageRange()
     {
-        string DB = "" + damage;
-        if(IsWeaponClass(WeaponClass.melee))
+        if(Template != null)
         {
-            DB += " + SB";
+            string DB = "1" + Template.diceSize.ToString();
+            string addition = "";
+            if(IsWeaponClass(WeaponClass.melee))
+            {
+                addition = " + S";
+            }
+            else if(damage > 0)
+            {
+                addition = " + " + damage;
+            }
+            else if(damage != 0)
+            {
+                addition = " - " + Mathf.Abs(damage);
+            }
+            return "Damage: " + DB + addition;  
         }
-        return "Damage: " + DB;  
+        return "Damage: " + damage;
     }
 
     public string AttributesToString()
@@ -383,7 +396,7 @@ public class Weapon : Item
             {
                 output += "FA/";
             }
-            output.TrimEnd(output[output.Length - 1]);
+            output.TrimEnd(output[output.Length - 2]);
             return output;
         }
         else
@@ -458,10 +471,45 @@ public class Weapon : Item
         }
     }
 
-    public int GetDamage()
+    public int RollDamage()
+    {
+        if(Template != null)
+        {
+            int maxRoll = 0;
+            switch(Template.diceSize)
+            {
+                case(diceSize.d4):
+                {
+                    maxRoll = 4;
+                }
+                break;
+                case(diceSize.d5):
+                {
+                    maxRoll = 5;
+                }
+                break;
+                case(diceSize.d6):
+                {
+                    maxRoll = 6;
+                }
+                break;
+                case(diceSize.d8):
+                {
+                    maxRoll = 8;
+                }
+                break;
+            }
+            int roll = Random.Range(1,maxRoll + 1);
+            return roll;
+        }
+        return 0;
+    }
+
+    public int GetDamageBonus()
     {
         return damage;
     }
+
     public override Sprite GetSprite()
     {
         if(Template.icon != null)
@@ -479,7 +527,7 @@ public class Weapon : Item
         
         tooltip += "\nRequired Skill: " + Template.WeaponSkill.name;
         tooltip += "\nSpecialization: " + Template.WeaponSkill.Specializations.ToArray()[Template.WeaponSpecialization];
-        tooltip += "\n accuracy" + Template.accuracy;
+        tooltip += "\nAccuracy" + Template.accuracy;
         tooltip += "\nArmor Penetration: " + Template.pen;
 
         if(IsWeaponClass(WeaponClass.melee))
@@ -507,7 +555,7 @@ public class Weapon : Item
             {
                 upgradedesc += ug.name + ",";
             } 
-            upgradedesc = upgradedesc.TrimEnd(upgradedesc[upgradedesc.Length - 1]);
+            upgradedesc = upgradedesc.TrimEnd(upgradedesc[upgradedesc.Length - 2]);
         }
         tooltip += upgradedesc;
         tooltip += "\nweight: " + weight;

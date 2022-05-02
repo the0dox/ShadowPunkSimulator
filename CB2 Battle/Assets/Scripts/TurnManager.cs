@@ -39,7 +39,7 @@ public class TurnManager : TurnActionsSR
                     CurrentAttack = AttackQueue.Dequeue();
                 }
             }
-            else if(CurrentAttack.AttackMissed)
+            else if(CurrentAttack.Completed)
             {
                 CurrentAttack = null;
                 Cancel();
@@ -54,11 +54,6 @@ public class TurnManager : TurnActionsSR
                 if(CurrentAttack.reactionRoll != null && CurrentAttack.reactionRoll.Completed() && !CurrentAttack.reactionRolled)
                 {
                     CurrentAttack.ReactionRollComplete();
-                }
-                if(CurrentAttack.soakRoll != null && CurrentAttack.soakRoll.Completed() && !CurrentAttack.soakRolled)
-                {
-                    CurrentAttack.SoakRollComplete();
-                    ResolveHit();
                 }
             }
             //Where all possible actions take place
@@ -145,42 +140,43 @@ public class TurnManager : TurnActionsSR
     
     void ServerLeftClick(GameObject ServerHitObject)
     {
-        if (ServerHitObject.tag == "Player")
+        if(withinRange(ServerHitObject))
         {
-            PlayerStats ps = ServerHitObject.GetComponent<PlayerStats>();
-            switch(currentAction)
+            if (ServerHitObject.tag == "Player")
             {
-                case "Attack":
-                RollToHit(ps, FireRate, ActiveWeapon, ActivePlayerStats);
-                ClearTiles();
-                break;
-                case "SelectSingleEnemy":
-                if(ps.GetTeam() != ActivePlayerStats.GetTeam())
+                PlayerStats ps = ServerHitObject.GetComponent<PlayerStats>();
+                switch(currentAction)
                 {
-                    target = ps;
+                    case "Attack":
+                    RollToHit(ps, FireRate, ActiveWeapon, ActivePlayerStats);
+                    break;
+                    case "SelectSingleEnemy":
+                    if(ps.GetTeam() != ActivePlayerStats.GetTeam())
+                    {
+                        target = ps;
+                    }
+                    break;
+                    case "SelectSingleAlly":
+                    if(ps.GetTeam() == ActivePlayerStats.GetTeam())
+                    {
+                        target = ps;
+                    }
+                    break;
                 }
-                break;
-                case "SelectSingleAlly":
-                if(ps.GetTeam() == ActivePlayerStats.GetTeam())
-                {
-                    target = ps;
-                }
-                break;
             }
-        }
-        else if(ServerHitObject.tag == "Tile")
-        {
-            switch(currentAction)
+            else if(ServerHitObject.tag == "Tile")
             {
-                case "SelectTargetsTiles":
-                if(multipleTargets.Count < multipleTargetsLimit && !multipleTargets.Contains(ServerHitObject) && !ServerHitObject.GetComponent<Tile>().blank)
+                switch(currentAction)
                 {
-                    CombatLog.Log("Selected tile at " + ServerHitObject.transform.position);
-                    multipleTargets.Add(ServerHitObject);
+                    case "SelectTargetsTiles":
+                    if(multipleTargets.Count < multipleTargetsLimit && !multipleTargets.Contains(ServerHitObject) && !ServerHitObject.GetComponent<Tile>().blank)
+                    {
+                        CombatLog.Log("Selected tile at " + ServerHitObject.transform.position);
+                        multipleTargets.Add(ServerHitObject);
+                    }
+                    break;
                 }
-                break;
             }
-            
         }
     }
 
@@ -532,8 +528,10 @@ public class TurnManager : TurnActionsSR
         FireRate = ROF;
         this.target = target; 
         ActiveWeapon = w;
-        //only a valid target if on diferent teams
-        if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
+        //only a valid target if on diferent teams (los restriction has been lifted temporarily)
+        //if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
+        //{
+        if(target.GetTeam() != ActivePlayerStats.GetTeam())
         {
             AttackSequence newAttack = TacticsAttack.Attack(target, attacker, ActiveWeapon, ROF);
             AttackQueue.Enqueue(newAttack);
@@ -547,8 +545,8 @@ public class TurnManager : TurnActionsSR
                     halfActions--;
                 }
             }
-        }
-
+        }   
+        //}
     }
 
     public void FallComplete(TacticsMovement tm, int distance)
@@ -692,5 +690,23 @@ public class TurnManager : TurnActionsSR
         TacticsAttack.Defend(CurrentAttack);
         ClearActions();
     }
+
+    private bool withinRange(GameObject target)
+    {
+        if(MaxSelectionRange == -1)
+        {
+            return true;
+        }
+        int distance = Mathf.FloorToInt(Vector3.Distance(ActivePlayerStats.transform.position, target.transform.position));
+        if(distance <= MaxSelectionRange)
+        {
+            return true;
+        }
+        else
+        {
+            CombatLog.Log("Target is outside range");
+            return false;
+        }
+    } 
 
 }

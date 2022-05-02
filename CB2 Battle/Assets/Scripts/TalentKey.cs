@@ -22,7 +22,8 @@ public enum TalentKey
     // Adept
     Adept,
     Momentum,
-    Dropkick,
-    Reposition,
+    ImprovedReflexes,
+    Desperado,
+    Dropkick
 }
 
