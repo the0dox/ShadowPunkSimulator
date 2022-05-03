@@ -21,8 +21,9 @@ MonoBehaviour:
   rating: 0
   icon: {fileID: 21300000, guid: f3d30d7ee2334c5409bc3b87fcd8780e, type: 3}
   upgrades: []
-  Attributes: []
-  diceSize: 2
+  Attributes:
+  - recoilless
+  diceSize: 0
   damageBonus: 0
   rangeClass: {fileID: 11400000, guid: dcc174bf66c50964aaa74d114569a6a2, type: 2}
   pen: 0

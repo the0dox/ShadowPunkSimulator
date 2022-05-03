@@ -98,7 +98,30 @@ public static class AttribueReference
     AttributeKey.UnarmedCombat,
     AttributeKey.ExoticWeapons,
     AttributeKey.Spellcasting,
+    AttributeKey.DroneHandling,
+    AttributeKey.DroneSpeed,
+    AttributeKey.DroneStructure,
+    AttributeKey.DroneArmor,
+    AttributeKey.DroneSensor,
+    AttributeKey.DronePiloting,
+    AttributeKey.DroneRating
     };
+
+    public static AttributeKey DroneEquivalent(AttributeKey Attribute)
+    {
+        switch(Attribute)
+        {
+            case(AttributeKey.Strength):
+                return AttributeKey.DroneStructure;
+            case(AttributeKey.Body):
+                return AttributeKey.DroneStructure;
+            case(AttributeKey.Agility):
+                return AttributeKey.DroneSpeed;
+            case(AttributeKey.Reaction):
+                return AttributeKey.DroneHandling;
+        }
+        return AttributeKey.Empty;
+    }
 }
 
 public enum AttributeKey
@@ -195,5 +218,12 @@ public enum AttributeKey
     Tracking,
     UnarmedCombat,
     ExoticWeapons,
-    Spellcasting
+    Spellcasting,
+    DroneHandling,
+    DroneSpeed,
+    DroneStructure,
+    DroneArmor,
+    DroneSensor,
+    DronePiloting,
+    DroneRating
 }

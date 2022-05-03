@@ -13,14 +13,13 @@ MonoBehaviour:
   m_Name: Momentum
   m_EditorClassIdentifier: 
   key: 13
-  description: 'Adepts use their environment to gain bursts of unnatural speed.
+  description: 'Adepts use bursts of unnatural speed to avoid fire and occasionally
+    unleash unique finishers.
 
 
-    ''Momentum''
-    is a free action where the adept makes an acrobatics check to preform a movement
-    trick described by the player. The threshold can be made easier or harder depending
-    on the senario. If successful, the adept enters a state of momentum, a defensive
-    buff that can be spent on special adept manuevers'
+    ''Momentum'' a status Adepts can gain depending
+    on their archtype. All adepts can enter momentum by using the ''running'' action.
+    Momentum a defensive buff that can be spent on special adept manuevers.'
   prerequisites: 0c000000
   conflictsWith: 
   Icon: {fileID: 21300000, guid: 5db07e9f657ceba44b4e95af66c9d1f2, type: 3}

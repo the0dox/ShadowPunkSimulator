@@ -354,6 +354,10 @@ public class DmMenu : MonoBehaviourPunCallbacks
 
     public static Photon.Realtime.Player GetOwner(CharacterSaveData csd)
     {
+        if(csd.isMinion)
+        {
+            return GetOwner(csd.getOwner());
+        }
         if(SavedCharacters.ContainsValue(csd))
         {
             foreach(KeyValuePair<int,CharacterSaveData> kvp in SavedCharacters)

@@ -61,8 +61,16 @@ public class RollResult
         this.useWeapon = true;
         this.WeaponAccuracy = weapon.Template.accuracy;
         this.owner = owner; 
-        this.firstField = weapon.Template.WeaponSkill.skillKey;
-        this.secondField = weapon.Template.WeaponSkill.derrivedAttribute;
+        if(owner.isMinion)
+        {
+            firstField = weapon.Template.WeaponSkill.DroneEquivalent;
+            secondField = weapon.Template.WeaponSkill.DroneAttributeEquivalent;
+        }
+        else
+        {
+            this.firstField = weapon.Template.WeaponSkill.skillKey;
+            this.secondField = weapon.Template.WeaponSkill.derrivedAttribute;
+        }
         this.threshold = 0;
         this.modifiers = modifiers; 
 
@@ -83,9 +91,18 @@ public class RollResult
         this.modifiers = modifiers;
         this.threshold = threshold;
         SkillTemplate testedSkill = SkillReference.GetSkill(skillKey);
-        firstField = skillKey;
-        secondField = testedSkill.derrivedAttribute;
-        LimitKey = testedSkill.limit;
+        if(owner.isMinion)
+        {
+            firstField = testedSkill.DroneEquivalent;
+            secondField = testedSkill.DroneAttributeEquivalent;
+            LimitKey = AttributeKey.DroneRating;
+        }
+        else
+        {
+            firstField = skillKey;
+            secondField = testedSkill.derrivedAttribute;
+            LimitKey = testedSkill.limit;
+        }
         if(SkillPromptBehavior.ManualRolls)
         {
             completed = false;
@@ -100,9 +117,27 @@ public class RollResult
     public RollResult(CharacterSaveData owner, AttributeKey firstField = AttributeKey.Empty, AttributeKey secondField = AttributeKey.Empty, AttributeKey LimitKey = AttributeKey.Empty, int threshold = 0, int modifiers = 0)//,  PlayerStats other = null)
     {
         this.owner = owner;
-        this.firstField = firstField;
-        this.secondField = secondField;
-        this.LimitKey = LimitKey;
+        // if I am minion
+        if(owner.isMinion)
+        {
+            AttributeKey convertedKey = AttribueReference.DroneEquivalent(firstField);
+            if(convertedKey != AttributeKey.Empty)
+            {
+                this.firstField = convertedKey;
+            }
+            else
+            {
+                this.firstField = AttributeKey.DroneHandling;
+            }
+            this.secondField = AttributeKey.Pilot;
+            LimitKey = AttributeKey.DroneRating;
+        }
+        else
+        {
+            this.firstField = firstField;
+            this.secondField = secondField;
+            this.LimitKey = LimitKey;
+        }
         this.modifiers = modifiers;
         this.threshold = threshold;
         if(SkillPromptBehavior.ManualRolls)
@@ -157,7 +192,14 @@ public class RollResult
         }
         if(secondField != AttributeKey.Empty)
         {
-            pool += owner.GetAttribute(secondField);
+            if(owner.isMinion)
+            {
+                pool += owner.GetOwnerAttribute(secondField);
+            }
+            else
+            {
+                pool += owner.GetAttribute(secondField);
+            }
         }
         pool += modifiers;
         //Debug.Log("Die Pool: " + pool);

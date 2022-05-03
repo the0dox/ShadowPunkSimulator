@@ -15,6 +15,8 @@ MonoBehaviour:
   IgnoreKey: 
   Modifiers: 0
   duration: 0
-  clearOnTurnStart: 0
+  clearOnTurnEnd: 0
   clearOnMove: 0
+  clearOnAttack: 1
   conditionKey: 10
+  effectKey: 0

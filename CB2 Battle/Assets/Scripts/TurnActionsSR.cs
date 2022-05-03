@@ -165,33 +165,6 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
-    public void Unjam()
-    {
-        StartCoroutine(UnjamDelay());
-    }
-
-    IEnumerator UnjamDelay()
-    {
-        RollResult unjamResult = ActivePlayerStats.AbilityCheck("BS",0);
-        while(!unjamResult.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        if(unjamResult.Passed())
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " successfully unjams their weapon!");
-            PopUpText.CreateText("Unjammed!",Color.green,ActivePlayerStats.gameObject);
-            ActiveWeapon.ExpendAmmo("Jam");
-            ActiveWeapon.SetJamStatus(false);
-        }
-        else
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " fails to unjams their weapon!");
-        }
-        halfActions-= 2;
-        Cancel();
-    }
-
     //restricted actions: actions that are only available when the player is restricted somehow
     public void GrappleControl()
     {
@@ -200,7 +173,8 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator GrappleControlDelay()
     {
-        RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck("S",0,null,ActivePlayerStats.grappler);
+        RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck(AttributeKey.UnarmedCombat);
+        opposedStrengthcheck.OpposedRoll(target.AbilityCheck(AttributeKey.UnarmedCombat));
         while(!opposedStrengthcheck.Completed())
         {
             yield return new WaitForSeconds(0.5f);
@@ -219,20 +193,14 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
-    public void GrappleContortionist()
-    {
-        ActivePlayerStats.AbilityCheck("Contortionist",0,"EscapeBonds");
-        halfActions -=2;
-        Cancel();
-    }
-
     public void GrappleScuffle()
     {
         StartCoroutine(GrappleScuffleDelay());
     }
     IEnumerator GrappleScuffleDelay()
     {
-        RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck("S",0,null,ActivePlayerStats.grappleTarget);
+        RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck(AttributeKey.UnarmedCombat);
+        opposedStrengthcheck.OpposedRoll(target.AbilityCheck(AttributeKey.UnarmedCombat));
         while(!opposedStrengthcheck.Completed())
         {
             yield return new WaitForSeconds(0.5f);
@@ -332,8 +300,29 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Reposition","Reposition");
         }
+        if(ActivePlayerStats.myData.equipmentObjects.Contains(ItemReference.GetItem("GM-Nissan Dobberman")))
+        {
+            d.Add("Deploy Drone","CreateMinion");
+        }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
+    }
+
+    // SimTech Skills
+    public void CreateMinion()
+    {
+        StartCoroutine(MinionDelay());
+    }
+
+    IEnumerator MinionDelay()
+    {
+        currentAction = "SelectLocation";
+        while(multipleTargets.Count == 0)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        Vector3 spawnPosition = multipleTargets[0].transform.position + new Vector3(0, 1.5f, 0);
+        PlayerSpawner.CreatePlayer(ActivePlayerStats, (Drone)ItemReference.GetItem("GM-Nissan Dobberman"), spawnPosition);
     }
 
     // Sam skills
@@ -411,7 +400,7 @@ public class TurnActionsSR : UIButtonManager
             yield return new WaitForSeconds(0.2f);
         }
         ClearActions();
-        RollResult IntimidationRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Intimidation, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+        RollResult IntimidationRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Intimidation, 0, 0);
         IntimidationRoll.OpposedRoll( new RollResult(target.myData, AttributeKey.Willpower, AttributeKey.Charisma, AttributeKey.MentalLimit, 0,0));
         while(!IntimidationRoll.Completed())
         {
@@ -452,7 +441,7 @@ public class TurnActionsSR : UIButtonManager
             yield return new WaitForSeconds(0.2f);
         }
         ClearActions();
-        RollResult DirectRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+        RollResult DirectRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, 0, 0);
         while(!DirectRoll.Completed())
         {
             yield return new WaitForSeconds(0.2f);
@@ -480,7 +469,7 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator InspireDelay()
     {
-        RollResult InspireRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+        RollResult InspireRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, 0, 0);
         while(!InspireRoll.Completed())
         {
             yield return new WaitForSeconds(0.2f);
@@ -517,7 +506,7 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator FlankingStyleDelay()
     {
-    RollResult InspireRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, AttributeKey.Charisma, AttributeKey.SocialLimit, 0, 0);
+    RollResult InspireRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Leadership, 0, 0);
     while(!InspireRoll.Completed())
     {
         yield return new WaitForSeconds(0.2f);
@@ -976,31 +965,6 @@ public class TurnActionsSR : UIButtonManager
         Cancel();
     }
 
-    IEnumerator WaitForFireResult(PlayerStats target, Weapon w)
-    {
-        RollResult AvoidResult = target.AbilityCheck("A",0);
-        while(!AvoidResult.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        if(!AvoidResult.Passed())
-        {
-            CombatLog.Log(target.GetName() + " is hit by the " + w.GetName() + "'s spray!");
-            /*if(!target.hasCondition("On Fire"))
-            {
-                target.AbilityCheck("A",0,"Fire");
-            }
-            */
-            TacticsAttack.DealDamage(target, ActivePlayerStats, "Body", w);
-        }
-        else
-        {
-            CombatLog.Log(target.GetName() + " avoids the " + w.GetName() + "'s spray!");
-        }
-    }
-
-
-
     public void Ready()
     {
         TokenDragBehavior.ToggleMovement(false);
@@ -1063,13 +1027,6 @@ public class TurnActionsSR : UIButtonManager
         ActivePlayerStats.ResetRecoilPenalty();
         CombatLog.Log(ActivePlayerStats.GetName() + " steadies their aim, reseting their recoil penalty!");
         halfActions--;
-        Cancel();
-    }
-
-    public void Extinguish()
-    {
-        ActivePlayerStats.AbilityCheck("A",0,"Fire");
-        halfActions -= 2;
         Cancel();
     }
 
@@ -1181,43 +1138,8 @@ public class TurnActionsSR : UIButtonManager
             }
             //CurrentStats.SetCondition("Under Fire", 1,false);
         } 
-        StartCoroutine(SuppressionDelay(targets));
     }
 
-    IEnumerator SuppressionDelay(List<Transform> targets)
-    {
-        RollResult SprayResult = ActivePlayerStats.AbilityCheck("BS",-20);
-        while(!SprayResult.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        int maxShots;
-        if(ActiveWeapon.CanFire("Auto"))
-        {
-            maxShots = ActiveWeapon.ExpendAmmo("Auto");
-        }
-        else
-        {
-            maxShots = ActiveWeapon.ExpendAmmo("Semi");
-        }
-        if(SprayResult.Passed() && targets.Count > 0)
-        {
-            RepeatedAttacks = 1 + (SprayResult.GetDOF()/2);
-            Debug.Log("attacks " + RepeatedAttacks);
-            if(RepeatedAttacks > maxShots)
-            {
-                RepeatedAttacks = maxShots;
-            }
-            for(int i = 0; i < RepeatedAttacks; i++)
-            {
-                int randomIndex = Random.Range(0,targets.Count - 1);
-                PlayerStats currentStats = targets[randomIndex].GetComponent<PlayerStats>();
-                AttackQueue.Enqueue(new AttackSequence (currentStats, ActivePlayerStats, ActiveWeapon,FireRate,1,true));
-            }
-        }
-        halfActions -= 2;
-        Cancel();
-    }
 
     public void CreateThreatRange(string type)
     {

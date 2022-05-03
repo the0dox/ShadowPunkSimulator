@@ -187,7 +187,14 @@ public class SkillPromptBehavior : MonoBehaviour
         }
         if(currentRoll.secondField != AttributeKey.Empty)
         {
-            CalculationText.text += currentRoll.secondField.ToString() + " ";
+            if(currentRoll.getOwner().isMinion)
+            {
+                CalculationText.text += "owner's " + currentRoll.secondField.ToString() + " ";
+            }
+            else 
+            {
+                CalculationText.text += currentRoll.secondField.ToString() + " ";
+            }
         }
         string endText = "no limit";
         if(currentRoll.useWeapon)

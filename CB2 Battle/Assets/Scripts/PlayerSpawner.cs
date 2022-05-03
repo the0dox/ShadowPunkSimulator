@@ -32,16 +32,19 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
     }
 
-    public static void CreatePlayer(string csdname,Vector3 pos, bool controlable)
+    public static void CreatePlayer(PlayerStats owner, Drone template, Vector3 pos)
     {
-
-        pv.RPC("RPC_CreatePlayer",RpcTarget.MasterClient,csdname,pos,controlable);
+        CharacterSaveData csd = new CharacterSaveData(owner, template);
+        CreatePlayer(csd, pos, false);
     }
 
-    [PunRPC]
-    void RPC_CreatePlayer(string csdname,Vector3 pos, bool controlable)
+    public static void CreatePlayer(string csdname, Vector3 pos, bool controlable)
     {
-        CharacterSaveData csd = DmMenu.GetCSD(csdname);
+        CreatePlayer(DmMenu.GetCSD(csdname), pos, controlable);
+    }
+
+    public static void CreatePlayer(CharacterSaveData csd,Vector3 pos, bool controlable)
+    {
         // Create Character with no model at position
         GameObject EmptyPlayer = PhotonNetwork.Instantiate("Player", pos, Quaternion.identity);
         EmptyPlayer.transform.position = pos;

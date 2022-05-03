@@ -959,6 +959,8 @@ MonoBehaviour:
     equipment: []
     equipmentSize: 
     equipmentCode: []
+    isMinion: 0
+    ownerID: 0
   ID: 0
   NPCHealth: 0
   NPCStun: 0

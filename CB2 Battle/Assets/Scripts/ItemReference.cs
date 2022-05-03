@@ -25,6 +25,10 @@ public class ItemReference : MonoBehaviour
         {
             return new Weapon((WeaponTemplate)template);
         }
+        else if(template.GetType().Equals(typeof(DroneTemplate)))
+        {
+            return new Drone((DroneTemplate)template);
+        }
         else if (template.GetType().Equals(typeof(ArmorTemplate)))
         {
             return new Armor((ArmorTemplate)template);

@@ -15,8 +15,9 @@ MonoBehaviour:
   weight: 0
   cost: 0
   availablity: 
-  description: 
-  unique: 0
-  rating: 0
-  icon: {fileID: 0}
+  description: highly illegal millitary-grade cyberware. Extensive subdermal coils
+    snake throughout the user's body, granting +1 physical initative die
+  unique: 1
+  rating: 7
+  icon: {fileID: 21300000, guid: af31cab9695a70d4196f056bdebf9da1, type: 3}
   upgrades: []

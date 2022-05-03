@@ -272,63 +272,6 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return newRoll;
     }
 
-    public RollResult AbilityCheck(string skillKey,int modifiers)
-    {
-        throw new System.NotImplementedException();
-    }
-    public RollResult AbilityCheck(string input, int modifiers,string command)
-    {
-        throw new System.NotImplementedException();
-    }
-    //attempts a skill OR Characteristic! from the skill dictionary, applying any modifiers if necessary, returns degrees of successes, not true/false
-    public RollResult AbilityCheck(string input, int modifiers,string command, PlayerStats other)
-    {
-        throw new System.NotImplementedException();
-        /*
-        int SkillTarget = 10;
-        int ConditionalModifiers = modifiers;
-        //Debug.Log("attempting " + input);
-        //Skill convertedSkill = GetSkillReference(input);
-        for skills not characteristics
-        if (convertedSkill != null)
-        {
-            //modifier for skills
-            ConditionalModifiers += CalculateStatModifiers(input);
-            type = convertedSkill.derrivedAttribute;
-            int LevelsTrained = convertedSkill.levels;
-            SkillTarget = GetStat(type);
-            if (LevelsTrained < 1)
-                {
-                    //to implement, custom basic skills    
-                    SkillTarget = SkillTarget/2;
-                }
-                else
-                {
-                    SkillTarget += 10 * (LevelsTrained-1);
-                } 
-        }
-        //for characteristic tests only
-        else
-        {
-            type = input; 
-            SkillTarget = GetStat(type);
-        }
-        //modifier that always applies 
-        ConditionalModifiers += CalculateStatModifiers(type);
-        
-        //untrained makes the skill half as likely to work
-
-        SkillTarget += ConditionalModifiers;  
-        
-        RollResult output;
-        output = new RollResult(this,SkillTarget,input,command);
-        if(other != null)
-        {
-            output.OpposedRoll(other.AbilityCheck(input,modifiers,command));
-        }
-        */
-    }
-
     public float RollInitaitve()
     {
         int roll = 0;

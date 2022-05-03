@@ -221,6 +221,16 @@ public class Item
             Armor thisArmor = (Armor)this;
             return(otherArmor.Template == thisArmor.Template);
         }
+        else if (this.GetType().Equals(typeof(Drone)))
+        {
+            if(!(obj is Drone))
+            {
+                return false;
+            }
+            Drone otherDrone = (Drone)obj;
+            Drone thisDrone = (Drone)this;
+            return(otherDrone.Template == thisDrone.Template);
+        }
         else
         {
             if (!(obj is Item))

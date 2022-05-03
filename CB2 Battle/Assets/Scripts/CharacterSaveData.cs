@@ -25,6 +25,8 @@ public class CharacterSaveData
     // Condensed list of equipment and there properties, only modified on load and save
     public List<string> equipmentCode = new List<string>(); 
     public List<Item> equipmentObjects = new List<Item>();
+    public bool isMinion = false;
+    public int ownerID;
     
     // Playable: whether to create an NPC or Player character
     // Creates a new Save Data with default skills and hit locations
@@ -60,6 +62,26 @@ public class CharacterSaveData
         DecompileStats(attribues);
         decompileEquipment(newequipment);
         DecompileTalents(newTalents);
+    }
+
+    // used for creating drones
+    public CharacterSaveData(PlayerStats owner, Drone minionTemplate)
+    {
+        isMinion = true;
+        Model = minionTemplate.Template.model;
+        this.ownerID = owner.ID;
+        this.playername = owner.GetName() + "'s " + minionTemplate.GetName();
+        this.team = owner.GetTeam();
+        SetAttribute(AttributeKey.DroneHandling, minionTemplate.Template.Handling, false);
+        SetAttribute(AttributeKey.DroneStructure, minionTemplate.Template.Structure, false);
+        SetAttribute(AttributeKey.DroneArmor, minionTemplate.Template.Armor, false);
+        SetAttribute(AttributeKey.DroneSensor, minionTemplate.Template.Sensor, false);
+        SetAttribute(AttributeKey.DronePiloting, minionTemplate.Template.Piloting, false);
+        SetAttribute(AttributeKey.DroneRating, minionTemplate.Template.rating, false);
+        SetAttribute(AttributeKey.Body, minionTemplate.Template.Structure,false);
+        SetAttribute(AttributeKey.Agility, minionTemplate.Template.Speed, false);
+        CalculateCharacteristics();
+        equipmentObjects.Add(ItemReference.GetItem(minionTemplate.Template.Weapon.name));
     }
 
     public void OnLoad()
@@ -177,6 +199,20 @@ public class CharacterSaveData
     public int GetAttribute(AttributeKey key)
     {
         return attribues[(int)key];
+    }
+
+    public int GetOwnerAttribute(AttributeKey key)
+    {
+        if(isMinion)
+        {
+            return getOwner().myData.GetAttribute(key);
+        }
+        return 0;
+    }
+
+    public PlayerStats getOwner()
+    {
+        return PlayerSpawner.IDtoPlayer(ownerID);
     }
 
     public bool hasTalent(TalentKey key)

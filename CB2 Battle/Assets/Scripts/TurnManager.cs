@@ -175,6 +175,9 @@ public class TurnManager : TurnActionsSR
                         multipleTargets.Add(ServerHitObject);
                     }
                     break;
+                    case "SelectLocation":
+                        multipleTargets.Add(ServerHitObject);
+                    break;
                 }
             }
         }
@@ -498,30 +501,6 @@ public class TurnManager : TurnActionsSR
             currentAction = "Grapple";
         }
     }
-    
-    IEnumerator FireDistractionDelay()
-    {
-        RollResult fireroll = ActivePlayerStats.AbilityCheck("WP",0);
-        while(!fireroll.Completed())
-        {
-            yield return new WaitForSeconds(0.5f);
-        }
-        if(!fireroll.Passed())
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " is too distracted by the fire to act!");
-            halfActions = 0;
-        }
-        else
-        {
-            CombatLog.Log(ActivePlayerStats.GetName() + " is able to act while on fire!");
-        }
-        Cancel();
-    }
-
-    public void HitCharacter()
-    {
-
-    }
 
     public void RollToHit(PlayerStats target, string ROF, Weapon w, PlayerStats attacker)
     {
@@ -578,12 +557,13 @@ public class TurnManager : TurnActionsSR
 
     IEnumerator grappleDelay(PlayerStats target, PlayerStats attacker)
     {
-            RollResult GrappleResult = attacker.AbilityCheck("WS",0);
-            while(!GrappleResult.Completed())
+            RollResult opposedStrengthcheck = ActivePlayerStats.AbilityCheck(AttributeKey.UnarmedCombat);
+            opposedStrengthcheck.OpposedRoll(target.AbilityCheck(AttributeKey.UnarmedCombat));
+            while(!opposedStrengthcheck.Completed())
             {
                 yield return new WaitForSeconds(0.5f);
             }
-            if (GrappleResult.Passed())
+            if (opposedStrengthcheck.Passed())
             {
                 AttackQueue.Enqueue(new AttackSequence(target,ActivePlayerStats,ActiveWeapon,"Grapple",1,true));
             }
@@ -615,16 +595,6 @@ public class TurnManager : TurnActionsSR
                 }
             }
         }
-    }
-
-    public void AbilityCheck(string skill)
-    {
-        ActivePlayerStats.AbilityCheck(skill,0);
-    }
-    public void AbilityCheck(string skill, int value)
-    {
-        ActivePlayerStats.AbilityCheck(skill,value);
-        Cancel();
     }
 
     public void AddPlayer(GameObject newPlayer)

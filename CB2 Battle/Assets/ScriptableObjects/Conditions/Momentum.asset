@@ -17,5 +17,6 @@ MonoBehaviour:
   duration: 0
   clearOnTurnEnd: 0
   clearOnMove: 0
-  conditionKey: 0
-  effectKey: 0
+  clearOnAttack: 0
+  conditionKey: 21
+  effectKey: 6

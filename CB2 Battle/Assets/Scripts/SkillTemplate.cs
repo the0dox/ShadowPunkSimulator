@@ -19,7 +19,12 @@ public class SkillTemplate : ScriptableObject
     [SerializeField] public string displayText;
     //the usual type of limit to this skill
     [SerializeField] public AttributeKey limit;
+    //players can use specializations to further improve their rolls within skill checks
     [SerializeField] public List<string> Specializations;
+    //if the skill is being used by a drone then it will instead use this skill
+    [SerializeField] public AttributeKey DroneEquivalent;
+    //if the skill is being used by a drone then it will instead use a skill from its master 
+    [SerializeField] public AttributeKey DroneAttributeEquivalent;
 
 }
 

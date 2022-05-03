@@ -12,8 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 13e9b4cee9722b340a3e714a0d739400, type: 3}
   m_Name: Improved Reflexes
   m_EditorClassIdentifier: 
-  key: 0
-  description: 
-  prerequisites: 
+  key: 14
+  description: Your body can react to stimuli your brain is still processsing. You
+    gain +1 phsyical initative die, allowing you to act quicker and more frequently
+    in combat
+  prerequisites: 0c000000
   conflictsWith: 
-  Icon: {fileID: 0}
+  Icon: {fileID: 21300000, guid: af31cab9695a70d4196f056bdebf9da1, type: 3}

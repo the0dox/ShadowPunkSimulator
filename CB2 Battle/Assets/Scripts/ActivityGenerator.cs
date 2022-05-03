@@ -289,7 +289,7 @@ public class ActivityGenerator : MonoBehaviour
                     modifier += 10;
                 }
             }   
-            RollResult LeadResult = PlayerSelection[0].AbilityCheck(SkillChoice,modifier,"Lead");
+            RollResult LeadResult = PlayerSelection[0].AbilityCheck(AttributeKey.AcademicKnowledge);
             StartCoroutine(waitForResult(LeadResult, name));
         }
     }
