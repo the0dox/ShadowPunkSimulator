@@ -24,6 +24,10 @@ public enum TalentKey
     Momentum,
     ImprovedReflexes,
     Desperado,
-    Dropkick
+    Dropkick,
+    SimTech,
+    SimTechProficiency,
+    HotSimAR,
+    
 }
 

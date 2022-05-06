@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
+  m_Name: Parry
+  m_EditorClassIdentifier: 
+  description: '[-5 initiative]: Add your ranks in a melee weapon skill to your defense
+    roll
+
+    This effect only applies against a single melee attack'
+  icon: {fileID: 21300000, guid: 44217e1759eab0c4f929e9d56d9b3846, type: 3}
+  code: Parry

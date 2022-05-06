@@ -30,7 +30,7 @@ public static class TacticsAttack
         if(w.IsWeaponClass(WeaponClass.ranged))
         {
             w.ExpendAmmo(AmmoExpenditure[type]);
-            if(!w.HasWeaponAttribute("recoilless"))
+            if(!w.HasWeaponAttribute("recoilless") && !type.Equals("SS"))
             {
                 myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
             }
@@ -74,6 +74,7 @@ public static class TacticsAttack
         CurrentAttack.target.IncreaseDefensePenality();
         CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense",0, totalModifiers);
     }
+
 
     public static void DealDamage(AttackSequence currentAttack)
     {
@@ -451,7 +452,14 @@ public static class TacticsAttack
             // bonus from attribute
             
             Dictionary<string, int> defenseModifiers = ApplyModifiers(tempAttackSequence,false);
-            defenseDice += target.myData.GetAttribute(AttributeKey.Reaction) + target.myData.GetAttribute(AttributeKey.Intuition);
+            if(!target.myData.isMinion)
+            {
+                defenseDice += target.myData.GetAttribute(AttributeKey.Reaction) + target.myData.GetAttribute(AttributeKey.Intuition);
+            }
+            else
+            {
+                defenseDice += target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Pilot);
+            }
             foreach(string key in defenseModifiers.Keys)
             {
                 int modifier = defenseModifiers[key];
@@ -475,10 +483,24 @@ public static class TacticsAttack
                     attackDice += modifier;
                 }
             }
-            // bonus from attribute
-            int attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derrivedAttribute);
-            // bonus from skill
-            int skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.skillKey);
+            int attributeDice = 0;
+            int skillDice = 0;
+            //drones calcualte attacks differently:
+            if(!myStats.myData.isMinion)
+            {
+                // bonus from attribute
+                attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derrivedAttribute);
+                // bonus from skill
+                skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.skillKey);
+            }
+            else
+            {
+                 // bonus from attribute
+                attributeDice = myStats.myData.GetAttribute(AttributeKey.DronePiloting);
+                // bonus from skill
+                skillDice = myStats.myData.getOwner().myData.GetAttribute(AttributeKey.Gunnery);
+            }
+            
             outputStack.Push("Base Attack Pool: " + (attributeDice + skillDice));
             attackDice += (attributeDice + skillDice);
             outputStack.Push("Accuracy Limit: " + w.Template.accuracy);
@@ -600,7 +622,7 @@ public static class TacticsAttack
         return Mathf.RoundToInt(angle);
     }
 
-    private static Dictionary<string,int> ApplyModifiers(AttackSequence thisAttack, bool type)
+    public static Dictionary<string,int> ApplyModifiers(AttackSequence thisAttack, bool type)
     {
         Dictionary<string,int> modifiers = new Dictionary<string, int>();
         modifiers.Add("enemy fire rate", ROFDefensePenalty(thisAttack,type));
@@ -757,7 +779,7 @@ public static class TacticsAttack
     {
         if(attack && thisAttack.attacker.hasCondition(Condition.Prone))
         {
-            return -1;
+            return -2;
         }
         return 0;
     }

@@ -11,5 +11,6 @@ public class ActionTemplate : ScriptableObject
     [SerializeField] public string description;  
     // Display image 
     [SerializeField] public Sprite icon; 
+    [SerializeField] public string code;
     
 }

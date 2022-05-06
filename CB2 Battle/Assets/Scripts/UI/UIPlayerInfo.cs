@@ -23,6 +23,8 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     [SerializeField] private Image MoveBar;
     [SerializeField] private GameObject display;
     [SerializeField] private GameObject actiondisplay;
+    [SerializeField] private GameObject customMessageDisplay;
+    [SerializeField] private Text customMessage;
     private static UIPlayerInfo instance;
     
     void Awake()
@@ -33,6 +35,25 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
     public static void UpdateDisplay(PlayerStats ps, int actions, int freeActions)
     {  
         instance.UpdateDisplayInstance(ps,actions,freeActions);
+    }
+
+    public static void UpdateCustomCommand(string message)
+    {
+        instance.pv.RPC("RPC_CustomCommand", RpcTarget.All, message);
+    }
+
+    [PunRPC]
+    void RPC_CustomCommand(string message)
+    {
+        if(!string.IsNullOrEmpty(message))
+        {
+            customMessageDisplay.SetActive(true);
+            customMessage.text = message;
+        }
+        else
+        {
+            customMessageDisplay.SetActive(false);
+        }
     }
 
     // ps: the active player whos turn it is
@@ -97,6 +118,9 @@ public class UIPlayerInfo : MonoBehaviourPunCallbacks
         // Weapons
         WeaponOne.text = WeaponOneText;
         WeaponTwo.text = WeaponTwoText;
+        // On cancel, custom messages disabled
+        customMessage.text = "";
+        customMessageDisplay.SetActive(false);
     }
 
     public static void ShowAllInfo(PlayerStats activePlayer)

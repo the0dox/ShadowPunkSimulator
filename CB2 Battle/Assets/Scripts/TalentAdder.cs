@@ -10,7 +10,7 @@ public class TalentAdder : MonoBehaviour
     void Awake()
     {
         int index = 0;
-        talentSlots = new TalentInputField[16];
+        talentSlots = new TalentInputField[20];
         foreach(TalentInputField iif in talentInputFields)
         {
             talentSlots[index] = iif;

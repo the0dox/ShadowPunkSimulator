@@ -286,6 +286,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {
             initativeDice++;
         }
+        // SimTechs can gain more initative in hotsim
+        if(myData.hasTalent(TalentKey.HotSimAR) && hasCondition(Condition.AR))
+        {
+            initativeDice++;
+        }
         for(int i = 0; i < initativeDice; i++)
         {
             roll += Random.Range(1,7);

@@ -5,21 +5,21 @@ using UnityEngine;
 public class ActionReference : MonoBehaviour
 {
     [SerializeField] private List<ActionTemplate> ActionInitalizer = new List<ActionTemplate>();
-    private static Dictionary<string, ActionTemplate> Library = new Dictionary<string, ActionTemplate>();
+    private static List<ActionTemplate> sActionReference;
     public void Init()
     {
-        foreach(ActionTemplate a in ActionInitalizer)
-        {
-            Library.Add(a.name, a);
-        }
+        sActionReference = ActionInitalizer;
     }
     
     public static ActionTemplate GetActionTemplate(string key)
     {
-        if(!Library.ContainsKey(key))
+        foreach(ActionTemplate a in sActionReference)
         {
-            return null;
+            if(a.code.Equals(key))
+            {
+                return a;
+            }
         }
-        return Library[key];
+        return null;
     }
 }

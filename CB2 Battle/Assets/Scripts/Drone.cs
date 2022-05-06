@@ -6,6 +6,9 @@ public class Drone : Item
 {
     new public DroneTemplate Template;
 
+    public bool deployed = false;
+    public PlayerStats droneMinion;
+
     public Drone(DroneTemplate template)
     {
         this.Template = template;
@@ -23,6 +26,12 @@ public class Drone : Item
             this.upgrades.Add(ug, false);
         }
         UpdateTooltip();
+    }
+
+    public void DeployDrone(PlayerStats owner, Vector3 location)
+    {
+        deployed = true;
+        droneMinion = PlayerSpawner.CreatePlayer(owner, this, location).GetComponent<PlayerStats>();
     }
 
     public override Sprite GetSprite()

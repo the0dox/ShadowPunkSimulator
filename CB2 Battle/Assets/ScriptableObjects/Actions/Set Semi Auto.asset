@@ -1,0 +1,23 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
+  m_Name: Set Semi Auto
+  m_EditorClassIdentifier: 
+  description: 'Sets current weapon''s fire rate to semi automatic. Semi-auto weapons
+    can fire 1 shot as a simple action and 3 shots as a complex action.
+
+
+    Semi
+    auto weapons are flexible, offering a low option with the occasional burst in
+    a pinch.'
+  icon: {fileID: 21300000, guid: f2bcff0c4bdc72a438e2fbeb62e1992b, type: 3}
+  code: setSA

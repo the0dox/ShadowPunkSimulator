@@ -28,6 +28,7 @@ public class Armor : Item
         {
             this.upgrades.Add(ug, false);
         }
+        UpdateTooltip();
     }
 
     public int GetAP()

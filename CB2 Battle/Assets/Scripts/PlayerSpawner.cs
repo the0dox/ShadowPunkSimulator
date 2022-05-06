@@ -32,18 +32,18 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
     }
 
-    public static void CreatePlayer(PlayerStats owner, Drone template, Vector3 pos)
+    public static GameObject CreatePlayer(PlayerStats owner, Drone template, Vector3 pos)
     {
         CharacterSaveData csd = new CharacterSaveData(owner, template);
-        CreatePlayer(csd, pos, false);
+        return CreatePlayer(csd, pos, false);
     }
 
-    public static void CreatePlayer(string csdname, Vector3 pos, bool controlable)
+    public static GameObject CreatePlayer(string csdname, Vector3 pos, bool controlable)
     {
-        CreatePlayer(DmMenu.GetCSD(csdname), pos, controlable);
+        return CreatePlayer(DmMenu.GetCSD(csdname), pos, controlable);
     }
 
-    public static void CreatePlayer(CharacterSaveData csd,Vector3 pos, bool controlable)
+    public static GameObject CreatePlayer(CharacterSaveData csd,Vector3 pos, bool controlable)
     {
         // Create Character with no model at position
         GameObject EmptyPlayer = PhotonNetwork.Instantiate("Player", pos, Quaternion.identity);
@@ -84,6 +84,7 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
                 GC.GetComponent<LevelEditor>().AddPlayer(EmptyPlayer);
             }
         }
+        return EmptyPlayer;
     }
 
     public static PlayerStats IDtoPlayer(int id)

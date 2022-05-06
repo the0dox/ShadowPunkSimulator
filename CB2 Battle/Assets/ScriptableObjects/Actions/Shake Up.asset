@@ -1,0 +1,20 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
+  m_Name: Shake Up
+  m_EditorClassIdentifier: 
+  description: '[Free Action]: Apply shake up to next attack at a -4 penalty
+
+    Shake
+    up makes target lose 5 initiative.'
+  icon: {fileID: 21300000, guid: bdde2f1cbfe3dce4d9e4e247d5a1d68b, type: 3}
+  code: ShakeUp

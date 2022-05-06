@@ -21,7 +21,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: ca1a9370614840d4e84acb0f488201c8, type: 3}
   upgrades: []
   Attributes: []
-  damageBonus: 10
+  diceSize: 3
+  damageBonus: 1
   rangeClass: {fileID: 11400000, guid: 303b3d0ca5f615d4a97d23e2e7094ded, type: 2}
   pen: -1
   SingleShot: 1
@@ -36,7 +37,7 @@ MonoBehaviour:
   blast: 0
   AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}
   clipType: 3
-  weaponClass: 0
+  weaponClass: 1
   Lethal: 1
   debugAddAllUpgrades: 0
   blastClass: 0

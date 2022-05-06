@@ -38,7 +38,7 @@ public class ActionButtonScript : MonoBehaviour
             Text.enabled = false;
             myIcon.sprite = myTemplate.icon;
             myTooltip.content = myTemplate.description;
-            myTooltip.header = displayName; 
+            myTooltip.header = myTemplate.name; 
         }
         else
         {

@@ -10,6 +10,7 @@ public class TurnActionsSR : UIButtonManager
     public PlayerStats ActivePlayerStats;
     protected string currentAction;
     protected Weapon ActiveWeapon;
+    protected Drone ActiveDrone;
     public GameObject Canvas;
     public GameObject ActionUIButton;
     protected int halfActions;
@@ -29,6 +30,7 @@ public class TurnActionsSR : UIButtonManager
     public void Combat()
     {
         TokenDragBehavior.ToggleMovement(false);
+        UIPlayerInfo.UpdateCustomCommand("Select Equipped Weapon");
         Dictionary<string,string> d = new Dictionary<string, string>();
         
         if(ActivePlayerStats.PrimaryWeapon != null) 
@@ -103,6 +105,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void GetWeaponActions()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Fire Rate");
         Dictionary<string,string> d = ActiveWeapon.GetWeaponActions(halfActions > 1);
         d.Add("Cancel","Cancel");
         ConstructActions(d);
@@ -131,6 +134,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void CalledShot()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Called Shot Type");
         Dictionary<string,string> d = new Dictionary<string, string>();
         if(!ActivePlayerStats.hasCondition(Condition.Disarm) && !ActivePlayerStats.hasCondition(Condition.KnockDown) && !ActivePlayerStats.hasCondition(Condition.ShakeUp))
         {
@@ -258,6 +262,7 @@ public class TurnActionsSR : UIButtonManager
         if(halfActions > 0)
         {
             d.Add("Aim","Aim");
+            d.Add("Toggle AR","AR");
             d.Add("Reload","Reload");
         }
         if(ActivePlayerStats.myData.hasTalent(TalentKey.Adrenaline) && !ActivePlayerStats.hasCondition(Condition.Winded))
@@ -300,15 +305,55 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Reposition","Reposition");
         }
-        if(ActivePlayerStats.myData.equipmentObjects.Contains(ItemReference.GetItem("GM-Nissan Dobberman")))
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.SimTechProficiency) && ActivePlayerStats.hasCondition(Condition.AR))
         {
-            d.Add("Deploy Drone","CreateMinion");
+            d.Add("Drone Menu", "Drone");
         }
         d.Add("Cancel","Cancel");
         ConstructActions(d);
     }
 
+    public void AR()
+    {
+        if(ActivePlayerStats.hasCondition(Condition.AR))
+        {
+            ActivePlayerStats.RemoveCondition(Condition.AR);
+            CombatLog.Log(ActivePlayerStats.GetName() + " exits AR!");
+        }
+        else
+        {
+            ActivePlayerStats.SetCondition(Condition.AR, -1, true);
+            CombatLog.Log(ActivePlayerStats.GetName() + " enters AR!");
+        }  
+        SpendFreeAction();
+        Cancel();
+    }
+
     // SimTech Skills
+    public void Drone()
+    {
+        Dictionary<string, string> d = new Dictionary<string, string>();
+        int addition = 0;
+        foreach(Item i in ActivePlayerStats.myData.equipmentObjects)
+        {
+            if(i.GetType() == typeof(Drone))
+            {
+                Drone DroneCast = (Drone)i;
+                if(DroneCast.deployed)
+                {
+                    d.Add(DroneCast.GetName() + "\n(control)", "Drone" + addition);
+                }
+                else{
+                    d.Add(DroneCast.GetName() + "\n(deploy)", "Drone" + addition);
+                }
+                addition++;
+            }
+        }
+        d.Add("Cancel","Cancel");
+        ConstructActions(d);
+    }
+
+
     public void CreateMinion()
     {
         StartCoroutine(MinionDelay());
@@ -316,13 +361,16 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator MinionDelay()
     {
+        UIPlayerInfo.UpdateCustomCommand("Place Drone [max range 5]");
+        MaxSelectionRange = 5;
         currentAction = "SelectLocation";
+        ConstructActions(new List<string>{"Cancel"});
         while(multipleTargets.Count == 0)
         {
             yield return new WaitForSeconds(0.2f);
         }
         Vector3 spawnPosition = multipleTargets[0].transform.position + new Vector3(0, 1.5f, 0);
-        PlayerSpawner.CreatePlayer(ActivePlayerStats, (Drone)ItemReference.GetItem("GM-Nissan Dobberman"), spawnPosition);
+        ActiveDrone.DeployDrone(ActivePlayerStats, spawnPosition);
     }
 
     // Sam skills
@@ -338,6 +386,7 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator RookDelay()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select a direction to block");
         while(DirectionPointerInfo == Vector3.one)
         {
             yield return new WaitForSeconds(0.2f);
@@ -394,6 +443,7 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator PresenceDelay()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select an enemy to intimidate");
         currentAction = "SelectSingleEnemy";
         while(target == null)
         {
@@ -435,6 +485,7 @@ public class TurnActionsSR : UIButtonManager
 
     IEnumerator DirectDelay()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select an ally to buff");
         currentAction = "SelectSingleAlly";
         while(target == null)
         {
@@ -540,7 +591,8 @@ public class TurnActionsSR : UIButtonManager
     public void SpellLob()
     {
         multipleTargetsLimit = 3;
-        MaxSelectionRange = 4;
+        MaxSelectionRange = 5;
+        UIPlayerInfo.UpdateCustomCommand("Select up to 3 tiles [max range 5]");
         currentAction = "SelectTargetsTiles";
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Attack", "SpellLobFinished");
@@ -558,9 +610,10 @@ public class TurnActionsSR : UIButtonManager
         }
         if(numTiles > 0)
         {
+            UIPlayerInfo.UpdateCustomCommand("Select attack target");
             Weapon SpellAttack = (Weapon)ItemReference.GetItem("TerrainLob");
-            SpellAttack.SetAP(numTiles);
-            SpellAttack.SetDamage(numTiles + 2);
+            SpellAttack.SetAP(Mathf.FloorToInt(numTiles/2f));
+            SpellAttack.SetDamage(numTiles);
             ActiveWeapon = SpellAttack;
             ClearTiles();
             fireSS();
@@ -586,6 +639,7 @@ public class TurnActionsSR : UIButtonManager
         if(SpellRoll.Passed())
         {
             ClearActions();
+            UIPlayerInfo.UpdateCustomCommand("Draw Barrier Within Range");
             GameObject dragToken = PhotonNetwork.Instantiate("LineDragToken", ActivePlayerStats.transform.position, Quaternion.identity);
             LineDragBehavior line = dragToken.GetComponent<LineDragBehavior>();
             line.SetParameters(SpellRoll.GetHits(), ActivePlayerStats.transform.position, true, 10, DmMenu.GetOwner(ActivePlayerStats));
@@ -612,8 +666,9 @@ public class TurnActionsSR : UIButtonManager
 
     public void SpellArmor()
     {
-        multipleTargetsLimit = 5;
+        multipleTargetsLimit = 6;
         MaxSelectionRange = 5;
+        UIPlayerInfo.UpdateCustomCommand("Select up to 6 Tiles [max range 5]");
         currentAction = "SelectTargetsTiles";
         Dictionary<string,string> d = new Dictionary<string, string>();
         d.Add("Finished", "SpellArmorFinished");
@@ -642,7 +697,9 @@ public class TurnActionsSR : UIButtonManager
         {
             armorBonus++;
         }
+        armorBonus /= 2;
         MaxSelectionRange = 10;
+        UIPlayerInfo.UpdateCustomCommand("Select an ally to buff [max range 10]");
         currentAction = "SelectSingleAlly";
         while(target == null)
         {
@@ -741,6 +798,7 @@ public class TurnActionsSR : UIButtonManager
     //is passed the action value of a button as an input
     override public void OnButtonPressed(string input)
     {
+        TooltipSystem.hide();
         int index;
         if(int.TryParse(input,out index))
         {
@@ -814,6 +872,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void Melee()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         PushToolTips();
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
@@ -823,6 +882,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void fireSS()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "SS";
         PushToolTips();
@@ -833,6 +893,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void fireSA()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "SA";
         PushToolTips();
@@ -842,6 +903,7 @@ public class TurnActionsSR : UIButtonManager
     }
     public void fireSAB()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "SAB";
         PushToolTips();
@@ -852,6 +914,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void fireBF()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "BF";
         PushToolTips();
@@ -861,6 +924,7 @@ public class TurnActionsSR : UIButtonManager
     }
     public void fireLB()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "LB";
         PushToolTips();
@@ -870,6 +934,7 @@ public class TurnActionsSR : UIButtonManager
     } 
     public void fireFA()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "FA";
         PushToolTips();
@@ -880,6 +945,7 @@ public class TurnActionsSR : UIButtonManager
 
     public void fireFAB()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
         currentAction = "Attack";
         FireRate = "FAB";
         PushToolTips();
@@ -1096,6 +1162,8 @@ public class TurnActionsSR : UIButtonManager
 
     public void TryReaction()
     {
+        int baseDefenseDice = CurrentAttack.CalculateQuickDefenseBonus();
+        UIPlayerInfo.UpdateCustomCommand("Target Can Choose to React \n[Die pool: " + baseDefenseDice +"] ");
         UIPlayerInfo.ShowActionsOnly(CurrentAttack.target);
         CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
         CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
@@ -1154,6 +1222,7 @@ public class TurnActionsSR : UIButtonManager
         {
             PhotonNetwork.Destroy(g);
         }
+        UIPlayerInfo.UpdateCustomCommand("");
     }
 
     public void ClearTiles()
@@ -1220,6 +1289,7 @@ public class TurnActionsSR : UIButtonManager
             halfActions = 0;
         }
         ActiveWeapon = null;
+        ActiveDrone = null;
         ConstructActions();
         Move();
         FireRate = null;

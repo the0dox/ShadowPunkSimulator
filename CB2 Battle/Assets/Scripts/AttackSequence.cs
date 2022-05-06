@@ -139,4 +139,28 @@ public class AttackSequence
             attacker.OnAttackFinished();
         }
     }
+
+    public int CalculateQuickDefenseBonus()
+    {
+        int totalModifiers = 0;
+        Dictionary<string, int> conditionalModifiers = TacticsAttack.ApplyModifiers(this,false);
+        foreach(string key in conditionalModifiers.Keys)
+        {
+            totalModifiers += conditionalModifiers[key];
+        }
+        int pool = 0;
+        if(target.myData.isMinion)
+        {
+            pool = target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Pilot) + totalModifiers;
+        }
+        else
+        {
+            pool = target.myData.GetAttribute(AttributeKey.Reaction) + target.myData.GetAttribute(AttributeKey.Intuition) + totalModifiers;
+        }
+        if(pool < 0)
+        {
+            pool = 0;
+        }
+        return pool;
+    }
 }

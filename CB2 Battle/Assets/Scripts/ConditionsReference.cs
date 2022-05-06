@@ -61,4 +61,5 @@ public enum Condition
     FocusFlank,
     TerrainArmor,
     Momentum,
+    AR,
 }

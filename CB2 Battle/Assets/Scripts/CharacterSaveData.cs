@@ -252,8 +252,8 @@ public class CharacterSaveData
         // Stun max = [Willpower / 2] + 8 
         float StunBonus = (float)(GetAttribute(AttributeKey.Willpower));
         SetAttribute(AttributeKey.StunHealth, Mathf.CeilToInt(StunBonus) + 8, false);
-        SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) * 2,false);
-        SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.Agility) * 4, false);
+        SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) + 6,false);
+        SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.MoveWalk) * 2, false);
         // COMPOSURE (CHA + WIL)
         SetAttribute(AttributeKey.Composure, GetAttribute(AttributeKey.Charisma) + GetAttribute(AttributeKey.Willpower),false);
         // JUDGE INTENTIONS (CHA + INT)
@@ -265,7 +265,7 @@ public class CharacterSaveData
         // DEFENSE (REF + INT)
         SetAttribute(AttributeKey.Defense, GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
         // RECOILCOMP = 1 + S/3
-        SetAttribute(AttributeKey.RecoilComp, 1 + Mathf.CeilToInt(GetAttribute(AttributeKey.Strength)/3),false);
+        SetAttribute(AttributeKey.RecoilComp, 1 + Mathf.CeilToInt(GetAttribute(AttributeKey.Strength)/2),false);
         // ESSENSE = 6 - penalties
         SetAttribute(AttributeKey.Essense, 6, false);
     }

@@ -110,6 +110,7 @@ MonoBehaviour:
   - RPC_SetParameters
   - RPC_FinishedDrag
   - RPC_CreateTile
+  - RPC_CustomCommand
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
