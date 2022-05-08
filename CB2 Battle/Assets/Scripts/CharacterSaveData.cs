@@ -136,16 +136,19 @@ public class CharacterSaveData
             int stacks = int.Parse(codeDecompiled[1]);
             string[] upgrades = codeDecompiled[2].Split(',');
             Item newItem = ItemReference.GetItem(name,stacks,upgrades);
-            if(codeDecompiled.Length > 3)
+            if(newItem != null)
             {
-                int clip = int.Parse(codeDecompiled[3]);
-                Weapon castItem = (Weapon) newItem;
-                castItem.SetClip(clip);
-                AddItem(castItem);
-            }
-            else
-            {
-                AddItem(newItem);
+                if(codeDecompiled.Length > 3)
+                {
+                    int clip = int.Parse(codeDecompiled[3]);
+                    Weapon castItem = (Weapon) newItem;
+                    castItem.SetClip(clip);
+                    AddItem(castItem);
+                }
+                else
+                {
+                    AddItem(newItem);
+                }
             }
         }
     }  

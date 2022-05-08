@@ -111,6 +111,7 @@ MonoBehaviour:
   - RPC_FinishedDrag
   - RPC_CreateTile
   - RPC_CustomCommand
+  - RPC_SetCamera
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

@@ -27,12 +27,15 @@ public static class TacticsAttack
         }
 
         // expend ammo & increase recoil
-        if(w.IsWeaponClass(WeaponClass.ranged))
-        {
-            w.ExpendAmmo(AmmoExpenditure[type]);
-            if(!w.HasWeaponAttribute("recoilless") && !type.Equals("SS"))
+        if(!DmMenu.debugMode)
+        { 
+            if(w.IsWeaponClass(WeaponClass.ranged))
             {
-                myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+                w.ExpendAmmo(AmmoExpenditure[type]);
+                if(!w.HasWeaponAttribute("recoilless") && !type.Equals("SS"))
+                {
+                    myStats.IncreaseRecoilPenalty(AmmoExpenditure[type]);
+                }
             }
         }
 
@@ -71,7 +74,11 @@ public static class TacticsAttack
             totalModifiers += conditionalModifiers[key];
         }
         //apply extra defense penalties to target
-        CurrentAttack.target.IncreaseDefensePenality();
+        // no modifiers in debug mode
+        if(!DmMenu.debugMode)
+        {
+            CurrentAttack.target.IncreaseDefensePenality();
+        }
         CurrentAttack.reactionRoll = CurrentAttack.target.AbilityCheck(AttributeKey.Reaction, AttributeKey.Intuition, AttributeKey.PhysicalLimit,"defense",0, totalModifiers);
     }
 
@@ -90,18 +97,19 @@ public static class TacticsAttack
         else
         {
             int roll = currentAttack.ActiveWeapon.RollDamage();
-            damage = roll;
+            damage += roll;
+            string rollString = "<" + roll + "> + ";
             ap = currentAttack.ActiveWeapon.GetAP();
             if(currentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
             {
                 int strengthBonus = currentAttack.attacker.myData.GetAttribute(AttributeKey.Strength);
                 damage += strengthBonus;
-                damageString = " damage roll:\n " + currentAttack.ActiveWeapon.DisplayDamageRange() + " = <" + roll + "> + " + strengthBonus + " = " + damage;
+                damageString = " damage roll:\n " + currentAttack.ActiveWeapon.DisplayDamageRange() + " = " + rollString + strengthBonus + " = " + damage;
             }
             else
             {
                 damage += currentAttack.ActiveWeapon.GetDamageBonus();
-                damageString = " damage roll:\n " + currentAttack.ActiveWeapon.DisplayDamageRange() + " = <" + roll + "> + " + currentAttack.ActiveWeapon.GetDamageBonus() + " = " + damage;
+                damageString = " damage roll:\n " + currentAttack.ActiveWeapon.DisplayDamageRange() + " = " + rollString + currentAttack.ActiveWeapon.GetDamageBonus() + " = " + damage;
         
             }
         }
@@ -109,10 +117,10 @@ public static class TacticsAttack
         int damageSoak = CalculateSoak(currentAttack);
         // subtract total damage by armor
         damage -= damageSoak;
-        // damage can never be negative
-        if(damage  < 0)
+        // damage can never be reduced to 0
+        if(damage  < 1)
         {
-            damage = 0;
+            damage = 1;
         }
         // apply damage
         if(currentAttack.ActiveWeapon != null && !currentAttack.ActiveWeapon.Template.Lethal)
@@ -770,7 +778,7 @@ public static class TacticsAttack
         }
         else if(thisAttack.target.hasCondition(Condition.Running))
         {
-            return -2;
+            return 2;
         }
         return 0;
     }

@@ -16,4 +16,4 @@ MonoBehaviour:
     with more shots cause more recoil but are harder to defend against and deal more
     damage to cover."
   icon: {fileID: 21300000, guid: 6df246c2a0b842c408b16dd330c9e79b, type: 3}
-  code: FireLB
+  code: fireLB

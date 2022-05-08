@@ -23,8 +23,8 @@ MonoBehaviour:
   upgrades: []
   Attributes:
   - recoilless
-  diceSize: 0
   damageBonus: 0
+  sizeDice: 3
   rangeClass: {fileID: 11400000, guid: dcc174bf66c50964aaa74d114569a6a2, type: 2}
   pen: 0
   SingleShot: 1

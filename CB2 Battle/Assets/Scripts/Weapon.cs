@@ -28,10 +28,13 @@ public class Weapon : Item
     [SerializeField] private ItemTemplate AmmoSource;
     [SerializeField] private int damage;
     [SerializeField] private int AP;
+    int sizeDice;
     // Special weapons with the recharge abilitiy use this to determine if they can fire this turn or not
     private bool clipEjected = false;
+    // Reference to the scriptable object, a weapon object represents a modifiable copy of a source weapon template that never changes.
     new public WeaponTemplate Template;
 
+    // standard constructor takes a weapon template and creates a copy of it
     public Weapon(WeaponTemplate template)
     {
         Template = template;
@@ -45,6 +48,7 @@ public class Weapon : Item
         this.unique = template.unique;
         this.damage = template.damageBonus;
         this.AP = template.pen;
+        this.sizeDice = template.sizeDice;
         if(Template.SingleShot)
         {
             FireRate = "SS";
@@ -78,19 +82,7 @@ public class Weapon : Item
         UpdateTooltip();
     }
 
-    public int GetStat(string key)
-    {
-        if(Stats.ContainsKey(key))
-        {
-            return Stats[key];
-        }
-        else
-        {
-            Debug.Log("Error!:" + key + " Not Defined!");
-            return 0;
-        }
-    }
-
+    // returns true if the weapon template has the same class as desired class
     public bool IsWeaponClass(WeaponClass DesiredClass)
     {
         // shields are considered melee for most purposes 
@@ -101,16 +93,19 @@ public class Weapon : Item
         return DesiredClass.Equals(Template.weaponClass);
     }
 
+    // getter for weaponclass of template
     public WeaponClass GetClass()
     {
         return Template.weaponClass;
     }
 
+    // Getter for armor penatration 
     public int GetAP()
     {
         return AP;
     }
 
+    // Returns a string code of each firerate this weapon is capable of shooting 
     public Dictionary<string, string> GetSelectableFireRates()
     {
         Dictionary<string, string> output = new Dictionary<string, string>();
@@ -133,6 +128,7 @@ public class Weapon : Item
         return output;
     }
 
+    // Returns a compatable list of actions for turn manager that this weapon can preform with a given number of half actions
     public Dictionary<string, string> GetWeaponActions(bool complex)
     {
         Dictionary<string, string> output = new Dictionary<string, string>();
@@ -191,21 +187,19 @@ public class Weapon : Item
         return output;
     }
 
+    // changes current fire rate to a new string code, should never accept anything out side of standard firerates
     public void setFireRate(string newFirerate)
     {
         FireRate = newFirerate;
     }
 
+    // returns true if current firerate equals given firemode
     public bool CanFire(string FireMode)
     {
         return FireRate.Equals(FireMode);
     }
 
-    public int ExpendAmmo(string FireMode)
-    {
-        throw new System.NotImplementedException();
-    }
-
+    // Removes given ammount of bullets from current clip
     public void ExpendAmmo(int bullets)
     {
         clip -= bullets;
@@ -269,6 +263,7 @@ public class Weapon : Item
         return clip != clipMax;
     }
 
+    // returns a string indicating if this weapon is lethal or not
     public string GetDamageType()
     {
         if(Template.Lethal)
@@ -281,6 +276,7 @@ public class Weapon : Item
         }
     }
 
+    // returns a readout of quick information for the player ui
     public override string ToString()
     {
         if(!IsWeaponClass(WeaponClass.ranged))
@@ -294,6 +290,7 @@ public class Weapon : Item
         return GetName() + ": " + clip + "/" + clipMax;
     }
 
+    // return range if specified on template. Thrown weapons have a range defined by the user
     public int getRange(PlayerStats owner)
     {
         if(IsWeaponClass(WeaponClass.thrown))
@@ -302,15 +299,20 @@ public class Weapon : Item
         }
         return range;
     }
+
+    // in certain instances owner isn't specified in which case we assume the weapon cannot be thrown
     public int getRange()
     {
         return range;
     }
+
+    // returns true if weapon has given attribute
     public bool HasWeaponAttribute(string attribute)
     {
         return Attributes.Contains(attribute);
     }
 
+    // information sent to the player to inform them how to reload this weapon
     public string ReloadString()
     {
         if(hasUpgrade("Speed Loader"))
@@ -319,16 +321,20 @@ public class Weapon : Item
         }
         return "(" + Template.clipType.ToString() + ": " + ReloadWeapon(null, false) + " half actions)";
     }
+
+    // certain weapons have a defined blast radius, calling for a blastattack from turnmanager instead of roll to hit
     public int GetBlast()
     {
         return blast;
     }
 
+    // depreciated
     public void SetJamStatus(bool input)
     {
         jammed = input;
     }
 
+    // depreciated
     public bool isJammed()
     {
         return jammed;
@@ -347,7 +353,7 @@ public class Weapon : Item
     {
         if(Template != null)
         {
-            string DB = "1" + Template.diceSize.ToString();
+            string DB = "1d" + Template.sizeDice;
             string addition = "";
             if(IsWeaponClass(WeaponClass.melee))
             {
@@ -471,39 +477,32 @@ public class Weapon : Item
         }
     }
 
+    // returns an array of d6 rolls of length equal to number of dice in the weapon template
     public int RollDamage()
     {
-        if(Template != null)
+        /*
+        int[] rolls = new int[numDice];
+        for(int i = 0; i < rolls.Length; i++)
         {
-            int maxRoll = 0;
-            switch(Template.diceSize)
-            {
-                case(diceSize.d4):
-                {
-                    maxRoll = 4;
-                }
-                break;
-                case(diceSize.d5):
-                {
-                    maxRoll = 5;
-                }
-                break;
-                case(diceSize.d6):
-                {
-                    maxRoll = 6;
-                }
-                break;
-                case(diceSize.d8):
-                {
-                    maxRoll = 8;
-                }
-                break;
-            }
-            int roll = Random.Range(1,maxRoll + 1);
-            return roll;
+            rolls[i] = Random.Range(1,7);
         }
-        return 0;
+        */
+        return Random.Range(1,sizeDice + 1);
     }
+
+    /* returns a sum total of Rolldamage() for cleaner code when the indvidual rolls don't need to be known
+    public int RollDamageTotal()
+    {
+        int[] rolls = RollDamage();
+        int total = 0;
+        for(int i = 0; i < rolls.Length; i++)
+        {
+            total += rolls[i];
+        }
+        return total;
+    }
+    */
+
 
     public int GetDamageBonus()
     {
@@ -591,7 +590,7 @@ public class Weapon : Item
                         }
                         else
                         {
-                            CombatLog.Log(owner.GetName() + " ejectes the clip in their " + GetName());
+                            CombatLog.Log(owner.GetName() + " ejects the clip in their " + GetName());
                         }
                         clipEjected = !clipEjected;
                     }

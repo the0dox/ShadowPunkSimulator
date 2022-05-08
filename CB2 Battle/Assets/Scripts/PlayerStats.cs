@@ -163,6 +163,18 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         pv.RPC("RPC_SetHP", RpcTarget.AllBuffered, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
     }
 
+    public void ResetHealth()
+    {
+        if(team != 0)
+        {
+            NPCHealth = 0;
+        }
+        else
+        {
+            myData.SetAttribute(AttributeKey.PDamage, 0, false);
+        }
+    }
+
     public void takeStun(int damage)
     {
         if(team != 0)
@@ -428,6 +440,10 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public int GetAP()
     {
         int bestAP = 0;
+        if(myData.isMinion)
+        {
+            return myData.GetAttribute(AttributeKey.DroneArmor);
+        }
         foreach(Item i in myData.equipmentObjects)
         {
             //only check armor

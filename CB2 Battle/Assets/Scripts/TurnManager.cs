@@ -9,7 +9,7 @@ public class TurnManager : TurnActionsSR
 {
     //static means easily accessable reference for all moveable characters
     //private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
-    [SerializeField] private GameObject DebugToolTipReference; 
+    [SerializeField] public GameObject DebugToolTipReference; 
     private bool gameStart = false;
     public InitativeTrackerScript It;
     public static TurnManager instance;
@@ -19,7 +19,14 @@ public class TurnManager : TurnActionsSR
     // Start is called before the first frame update
     void Awake()
     {
-        instance = this;
+        if(!DmMenu.debugMode)
+        {
+            instance = this;
+        }
+        else
+        {
+            Destroy(gameObject);
+        }
     }
 
     void Update ()
@@ -217,7 +224,7 @@ public class TurnManager : TurnActionsSR
             Cancel();
             PrintInitiative();
             RemoveRange(ActivePlayerStats);
-            CameraButtons.SetFocus(ActivePlayer.transform.position);
+            pv.RPC("RPC_SetCamera", RpcTarget.All, ActivePlayer.transform.position);
             foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
             {
                 w.OnTurnStart();
@@ -246,14 +253,21 @@ public class TurnManager : TurnActionsSR
         ActivePlayerStats.ResetActions();
         ActivePlayer.OnTurnStart();
         ApplyConditions();
+        PrintInitiative();
         Cancel();
         //PrintInitiative();
         RemoveRange(ActivePlayerStats);
-        CameraButtons.SetFocus(ActivePlayer.transform.position);
+        pv.RPC("RPC_SetCamera", RpcTarget.All, ActivePlayer.transform.position);
         foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
         {
             w.OnTurnStart();
         }
+    }
+
+    [PunRPC]
+    void RPC_SetCamera(Vector3 location)
+    {
+        CameraButtons.SetFocus(location);
     }
 
     private void CompletePass()
@@ -458,7 +472,7 @@ public class TurnManager : TurnActionsSR
     public void EndTurn(){
         ActivePlayerStats.OnTurnEnd();
         // minions do not participate in the initative order
-        if(!ActivePlayerStats.myData.isMinion)
+        if(IntiativeActiveActors.ContainsValue(ActivePlayerStats))
         {
             float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
             IntiativeFinishedActors.Add(initative,ActivePlayerStats);
@@ -646,6 +660,14 @@ public class TurnManager : TurnActionsSR
     public void RemovePlayer(GameObject Player)
     {
         PlayerStats removedPlayer = Player.GetComponent<PlayerStats>();
+        if(IntiativeActiveActors.Count == 1)
+        {
+            ActivePlayerStats = null;
+        }
+        while(ActivePlayerStats == removedPlayer)
+        {
+            EndTurn();
+        }
         if(IntiativeActiveActors.ContainsValue(removedPlayer))
         {
             IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(removedPlayer));

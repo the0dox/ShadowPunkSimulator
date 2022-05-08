@@ -1013,7 +1013,6 @@ public class TurnActionsSR : UIButtonManager
         FireRate = "S";
         if(targets.Count > 0)
         {
-            ActiveWeapon.ExpendAmmo(FireRate);
             int roll = Random.Range(1,11);
             /*
             if(!TacticsAttack.Jammed(roll, ActiveWeapon,FireRate,ActivePlayerStats))

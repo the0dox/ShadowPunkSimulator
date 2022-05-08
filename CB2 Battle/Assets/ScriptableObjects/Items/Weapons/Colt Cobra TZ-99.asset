@@ -22,10 +22,10 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: ca1a9370614840d4e84acb0f488201c8, type: 3}
   upgrades: []
   Attributes: []
-  diceSize: 0
-  damageBonus: 1
+  damageBonus: 4
+  sizeDice: 6
   rangeClass: {fileID: 11400000, guid: dcc174bf66c50964aaa74d114569a6a2, type: 2}
-  pen: 0
+  pen: -1
   SingleShot: 0
   SemiAuto: 0
   BurstFire: 1

@@ -24,6 +24,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     private static GameObject instance;
     private static PhotonView spv;
     private Dictionary<int, string> DummyCharacters = new Dictionary<int, string>();
+    public static bool debugMode = false;
 
     public static CharacterSheet ActiveCharacterSheet;
 
@@ -154,6 +155,12 @@ public class DmMenu : MonoBehaviourPunCallbacks
     {
         CameraButtons.UIFreeze(false);
         PhotonNetwork.LoadLevel("LevelEditor");
+    }
+
+    public void DebugMode()
+    {
+        Debug.Log("WARNING: DEBUGMODE MUST BE ACTIVATED BEFORE LOADING A LEVEL");
+        debugMode = true;
     }
 
     public void Quit()

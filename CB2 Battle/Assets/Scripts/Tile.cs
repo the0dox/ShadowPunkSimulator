@@ -147,20 +147,14 @@ public class Tile : MonoBehaviour
         int damage = incomingAttack.ActiveWeapon.RollDamage() + incomingAttack.ActiveWeapon.GetDamageBonus();
         int AP = incomingAttack.ActiveWeapon.Template.pen;
 
-        int armorDice = ArmorValue - AP;
+        int soak = ArmorValue - AP;
 
-        int successes = 0;
-
-        for(int i = 0; i < armorDice; i++)
+        if(soak < 0)
         {
-            int result = Random.Range(1,7);
-            if(result > 4)
-            {
-                successes++;
-            }
+            soak = 0;
         }
-
-        if(damage > successes)
+        damage -= soak;
+        if(damage > 0)
         {
             int netDamage = TacticsAttack.AmmoExpenditure[incomingAttack.FireRate]; 
             BoardBehavior.DistributeCoverDamage(transform.position, netDamage);

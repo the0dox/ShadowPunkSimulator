@@ -8,8 +8,8 @@ public class WeaponTemplate : ItemTemplate
 {
     [SerializeField] public List<string> Attributes = new List<string>();
     //Flat damage bonus for ranged weapons, multiplier for SB for melee weapons
-    [SerializeField] public diceSize diceSize;
     [SerializeField] public int damageBonus;
+    [SerializeField] public int sizeDice;
     [SerializeField] public RangeWeaponClass rangeClass;
     //Negates AP of target
     [SerializeField] public int pen;
@@ -77,12 +77,4 @@ public enum WeaponClass
     ranged,
     thrown,
     shield
-}
-
-public enum diceSize
-{
-    d4,
-    d5,
-    d6,
-    d8,
 }

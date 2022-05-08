@@ -123,7 +123,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
             HealthMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.PDamage));
         }
         UpdateInputFields();
-        //AddItem("Cyberdeck");
         SkillAdder.DownloadOwner(ActivePlayer);
         ItemAdder.DownloadOwner(ActivePlayer);
         TalentAdder.DownloadOwner(ActivePlayer);
