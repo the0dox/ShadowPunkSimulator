@@ -497,7 +497,7 @@ public static class TacticsAttack
             if(!myStats.myData.isMinion)
             {
                 // bonus from attribute
-                attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derrivedAttribute);
+                attributeDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.derivedAttribute);
                 // bonus from skill
                 skillDice = myStats.myData.GetAttribute(w.Template.WeaponSkill.skillKey);
             }

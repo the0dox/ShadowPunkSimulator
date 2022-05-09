@@ -69,7 +69,7 @@ public class RollResult
         else
         {
             this.firstField = weapon.Template.WeaponSkill.skillKey;
-            this.secondField = weapon.Template.WeaponSkill.derrivedAttribute;
+            this.secondField = weapon.Template.WeaponSkill.derivedAttribute;
         }
         this.threshold = 0;
         this.modifiers = modifiers; 
@@ -100,7 +100,7 @@ public class RollResult
         else
         {
             firstField = skillKey;
-            secondField = testedSkill.derrivedAttribute;
+            secondField = testedSkill.derivedAttribute;
             LimitKey = testedSkill.limit;
         }
         if(SkillPromptBehavior.ManualRolls)

@@ -399,9 +399,4 @@ public class DmMenu : MonoBehaviourPunCallbacks
             CombatLog.Log("Character " + SavedCharacters[StatsID].playername + " is already assigned!");
         }
     }
-
-    void OnPhotonPlayerDisconnected()
-    {
-        Quit();
-    }
 }

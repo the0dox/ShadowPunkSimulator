@@ -1165,7 +1165,7 @@ public class TurnActionsSR : UIButtonManager
         UIPlayerInfo.UpdateCustomCommand("Target Can Choose to React \n[Die pool: " + baseDefenseDice +"] ");
         UIPlayerInfo.ShowActionsOnly(CurrentAttack.target);
         CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
-        CombatLog.Log(CurrentAttack.target.GetName() + " has to react against against an incoming attack!");
+        CombatLog.Log(CurrentAttack.target.GetName() + " has to react against an incoming attack!");
         List<string> l = new List<string>();
         l.Add("TotalDefense");
         l.Add("Dodge");

@@ -23,4 +23,7 @@ EditorBuildSettings:
   - enabled: 0
     path: Assets/Scenes/test.unity
     guid: 2b86e1c78d90c124d8eea77d273b7971
+  - enabled: 1
+    path: Assets/Scenes/LostConnection.unity
+    guid: 720d63d8fb867864288873443e101fb6
   m_configObjects: {}

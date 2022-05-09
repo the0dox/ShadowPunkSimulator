@@ -226,7 +226,7 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
 
     IEnumerator Scatter()
     {
-        RollResult ScatterRoll = attacker.AbilityCheck(w.Template.WeaponSkill.skillKey, w.Template.WeaponSkill.derrivedAttribute, AttributeKey.PhysicalLimit, null , 3,0);
+        RollResult ScatterRoll = attacker.AbilityCheck(w.Template.WeaponSkill.skillKey, w.Template.WeaponSkill.derivedAttribute, AttributeKey.PhysicalLimit, null , 3,0);
         while(!ScatterRoll.Completed())
         {
             yield return new WaitForSeconds (0.5f);

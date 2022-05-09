@@ -41,6 +41,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     public void UpdateStatsOut()
     {
         CameraButtons.UIFreeze(false);
+        TooltipSystem.hide();
         // if this is called client side send my changes to the server
         if(!pv.IsMine)
         {

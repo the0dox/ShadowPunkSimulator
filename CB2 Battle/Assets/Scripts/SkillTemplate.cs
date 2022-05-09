@@ -9,8 +9,8 @@ public class SkillTemplate : ScriptableObject
     [SerializeField] public bool defaultable = true;
     //skills are stored the same way as attributes so they are accessed the same way now
     [SerializeField] public AttributeKey skillKey;
-    //indicates which derrivedAttribute is referenced when this skill is attempted
-    [SerializeField] public AttributeKey derrivedAttribute;
+    //indicates which derivedAttribute is referenced when this skill is attempted
+    [SerializeField] public AttributeKey derivedAttribute;
     //default true, false if you want this skill to be hidden for not true skill effects like parry
     [SerializeField] public bool visible = true;
     //Archetypes of skill, such as crafting

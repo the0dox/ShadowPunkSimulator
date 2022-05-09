@@ -503,6 +503,8 @@ MonoBehaviour:
   characterwraplimit: 200
   myCanvas: {fileID: 2095848197068833015}
   rectTransform: {fileID: 2095848198134677328}
+  xoffSet: 10
+  yoffSet: -10
 --- !u!114 &2095848198134677334
 MonoBehaviour:
   m_ObjectHideFlags: 0

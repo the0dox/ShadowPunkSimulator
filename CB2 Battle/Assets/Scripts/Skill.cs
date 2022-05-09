@@ -14,7 +14,7 @@ public class Skill
     private List<string> Descriptor;
     private string displayText;
 
-    public Skill(string name, int levels, string derrivedAttribute, bool basic)
+    public Skill(string name, int levels, string derivedAttribute, bool basic)
     {
         this.name = name;
         this.levels = levels;

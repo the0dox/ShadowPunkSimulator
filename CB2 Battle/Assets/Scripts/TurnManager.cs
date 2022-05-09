@@ -119,14 +119,11 @@ public class TurnManager : TurnActionsSR
             Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);
             RaycastHit hit;
             bool hitUi = false;
-            GameObject[] ui = GameObject.FindGameObjectsWithTag("ActionInput");
-            foreach(GameObject g in ui)
+            if(EventSystem.current.IsPointerOverGameObject())
             {
-                if(EventSystem.current.IsPointerOverGameObject())
-                {
-                    hitUi = true;
-                }
+                hitUi = true;
             }
+
             //if the mouse clicked on a thing
             if (Physics.Raycast(ray, out hit) && !hitUi )
             {

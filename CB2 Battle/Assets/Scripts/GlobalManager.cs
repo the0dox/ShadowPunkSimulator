@@ -156,4 +156,17 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         CameraButtons.UIFreeze(false);
         LoadingScreenBehavior.FinishedLoading();
     }
+
+    void OnPhotonPlayerDisconnected()
+    {
+        Debug.Log("disconnected");
+        SceneManager.LoadScene("LostConnection");
+    }
+
+    public override void OnMasterClientSwitched(Photon.Realtime.Player newMasterClient)
+    {
+        PhotonNetwork.Disconnect();
+        Debug.Log("disconnected");
+        SceneManager.LoadScene("LostConnection");
+    }
 }

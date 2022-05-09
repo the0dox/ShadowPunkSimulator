@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 using UnityEngine.UI;
+using UnityEngine.EventSystems;
 
 // Controls the behavior of the tooltip box, requires tooltipsystem to know when/what to say
 public class UITooltipBehavior : MonoBehaviour
@@ -22,6 +23,10 @@ public class UITooltipBehavior : MonoBehaviour
     // Used to properly scale UI objects to screen bounds
     private float canvasScale;
 
+    // defined offsets of the tooltip syste 
+    [SerializeField] private float xoffSet;
+    [SerializeField] private float yoffSet;
+
     void Start()
     {
         canvasScale = myCanvas.GetComponent<RectTransform>().localScale.y;
@@ -31,6 +36,7 @@ public class UITooltipBehavior : MonoBehaviour
     {
         // Sets pivot position to prevent UI going off screen
         Vector2 mousepos = Input.mousePosition;
+        mousepos += new Vector2(xoffSet, yoffSet);
         float pivotX = 0;
         float pivotY = 1;
         float RightX = (rectTransform.sizeDelta.x * canvasScale) + mousepos.x;
@@ -47,6 +53,20 @@ public class UITooltipBehavior : MonoBehaviour
         }
         rectTransform.pivot = new Vector2(pivotX,pivotY);
         transform.position = mousepos;
+        // check input 
+        if(Input.anyKeyDown)
+        {
+            CheckInput();
+        }
+    }
+
+    public void CheckInput()
+    {
+        if(!EventSystem.current.IsPointerOverGameObject())
+        {
+            Debug.Log("didnt hit ui");
+            TooltipSystem.hide();
+        }
     }
 
     // Given content and header, sets the given text and determines if text needs to be wrapped
