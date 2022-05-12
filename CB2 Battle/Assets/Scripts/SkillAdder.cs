@@ -12,6 +12,7 @@ public class SkillAdder : MonoBehaviour
     [SerializeField] private GameObject SkillinputRef;
     [SerializeField] private Transform ContentRef;
     [SerializeField] private GameObject ButtonRef;
+    [SerializeField] private CharacterSheet mySheet;
     // Static references to objects
     // Display for skill adder
     private static Transform SContent;
@@ -22,10 +23,10 @@ public class SkillAdder : MonoBehaviour
     // Object used to select which skills to add/remove
     private static GameObject SButton;
     // Reference to all skills the player currently has active
-    private static List<SkillScript> Skills;
+    private static List<SkillScript> Skills = new List<SkillScript>();
     // Reference to the player being edited
     private static CharacterSaveData owner;
-    
+    private static CharacterSheet SmySheet;
     // Saves the static references
     void Awake()
     {
@@ -33,18 +34,24 @@ public class SkillAdder : MonoBehaviour
         SkillInput = SkillinputRef;
         SContent = ContentRef;
         SButton = ButtonRef;
+        SmySheet = mySheet;
     }
 
     // Given newowner savedata, creates Skillinputs for each skill the player already knows
     public static void DownloadOwner(CharacterSaveData newonwer)
     { 
         owner = newonwer;
-        Skills = new List<SkillScript>();
+
+        foreach(SkillScript sc in Skills)
+        {
+            Destroy(sc);
+        }
+        Skills.Clear();
         Dictionary<string, SkillTemplate> allSkills = SkillReference.SkillsTemplates();
         foreach(string key in allSkills.Keys)  
         {
             AttributeKey currentSkillkey = allSkills[key].skillKey;
-            if(newonwer.GetAttribute(currentSkillkey) > 0)
+            if(newonwer.GetAttribute(currentSkillkey) > 0 && validSkill(allSkills[key]))
             {
                 AddSkill(allSkills[key],false);
             }
@@ -57,7 +64,7 @@ public class SkillAdder : MonoBehaviour
     public static void AddSkill(SkillTemplate newSkill, bool add)
     {
         SkillScript indicator = Instantiate(SkillInput as GameObject).GetComponent<SkillScript>();
-        indicator.DownloadCharacter(owner, newSkill);
+        indicator.DownloadCharacter(owner, newSkill, SmySheet);
         Skills.Add(indicator);
         indicator.transform.SetParent(SDisplay);
     }

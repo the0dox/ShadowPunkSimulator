@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 88
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: Used for throwing anything from shurkiens to grenades
@@ -23,3 +23,5 @@ MonoBehaviour:
   - Aerodynamic
   - Blades
   - Non-aerodynamic
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

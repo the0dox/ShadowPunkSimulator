@@ -21,7 +21,10 @@ public class UITooltipBehavior : MonoBehaviour
     // A reference to my own RectTransform, used to modifiy scale and position
     [SerializeField] private RectTransform rectTransform;
     // Used to properly scale UI objects to screen bounds
-    private float canvasScale;
+    private float canvasscaleY;
+    // reference to the offset, offset is calculated once
+    private Vector2 mouseOffset;
+    
 
     // defined offsets of the tooltip syste 
     [SerializeField] private float xoffSet;
@@ -29,18 +32,21 @@ public class UITooltipBehavior : MonoBehaviour
 
     void Start()
     {
-        canvasScale = myCanvas.GetComponent<RectTransform>().localScale.y;
+        RectTransform canvasRect = myCanvas.GetComponent<RectTransform>();
+        canvasscaleY = canvasRect.localScale.y;
+        float canvasscaleX = canvasRect.localScale.x;
+        mouseOffset = new Vector2(xoffSet * canvasscaleX, yoffSet * canvasscaleY);
     }
 
     public void Update()
     {
         // Sets pivot position to prevent UI going off screen
         Vector2 mousepos = Input.mousePosition;
-        mousepos += new Vector2(xoffSet, yoffSet);
+        mousepos += mouseOffset;
         float pivotX = 0;
         float pivotY = 1;
-        float RightX = (rectTransform.sizeDelta.x * canvasScale) + mousepos.x;
-        float BottomY = rectTransform.sizeDelta.y * canvasScale;
+        float RightX = (rectTransform.sizeDelta.x * canvasscaleY) + mousepos.x;
+        float BottomY = rectTransform.sizeDelta.y * canvasscaleY;
         float percentageOver = (BottomY - mousepos.y)/BottomY;
         //Debug.Log("mouse pos " + mousepos.y + "| y bound: " + BottomY + " | diff" + (BottomY - mousepos.y) +"| % over" + percentageOver + "| displace?:" + (percentageOver > 0));
         if(RightX > Screen.width)
@@ -54,7 +60,7 @@ public class UITooltipBehavior : MonoBehaviour
         rectTransform.pivot = new Vector2(pivotX,pivotY);
         transform.position = mousepos;
         // check input 
-        if(Input.anyKeyDown)
+        if(Input.GetMouseButtonUp(0))
         {
             CheckInput();
         }
@@ -62,11 +68,7 @@ public class UITooltipBehavior : MonoBehaviour
 
     public void CheckInput()
     {
-        if(!EventSystem.current.IsPointerOverGameObject())
-        {
-            Debug.Log("didnt hit ui");
-            TooltipSystem.hide();
-        }
+        TooltipSystem.hide();
     }
 
     // Given content and header, sets the given text and determines if text needs to be wrapped

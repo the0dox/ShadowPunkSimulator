@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 43
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: Blades is your proficiency with edged weapons.
@@ -24,3 +24,5 @@ MonoBehaviour:
   - Knives
   - Swords
   - Parrying
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 79

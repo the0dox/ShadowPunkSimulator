@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 56
-  derrivedAttribute: 10
+  derivedAttribute: 10
   visible: 1
   Descriptor: []
   displayText: 
-  limit: 0
+  limit: 23
   Specializations: []
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

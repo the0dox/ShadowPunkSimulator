@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 91
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: Used for weapons that aren't included in the other weapon classes
   limit: 0
   Specializations:
   - Shields
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 79

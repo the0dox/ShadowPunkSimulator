@@ -9,7 +9,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     [SerializeField] private GameObject Display;
     static private Dictionary<int, CharacterSaveData> SavedCharacters;
     static private Dictionary<int, Photon.Realtime.Player> CharacterPermissions;
-    static private Dictionary<int, bool> ActiveCharacterSheets;
+    static private Dictionary<int, CharacterSheet> ActiveCharacterSheets;
     [SerializeField] private GameObject PlayerScreen;
     [SerializeField] private GameObject SelectorButton;
     [SerializeField] private GameObject SceneButton;
@@ -51,7 +51,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
             // delete sheets if active
             if(ActiveCharacterSheet != null)
             {
-                ActiveCharacterSheet.UpdateStatsOut();
+                ActiveCharacterSheet.OnExit();
                 ActiveCharacterSheet = null;
                 CameraButtons.UIFreeze(false);
             }
@@ -74,7 +74,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(1f);
         SavedCharacters = new Dictionary<int, CharacterSaveData>();
         CharacterPermissions = new Dictionary<int, Photon.Realtime.Player>();
-        ActiveCharacterSheets = new Dictionary<int, bool>();
+        ActiveCharacterSheets = new Dictionary<int, CharacterSheet>();
         int index = 0;
         foreach(CharacterSaveData csd in SaveSystem.LoadPlayer())
         {
@@ -205,14 +205,25 @@ public class DmMenu : MonoBehaviourPunCallbacks
     public static void DMDisplay(CharacterSaveData csd)
     {
         Photon.Realtime.Player owner = GetOwner(csd);
-        if(ActiveCharacterSheets.ContainsKey(owner.ActorNumber) && ActiveCharacterSheets[owner.ActorNumber])
+        // if an entry hasn't yet been created for this player
+        if(!ActiveCharacterSheets.ContainsKey(owner.ActorNumber))
         {
-            CombatLog.Log("can't access this sheet");
+            ActiveCharacterSheets.Add(owner.ActorNumber, null);
         }
+        // if sheet is currently active open it
+        if(ActiveCharacterSheets[owner.ActorNumber] != null)
+        {
+            Debug.Log("tunring on sheet for master that already exisits");
+            ActiveCharacterSheets[owner.ActorNumber].UpdateStatsIn(csd, PhotonNetwork.LocalPlayer.ActorNumber);
+        }
+        // else create a new one
         else
         {   
-            GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet",new Vector3(), Quaternion.identity);
-            newSheet.GetComponent<CharacterSheet>().UpdateStatsIn(csd, PhotonNetwork.LocalPlayer.ActorNumber);
+            Debug.Log("creating new sheet for master");
+            CharacterSheet newSheet = PhotonNetwork.Instantiate("CharacterSheet",new Vector3(), Quaternion.identity).GetComponent<CharacterSheet>();
+            // create sheet of csd on masters screen
+            newSheet.UpdateStatsIn(csd, PhotonNetwork.LocalPlayer.ActorNumber);
+            ActiveCharacterSheets[owner.ActorNumber] = newSheet;
         }
     }
 
@@ -253,21 +264,27 @@ public class DmMenu : MonoBehaviourPunCallbacks
     // master sends character data to calling player id
     private void SendClientCharacterSheet(CharacterSaveData csd, int callingPlayerID)
     {
+        // if an entry hasn't yet been created for this player
         if(!ActiveCharacterSheets.ContainsKey(callingPlayerID))
         {
-            ActiveCharacterSheets.Add(callingPlayerID, false);
+            ActiveCharacterSheets.Add(callingPlayerID, null);
         }
-        if(!ActiveCharacterSheets[callingPlayerID])
+        // if this player's charactersheet is not active
+        if(ActiveCharacterSheets[callingPlayerID] == null)
         {
+            Debug.Log("creating new sheet for client, hidden on master");
             //flag indicating its safe to send charactersheet
-            ActiveCharacterSheets[callingPlayerID] = true;
             GameObject newSheet = PhotonNetwork.Instantiate("CharacterSheet", new Vector3(), Quaternion.identity);
+            //create sheet of csd on calling players screen
             CharacterSheet characterSheet = newSheet.GetComponent<CharacterSheet>();
+            ActiveCharacterSheets[callingPlayerID] = characterSheet;
             characterSheet.UpdateStatsIn(csd, callingPlayerID);
         }
+        // if charactersheet is already active
         else
         {
-            Debug.Log("first sheet needs to be exited out first");
+            Debug.Log("activing sheet that already exisits on master for client");
+            ActiveCharacterSheets[callingPlayerID].UpdateStatsIn(csd, callingPlayerID);
         }
     }
 
@@ -276,9 +293,9 @@ public class DmMenu : MonoBehaviourPunCallbacks
     {
         if(!ActiveCharacterSheets.ContainsKey(callingPlayerID))
         {
-            ActiveCharacterSheets.Add(callingPlayerID, false);
+            ActiveCharacterSheets.Add(callingPlayerID, null);
         }
-        ActiveCharacterSheets[callingPlayerID] = false;
+        ActiveCharacterSheets[callingPlayerID] = null;
     }
 
     [PunRPC]

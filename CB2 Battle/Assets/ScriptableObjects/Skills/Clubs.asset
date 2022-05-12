@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 45
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: Clubs is your proficiency with blunt weaponry. The skill can be used
@@ -26,3 +26,5 @@ MonoBehaviour:
   - Saps
   - Staves
   - Parrying
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 79

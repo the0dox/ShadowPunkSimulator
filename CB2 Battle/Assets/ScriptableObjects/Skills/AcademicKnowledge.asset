@@ -14,10 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 32
-  derrivedAttribute: 10
+  derivedAttribute: 10
   visible: 1
   Descriptor: []
   displayText: This represents any academic knowlege a runner may have picked up
     in their background
-  limit: 0
+  limit: 23
   Specializations: []
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

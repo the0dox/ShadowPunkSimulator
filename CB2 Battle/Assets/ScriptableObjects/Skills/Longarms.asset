@@ -14,9 +14,12 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 71
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: Longarms is the combat skill used to fire larger non-automatic weapons
+    such as sniper rifles and shotgun
   limit: 0
   Specializations: []
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 58

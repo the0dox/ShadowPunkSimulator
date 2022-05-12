@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 40
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: 

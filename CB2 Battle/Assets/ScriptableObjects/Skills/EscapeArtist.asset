@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 53
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: 'Escape Artist '
-  limit: 0
+  limit: 24
   Specializations: []
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

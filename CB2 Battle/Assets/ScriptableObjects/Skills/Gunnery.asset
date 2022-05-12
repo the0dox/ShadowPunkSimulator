@@ -14,9 +14,11 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 58
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: Gunnery is the primary skill used for firing mounted weapons and drones.
   limit: 0
   Specializations: []
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

@@ -19,7 +19,7 @@ public class TrackerSheet : MonoBehaviour
     private bool EnforceMaximum = true;
     [SerializeField] private CharacterSheet myData;
 
-    public void Init()
+    void Awake()
     {
         MyResource = 0;
         Tokens = new Dictionary<int, GameObject>();
@@ -78,7 +78,7 @@ public class TrackerSheet : MonoBehaviour
     }
 
     // Udates tokens to match values
-    private void UpdateTokens()
+    public void UpdateTokens()
     {
         foreach(int key in Tokens.Keys)
         {

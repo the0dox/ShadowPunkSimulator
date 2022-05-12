@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 0
   skillKey: 92
-  derrivedAttribute: 15
+  derivedAttribute: 15
   visible: 1
   Descriptor:
   - 
@@ -25,3 +25,5 @@ MonoBehaviour:
   - Projectiles
   - Buffs
   - Heals
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

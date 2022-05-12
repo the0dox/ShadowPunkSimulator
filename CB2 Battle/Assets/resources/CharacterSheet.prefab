@@ -982,7 +982,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 9042909675615074341}
         m_TargetAssemblyTypeName: CharacterSheet, Assembly-CSharp
-        m_MethodName: UpdateName
+        m_MethodName: OnNameUpdated
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -2522,6 +2522,7 @@ MonoBehaviour:
   SkillinputRef: {fileID: 8238126605918207066, guid: 294ab3d0436c10a4c945e993fa736395, type: 3}
   ContentRef: {fileID: 3046492177428039099}
   ButtonRef: {fileID: 4787088418650499487}
+  mySheet: {fileID: 9042909675615074341}
 --- !u!1 &2642928448727690074
 GameObject:
   m_ObjectHideFlags: 0
@@ -6263,7 +6264,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 9042909675615074341}
         m_TargetAssemblyTypeName: CharacterSheet, Assembly-CSharp
-        m_MethodName: UpdateStatsOut
+        m_MethodName: OnExit
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}
@@ -9248,6 +9249,10 @@ MonoBehaviour:
   HealthMonitor: {fileID: 1732914631901416523}
   StunMonitor: {fileID: 1366836617557053147}
   EdgeMonitor: {fileID: 2732125983319684634}
+  MasterActive: 0
+  ClientActive: 0
+  MasterActiveOnce: 0
+  ClientActiveOnce: 0
 --- !u!114 &1403750564540266951
 MonoBehaviour:
   m_ObjectHideFlags: 0

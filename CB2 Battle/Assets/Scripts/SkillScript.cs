@@ -11,6 +11,7 @@ public class SkillScript : MonoBehaviour
     [SerializeField] private Text FinalResult;
     [SerializeField] private Dropdown SpecializationField;
     [SerializeField] private CharacterSaveData myData;
+    [SerializeField] private CharacterSheet mySheet;
     [SerializeField] private TooltipTrigger tooltipTrigger;
     public GameObject ButtonText; 
 
@@ -19,8 +20,9 @@ public class SkillScript : MonoBehaviour
         transform.localScale = Vector3.one;
     }
 
-    public void DownloadCharacter(CharacterSaveData myData, SkillTemplate mySkill)
+    public void DownloadCharacter(CharacterSaveData myData, SkillTemplate mySkill, CharacterSheet mySheet)
     {
+        this.mySheet = mySheet; 
         this.myData = myData;
         this.mySkill = mySkill;
         SpecializationField.ClearOptions();
@@ -83,7 +85,7 @@ public class SkillScript : MonoBehaviour
         {
             value = 0;
         }
-        myData.SetAttribute(mySkill.skillKey, value, false);
+        mySheet.UpdatedAttribute(mySkill.skillKey, value);
         UpdateValue();
     }
 

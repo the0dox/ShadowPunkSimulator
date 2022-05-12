@@ -112,6 +112,12 @@ MonoBehaviour:
   - RPC_CreateTile
   - RPC_CustomCommand
   - RPC_SetCamera
+  - RPC_OnNameUpdated
+  - RPC_UpdatedAttributeClient
+  - RPC_UpdatedAttributeMaster
+  - RPC_OnExit
+  - RPC_ShowExisitingClient
+  - RPC_DontSync
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1
