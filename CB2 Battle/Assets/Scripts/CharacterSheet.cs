@@ -23,17 +23,18 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     [SerializeField] private TrackerSheet HealthMonitor;
     [SerializeField] private TrackerSheet StunMonitor;
     [SerializeField] private TrackerSheet EdgeMonitor;
+    [SerializeField] private TalentAdder TalentAdder;
+    [SerializeField] private ItemAdder ItemAdder;
 
     public bool MasterActive = false;
     public bool ClientActive = false;
-    public bool MasterActiveOnce = false;
-    public bool ClientActiveOnce = false;
+    public bool ActiveOnce = false;
 
 
     private PlayerStats CurrentToken;
     private int NPCHealth = -1;
     // Called when created downloads player data onto the sheet and freezes the screen
-    public void Init(){
+    public void Show(){
         DmMenu.ActiveCharacterSheet = this;
         CameraButtons.UIFreeze(true);
         transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
@@ -52,10 +53,10 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         }
         */
         // if this is server side apply the changes
-            // apply changes to npcs
+        // apply changes to npcs
         if(CurrentToken != null && CurrentToken.team != 0)
         {
-            CurrentToken.NPCHealth = this.NPCHealth;
+            CurrentToken.NPCHealth = ActivePlayer.GetAttribute(AttributeKey.PDamage);
             CurrentToken.OnDownload();
         }
         // apply changes to an individual player
@@ -89,38 +90,32 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         // NPCS track health seperately per token
         if(CurrentToken != null && input.team != 0)
         {
-            NPCHealth = CurrentToken.getWounds();
+            ActivePlayer.SetAttribute(AttributeKey.PDamage,CurrentToken.getWounds(), false);
         }
 
-        // always build the sheet on the master side
-        if(!MasterActiveOnce)
+        // always build the sheet on master and client, and then hide
+        if(!ActiveOnce)
         {
-            MasterActiveOnce = true;
+            ActiveOnce = true;
             ActivePlayer = input;
-            UpdateStatsIn();
+            // builds character and copy of character on sheets in all clients. Sheets exisit in all copies of the game, but only shown to the people that ask for them
+            UpdateStatsIn();    
+            pv.RPC("RPC_SyncStats", RpcTarget.Others, input.playername, input.CompileStats(), input.skillSpecialization, input.compileEquipment(), NPCHealth, input.CompileTalents());
+            
         }
 
         Photon.Realtime.Player CallingPlayer = PhotonNetwork.CurrentRoom.GetPlayer(callingPlayerID);
-        //server side edit, no need for transfer notice this is always called by master so isMine doesn't work here
+        //server side edit, show sheet on master
         if(CallingPlayer == pv.Owner)
         {
             MasterActive = true;
-            Init();
+            Show();
         }
-        // client side edit, transfer charactershetet
+        // client side edit, show sheet on calling player
         else
         { 
             ClientActive = true;
-            if(!ClientActiveOnce)
-            {
-                ClientActiveOnce = true;
-                pv.RPC("RPC_SyncStats", CallingPlayer, input.playername, input.CompileStats(), input.skillSpecialization, input.compileEquipment().ToArray(), NPCHealth, input.CompileTalents());
-            }
-            else
-            {
-                pv.RPC("RPC_DontSync",CallingPlayer);
-            }
-
+            pv.RPC("RPC_Show",CallingPlayer);
         }
     }
 
@@ -128,7 +123,8 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     public void UpdateStatsIn(){
         NameField.text = ActivePlayer.playername;
         ActivePlayer.CalculateCharacteristics();
-        StunMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.SDamage));
+        
+        /*StunMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.SDamage));
         EdgeMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.Edge));
 
         if(NPCHealth >= 0)
@@ -139,6 +135,8 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         {
             HealthMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.PDamage));
         }
+        */
+
         UpdateInputFields();
         SkillAdder.DownloadOwner(ActivePlayer);
         ItemAdder.DownloadOwner(ActivePlayer);
@@ -154,7 +152,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         {
             if(NPCHealth < 18)
             {
-                HealthMonitor.IncrementValue();
                 NPCHealth++;
             }
         }
@@ -162,8 +159,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         {
             if(ActivePlayer.attribues[(int)AttributeKey.PDamage] < 18)
             {
-                HealthMonitor.IncrementValue();
-                ActivePlayer.attribues[(int)AttributeKey.PDamage]++;
+                UpdatedAttribute(AttributeKey.PDamage, ActivePlayer.GetAttribute(AttributeKey.PDamage) + 1);
             }
         }
     }
@@ -174,7 +170,6 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         {
             if(NPCHealth > 0)
             {
-                HealthMonitor.SubtractValue();
                 NPCHealth--;
             }
         }
@@ -182,8 +177,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         {
             if(ActivePlayer.attribues[(int)AttributeKey.PDamage] > 0)
             {
-                HealthMonitor.SubtractValue();
-                ActivePlayer.attribues[(int)AttributeKey.PDamage]--;
+                UpdatedAttribute(AttributeKey.PDamage, ActivePlayer.GetAttribute(AttributeKey.PDamage) - 1);
             }
         }
     }
@@ -192,8 +186,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     {
         if(ActivePlayer.attribues[(int)AttributeKey.SDamage] < 12)
         {
-            StunMonitor.IncrementValue();
-            ActivePlayer.attribues[(int)AttributeKey.SDamage]++;
+            UpdatedAttribute(AttributeKey.SDamage, ActivePlayer.GetAttribute(AttributeKey.SDamage) + 1);
         }
     }
 
@@ -201,8 +194,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     {
         if(ActivePlayer.attribues[(int)AttributeKey.SDamage] > 0)
         {
-            StunMonitor.SubtractValue();
-            ActivePlayer.attribues[(int)AttributeKey.SDamage]--;
+            UpdatedAttribute(AttributeKey.SDamage, ActivePlayer.GetAttribute(AttributeKey.SDamage) - 1);
         }
     }
 
@@ -210,8 +202,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     {
         if(ActivePlayer.attribues[(int)AttributeKey.CurrentEdge] < 7)
         {
-            EdgeMonitor.IncrementValue();
-            ActivePlayer.attribues[(int)AttributeKey.CurrentEdge]++;
+            UpdatedAttribute(AttributeKey.CurrentEdge, ActivePlayer.GetAttribute(AttributeKey.CurrentEdge) + 1);
         }
     }
 
@@ -219,8 +210,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     {
         if(ActivePlayer.attribues[(int)AttributeKey.CurrentEdge] > 0)
         {
-            EdgeMonitor.SubtractValue();
-            ActivePlayer.attribues[(int)AttributeKey.CurrentEdge]--;
+            UpdatedAttribute(AttributeKey.CurrentEdge, ActivePlayer.GetAttribute(AttributeKey.CurrentEdge) - 1);
         }
     }
 
@@ -265,15 +255,100 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         SkillAdder.UpdateSkillFields();
     }
 
+    // Client or Master clicked a talent button
+    public void UpdateTalent(TalentKey talent)
+    {
+        pv.RPC("RPC_UpdatedTalentMaster", RpcTarget.MasterClient, (int)talent);
+    }
+
+    // Master does logic to determine if talent should be removed or not
+    [PunRPC]
+    void RPC_UpdatedTalentMaster(int key)
+    {
+        Talent Talent = TalentReference.GetTalent((TalentKey)key);
+        if(ActivePlayer.hasTalent(Talent.key))
+        {
+            Debug.Log("removing talent");
+            ActivePlayer.SetTalent(Talent.key, false);
+        }
+        else if(Talent.CanSelect(ActivePlayer))
+        {
+            Debug.Log("adding talent");
+            ActivePlayer.SetTalent(Talent.key, true);
+        }
+        TalentAdder.OnValueChanged();
+        pv.RPC("RPC_UpdatedTalentClient", RpcTarget.Others, ActivePlayer.CompileTalents());
+    }
+
+    // Master sends its new list of updated talents to each client
+    [PunRPC]
+    void RPC_UpdatedTalentClient(Dictionary<int,bool> newTalents)
+    {
+        ActivePlayer.DecompileTalents(newTalents);
+        TalentAdder.OnValueChanged();
+    }
+
+    // Change Items
+    public void ChangeItem(string newItem, bool add)
+    {
+        pv.RPC("RPC_UpdatedItemMaster", RpcTarget.MasterClient, newItem, add);
+    }
+
+    // send new item to master
+    [PunRPC]
+    void RPC_UpdatedItemMaster(string name, bool add)
+    {
+        Item newItem = ItemReference.GetItem(name);
+        if(newItem != null)
+        {
+            if(add)
+            {
+                ActivePlayer.AddItem(newItem);
+            }
+            else
+            {
+                ActivePlayer.RemoveItem(newItem);
+            }
+            ItemAdder.DisplayItems();
+            string[] equipment = ActivePlayer.compileEquipment();
+            pv.RPC("RPC_UpdatedItemClient", RpcTarget.Others, equipment);
+        }
+    }
+
+    // send new items to clients
+    [PunRPC]
+    void RPC_UpdatedItemClient(string[] newequipment)
+    {
+        ActivePlayer.decompileEquipment(newequipment);
+        ItemAdder.DisplayItems();
+    }
+
+    public void ChangeSpecialization(string skillKey, int SpecializationIndex)
+    {
+        pv.RPC("RPC_ChangeSpecialization", RpcTarget.All, skillKey, SpecializationIndex);
+    }
+
+    [PunRPC]
+    void RPC_ChangeSpecialization(string skillKey, int SpecializationIndex)
+    {
+        ActivePlayer.setSpecialization(skillKey, SpecializationIndex);
+        SkillAdder.UpdateSkillFields();
+    }
+
     private void UpdateInputFields()
     {
         foreach (InputFieldScript t in EntryList)
         {
             t.UpdateValue(ActivePlayer,this);
         }
+        /*
         HealthMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.PhysicalHealth));
         StunMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.StunHealth));
         EdgeMonitor.SetMaximum(ActivePlayer.GetAttribute(AttributeKey.Edge));
+        HealthMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.PhysicalHealth));
+        StunMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.StunHealth));
+        EdgeMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.CurrentEdge));
+        */
     }
 
 
@@ -281,25 +356,19 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_SyncStats(string name, string[] characteristics, Dictionary<string,int> specalizations, string[] equipment, int newNPCHealth, Dictionary<int,bool> newTalents)
     {
-        List<string> convertedArray = new List<string>();
-        for(int i = 0; i < equipment.Length; i++)
-        {
-            convertedArray.Add(equipment[i]);
-        }
-        ActivePlayer = new CharacterSaveData(name, characteristics, specalizations, convertedArray,newTalents);
+        ActivePlayer = new CharacterSaveData(name, characteristics, specalizations, equipment,newTalents);
         if(newNPCHealth >= 0)
         {
             Debug.Log("Unique npc health" + newNPCHealth);
             NPCHealth = newNPCHealth;
         }
-        Init();
         UpdateStatsIn();
     }
 
     [PunRPC]
-    void RPC_DontSync()
+    void RPC_Show()
     {
-        Init();
+        Show();
     }
     
     // when exiting as either master or client

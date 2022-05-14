@@ -18,12 +18,8 @@ public class CharacterSaveData
     public string playername;
     // Name of mesh model
     public string Model;
-    // Each entry is a unique skill name for the itemReference
-    public string[] equipment = new string[20];
-    // Each entry is the number of each equipment piece a player has of the same index
-    public int[] equipmentSize = new int[20];
     // Condensed list of equipment and there properties, only modified on load and save
-    public List<string> equipmentCode = new List<string>(); 
+    public string[] equipmentCode; 
     public List<Item> equipmentObjects = new List<Item>();
     public bool isMinion = false;
     public int ownerID;
@@ -55,7 +51,7 @@ public class CharacterSaveData
         CalculateCharacteristics();
     }
 
-    public CharacterSaveData(string playername, string[] attribues, Dictionary<string,int> specalizations, List<string> newequipment, Dictionary<int, bool> newTalents)
+    public CharacterSaveData(string playername, string[] attribues, Dictionary<string,int> specalizations, string[] newequipment, Dictionary<int, bool> newTalents)
     {
         this.playername = playername;
         this.skillSpecialization = specalizations;
@@ -125,37 +121,52 @@ public class CharacterSaveData
     }
 
 
-    public void decompileEquipment(List<string> newequipmentcode)
+    public void decompileEquipment(string[] newequipmentcode)
     {
         equipmentObjects.Clear();
-        foreach(string code in newequipmentcode)
+        for( int i = 0; i < newequipmentcode.Length; i++)
         {
-            string[] codeDecompiled = code.Split('|');
-            //decompile
-            string name = codeDecompiled[0];
-            int stacks = int.Parse(codeDecompiled[1]);
-            string[] upgrades = codeDecompiled[2].Split(',');
-            Item newItem = ItemReference.GetItem(name,stacks,upgrades);
-            if(newItem != null)
+            string code = newequipmentcode[i];
+            if(!code.Equals("empty"))
             {
-                if(codeDecompiled.Length > 3)
+                string[] codeDecompiled = code.Split('|');
+                //decompile
+                string name = codeDecompiled[0];
+                int stacks = int.Parse(codeDecompiled[1]);
+                string[] upgrades = codeDecompiled[2].Split(',');
+                Item newItem = ItemReference.GetItem(name,stacks,upgrades);
+                if(newItem != null)
                 {
-                    int clip = int.Parse(codeDecompiled[3]);
-                    Weapon castItem = (Weapon) newItem;
-                    castItem.SetClip(clip);
-                    AddItem(castItem);
-                }
-                else
-                {
-                    AddItem(newItem);
+                    if(codeDecompiled.Length > 3)
+                    {
+                        int clip = int.Parse(codeDecompiled[3]);
+                        Weapon castItem = (Weapon) newItem;
+                        castItem.SetClip(clip);
+                        AddItem(castItem);
+                    }
+                    else
+                    {
+                        AddItem(newItem);
+                    }
                 }
             }
         }
     }  
 
-    public List<string> compileEquipment()
+    public string[] compileEquipment()
     {
-        List<string> output = new List<string>();
+        string[] output;
+        // an array of 1 should be artifically extended to avoid photon jank
+        if(equipmentObjects.Count == 1)
+        {
+            output = new string[2];
+            output[1] = "empty";
+        }
+        else
+        {
+            output = new string[equipmentObjects.Count];
+        }
+        int index = 0;
         foreach(Item item in equipmentObjects)
         {
             string name = item.GetName();
@@ -170,7 +181,8 @@ public class CharacterSaveData
                 code+="|" + clip;
             }
             //Debug.Log(code);
-            output.Add(code); 
+            output[index] = code;
+            index++; 
         }
         return output;
     }
@@ -197,6 +209,14 @@ public class CharacterSaveData
     public void SetTalent(TalentKey key, bool value)
     {
         talents[(int)key] = value;
+        //enforce TalentRules
+        foreach(KeyValuePair<TalentKey, Talent> kvp in TalentReference.getLibraries())
+        {
+            if(!kvp.Value.CanSelect(this))
+            {
+                talents[(int)kvp.Key] = false;
+            }
+        }
     }
 
     public int GetAttribute(AttributeKey key)
@@ -301,27 +321,6 @@ public class CharacterSaveData
         return skillSpecialization[skillKey];
     }
 
-    // Converts Equipment and EquipmentSize into a readable list of Item objects
-    public Dictionary<string,int> GetEquipment()
-    {
-        Dictionary<string,int> output = new Dictionary<string, int>();
-        for(int i = 0; i < 8; i++)
-        {
-            if(equipment[i] != null)
-            {
-                if(!output.ContainsKey(equipment[i]))
-                {
-                    output.Add(equipment[i],equipmentSize[i]);
-                }
-                else
-                {
-                    output[equipment[i]] += equipmentSize[i];
-                }
-            }
-        }
-        return output;
-    }
-
     // Converts talents into readable code for PUN
     public Dictionary<int, bool> CompileTalents()
     {
@@ -390,20 +389,21 @@ public class CharacterSaveData
         }
         else
         {
-            item.SubtractStack();
-            if(item.IsConsumed())
+            // often item will not be apart of my inventory, in which case we need to actually see our stacks of this item
+            Item modifiedItem = item;
+            Item[] equipment = equipmentObjects.ToArray();
+            for(int i = 0; i < equipmentObjects.Count; i++)
             {
-                equipmentObjects.Remove(item);
+                if(equipment[i].Equals(item))
+                {
+                    modifiedItem = equipment[i];
+                }
             }
-        }
-    }
-
-    public void ReduceItemInventory(Item item)
-    {
-        RemoveItem(item);
-        if(item.IsConsumed())
-        {
-            ItemAdder.RemoveItem(item);
+            modifiedItem.SubtractStack();
+            if(modifiedItem.IsConsumed())
+            {
+                equipmentObjects.Remove(modifiedItem);
+            }
         }
     }
 

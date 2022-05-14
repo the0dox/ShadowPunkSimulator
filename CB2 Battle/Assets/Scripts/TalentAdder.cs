@@ -6,7 +6,6 @@ public class TalentAdder : MonoBehaviour
 {
     [SerializeField] private List<TalentInputField> talentInputFields;
     private static TalentInputField[] talentSlots;  
-    private static CharacterSaveData owner;
     void Awake()
     {
         int index = 0;
@@ -18,7 +17,7 @@ public class TalentAdder : MonoBehaviour
         }
     }
 
-    public static void OnValueChanged()
+    public void OnValueChanged()
     {
         for(int i = 0; i < talentSlots.Length;i++)
         {
@@ -26,14 +25,13 @@ public class TalentAdder : MonoBehaviour
         }
     }
 
-    public static void DownloadOwner(CharacterSaveData newowner)
+    public void DownloadOwner(CharacterSaveData newowner)
     {
         int index = 0;
-        owner = newowner;
         Dictionary<TalentKey, Talent> allTalents = TalentReference.getLibraries();
         foreach(KeyValuePair<TalentKey,Talent> kvp in allTalents)
         {
-            talentSlots[index].DownloadCharacter(owner, kvp.Key);
+            talentSlots[index].DownloadCharacter(newowner, kvp.Key);
             index++;
         }
         OnValueChanged();

@@ -10,16 +10,16 @@ public class ItemInputField : MonoBehaviour
     [SerializeField] private GameObject popUpMenu;
     [SerializeField] private Image displayImage;
     [SerializeField] private Sprite EmptyImage;
-    private CharacterSaveData owner;
+    [SerializeField] private ItemAdder ItemAdder;
     private Item myData;
 
-    public void DownloadCharacter(CharacterSaveData owner, Item myData)
+    public void SetItem(Item myData)
     {
-        this.owner = owner;
         if(myData != null)
         {
             this.myData = myData;
             displayImage.sprite = myData.GetSprite();
+            tooltipContent.enabled = true;
             if(!myData.Stackable())
             {
                 displayText.text = "";
@@ -27,10 +27,7 @@ public class ItemInputField : MonoBehaviour
         }
         else
         {
-            this.myData = null;
-            displayText.text = "";
-            displayImage.sprite = EmptyImage;  
-            TooltipSystem.hide();
+            Clear();
         }
     }
 
@@ -44,11 +41,6 @@ public class ItemInputField : MonoBehaviour
         }
     }
 
-    public void Reduce()
-    {
-        owner.ReduceItemInventory(myData);
-    }
-
     public Item GetItem()
     {
         return myData;
@@ -57,5 +49,13 @@ public class ItemInputField : MonoBehaviour
     public void OnButtonPressed()
     {
         ItemAdder.OnItemClicked(this);
+    }
+
+    public void Clear()
+    {
+        myData = null;
+        displayText.text = "";
+        displayImage.sprite = EmptyImage;  
+        tooltipContent.enabled = false;
     }
 }

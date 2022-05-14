@@ -118,6 +118,12 @@ MonoBehaviour:
   - RPC_OnExit
   - RPC_ShowExisitingClient
   - RPC_DontSync
+  - RPC_UpdatedTalentMaster
+  - RPC_UpdatedTalentClient
+  - RPC_Show
+  - RPC_UpdatedItemClient
+  - RPC_UpdatedItemMaster
+  - RPC_ChangeSpecialization
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

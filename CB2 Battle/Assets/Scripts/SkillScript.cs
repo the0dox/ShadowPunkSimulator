@@ -48,7 +48,10 @@ public class SkillScript : MonoBehaviour
         int levels = myData.GetAttribute(mySkill.skillKey);
         int total = derivedValue + levels; 
         IF.text = "" + levels;
-        ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.derivedAttribute + ")";
+        if(ButtonText != null)
+        {
+            ButtonText.GetComponent<Text>().text = mySkill.name + " (" + mySkill.derivedAttribute + ")";
+        }
         FinalResult.text = "[" + total +"]";
 
         string description = mySkill.displayText;
@@ -71,11 +74,12 @@ public class SkillScript : MonoBehaviour
         }
         tooltipTrigger.header = mySkill.name;
         tooltipTrigger.content = description;
+        SpecializationField.value = myData.GetSpecializationIndex(mySkill.name);
     }
 
     public void UpdateSpecalization()
     {
-        myData.setSpecialization(mySkill.name,SpecializationField.value);
+        mySheet.ChangeSpecialization(mySkill.name,SpecializationField.value);
     }
 
     public void OnValueChange()

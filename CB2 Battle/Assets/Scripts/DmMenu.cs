@@ -25,6 +25,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     private static PhotonView spv;
     private Dictionary<int, string> DummyCharacters = new Dictionary<int, string>();
     public static bool debugMode = false;
+    private bool ready = false;
 
     public static CharacterSheet ActiveCharacterSheet;
 
@@ -34,6 +35,10 @@ public class DmMenu : MonoBehaviourPunCallbacks
         if(pv.IsMine && SavedCharacters == null)
         {
             StartCoroutine(LoadDelay());
+        }
+        else
+        {
+            ready = true;
         }
         instance = gameObject;
         DisplayInstance = Display;
@@ -46,7 +51,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     void Update()
     {
         // on pressing escape
-        if(Input.GetKeyUp(KeyCode.Escape))
+        if(Input.GetKeyUp(KeyCode.Escape) && ready)
         {
             // delete sheets if active
             if(ActiveCharacterSheet != null)
@@ -86,6 +91,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
             }
             index++;
         }
+        ready = true;
         SavedScenes = SaveSystem.LoadScenes();
     }
 

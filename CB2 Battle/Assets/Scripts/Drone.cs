@@ -43,6 +43,11 @@ public class Drone : Item
         return Resources.Load<Sprite>("Assets/Resources/Materials/Icons/Items/Drone.png");
     }
 
+    public override string GetTemplateName()
+    {
+        return (Template.name);
+    }
+
     public override void UpdateTooltip()
     {
         tooltip = "Rating " + rating + " drone";

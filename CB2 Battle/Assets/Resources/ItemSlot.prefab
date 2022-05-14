@@ -214,6 +214,7 @@ MonoBehaviour:
   popUpMenu: {fileID: 1433055937280781449}
   displayImage: {fileID: 4765826455114047851}
   EmptyImage: {fileID: 10917, guid: 0000000000000000f000000000000000, type: 0}
+  ItemAdder: {fileID: 0}
 --- !u!114 &3851215727645345126
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -637,7 +638,7 @@ MonoBehaviour:
       m_Calls:
       - m_Target: {fileID: 3348981938310734661}
         m_TargetAssemblyTypeName: ItemInputField, Assembly-CSharp
-        m_MethodName: Reduce
+        m_MethodName: OnSubtractButtonClicked
         m_Mode: 1
         m_Arguments:
           m_ObjectArgument: {fileID: 0}

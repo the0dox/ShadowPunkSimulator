@@ -14,6 +14,7 @@ public class ItemAdder : MonoBehaviour
     [SerializeField] private List<ItemInputField> itemInputFieldInitalizer;
     [SerializeField] private GameObject PopupObject;
     [SerializeField] private static ItemInputField[] ItemSlots;  
+    [SerializeField] CharacterSheet mySheet;
     // Static references to objects
     // Display for skill adder
     private static Transform SAdderContent;
@@ -40,68 +41,42 @@ public class ItemAdder : MonoBehaviour
         SButton = ButtonRef;
         SPopupObject = PopupObject;
         int index = 0;
-        ItemSlots = new ItemInputField[17];
+        ItemSlots = new ItemInputField[16];
         foreach(ItemInputField iif in itemInputFieldInitalizer)
         {
             ItemSlots[index] = iif;
             index++;
         }
-        ItemSlots[16] = new ItemInputField();
     }
 
     // Given newowner savedata, creates Skillinputs for each skill the player already knows
-    public static void DownloadOwner(CharacterSaveData newonwer)
+    public void DownloadOwner(CharacterSaveData newonwer)
     { 
-        lastIndex = 0;
         owner = newonwer;
-        foreach(Item item in newonwer.equipmentObjects)
-        {
-            AddItem(item,false);
-        } 
+        DisplayItems(); 
         UpdateAdderContent();
     }
-    
-    // Adds a skill from skillreferences that matches a given name
-    // if add, add the skill to the owner
-    public static void AddItem(Item newItem, bool add)
-    {
-        int oldCount = owner.equipmentObjects.Count;
-        if(add)
-        {
-            owner.AddItem(newItem);
-        }
-        if(!add || oldCount != owner.equipmentObjects.Count)
-        {
-            ItemSlots[lastIndex].DownloadCharacter(owner,newItem);
-            lastIndex++;
-        }
-    }
 
-    // Called from the edited player when their item is reduced to 0, removes said item from the box
-    public static void RemoveItem(Item removedItem)
+    public void DisplayItems()
     {
-        ClearPopup();
-        lastIndex--;
-        bool incrementPosition = false;
-        for(int i = 0; i < ItemSlots.Length-1; i++)
+        Item[] equipement = owner.equipmentObjects.ToArray();
+        // for each item slot
+        for(int i = 0; i < ItemSlots.Length; i++)
         {
-            if(removedItem == ItemSlots[i].GetItem())
+            // add an item
+            if(i < equipement.Length)
             {
-                incrementPosition = true;
+                ItemSlots[i].SetItem(equipement[i]);
             }
-            if(incrementPosition && i < ItemSlots.Length)
+            // clear slot
+            else
             {
-                ItemInputField nextInputfield = ItemSlots[i+1];
-                if(nextInputfield != null)
-                {
-                    Item nextItem = ItemSlots[i+1].GetItem();
-                    ItemSlots[i].DownloadCharacter(owner, nextItem);
-                }
+                ItemSlots[i].Clear();
             }
         }
     }
 
-    public static void OnItemClicked(ItemInputField clickedItemField)
+    public void OnItemClicked(ItemInputField clickedItemField)
     {
         // if this has already been clicked
         if(activePopupfield == clickedItemField || clickedItemField.GetItem() == null)
@@ -117,15 +92,21 @@ public class ItemAdder : MonoBehaviour
         }
     }
 
-    public static void RemoveItem()
+    public void OnSubtractButtonClicked()
     {
-        if(activePopupfield != null)
+        Item activeItem = activePopupfield.GetItem();
+        if(activeItem.GetStacks() < 2)
         {
-            activePopupfield.Reduce();
+            ClearPopup();
+        }
+        if(activeItem != null)
+        {
+            string name = activeItem.GetTemplateName();
+            mySheet.ChangeItem(name, false);
         }
     }
 
-    public static void ClearPopup()
+    public void ClearPopup()
     {
         activePopupfield = null;
         SPopupObject.SetActive(false);
@@ -134,12 +115,11 @@ public class ItemAdder : MonoBehaviour
     public void OnClicked()
     {
         string name = EventSystem.current.currentSelectedGameObject.name;
-        Item newItem = ItemReference.GetItem(name);
-        AddItem(newItem,true);
+        mySheet.ChangeItem(name, true);
     }
 
     // Adds button prefabs to SContent to represent all the skills the player can have 
-    private static void UpdateAdderContent()
+    private void UpdateAdderContent()
     {
         foreach(string itemKey in ItemReference.ItemTemplates().Keys)
         {

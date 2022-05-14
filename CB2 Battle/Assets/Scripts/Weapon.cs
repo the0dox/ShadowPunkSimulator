@@ -696,4 +696,9 @@ public class Weapon : Item
     {
         damage = newDamage;
     }
+
+    public override string GetTemplateName()
+    {
+        return (Template.name);
+    }
 }

@@ -46,6 +46,11 @@ public class Armor : Item
     
     }
 
+    public override string GetTemplateName()
+    {
+        return (Template.name);
+    }
+
     public override void UpdateTooltip()
     {
         tooltip = "Rating " + rating + " Armor ";

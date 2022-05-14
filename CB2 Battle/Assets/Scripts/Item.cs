@@ -195,6 +195,11 @@ public class Item
         return Resources.Load<Sprite>("Assets/Resources/Materials/Icons/Items/Default.png");
     }
 
+    public virtual string GetTemplateName()
+    {
+        return (Template.name);
+    }
+
     public override bool Equals(object obj)
     {
         if (obj == null)
