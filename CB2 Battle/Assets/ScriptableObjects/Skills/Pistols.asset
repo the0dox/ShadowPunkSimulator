@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 80
-  derrivedAttribute: 6
+  derivedAttribute: 6
   visible: 1
   Descriptor: []
   displayText: 'Pistols is your proficiency with non-automatic pistols. Pistols cover
@@ -25,3 +25,5 @@ MonoBehaviour:
   - Revolvers
   - Semi-Automatics
   - Tasers
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 58
