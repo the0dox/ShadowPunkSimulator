@@ -60,23 +60,21 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
         else if(threatType.Equals("Overwatch"))
         {
             List<Transform> inRangeTargets = myRange.GetTargets();
+            bool triggered = false;
             foreach(Transform t in inRangeTargets)
             {
                 PlayerStats target = t.GetComponent<PlayerStats>();
                 //if target is moving and an enemy!
                 if(t.GetComponent<TacticsMovement>().moving && target.GetTeam() != attacker.GetTeam())
                 {
-                    if(w.CanFire("Auto"))
-                    {
-                        TurnManager.RollToHit(t.GetComponent<PlayerStats>(),"Auto",w,attacker);
-                    }
-                    else if(w.CanFire("Semi"))
-                    {
-                        TurnManager.RollToHit(t.GetComponent<PlayerStats>(),"Semi",w,attacker);
-                    }
-                    
-                    RemoveRange(attacker);
+                    Debug.Log("triggerd firing at " + w.getHighestROF() +" target "+ target.GetName() + " attacker " + attacker.GetName());
+                    TurnManager.RollToHit(target,w.getHighestROF(),w,attacker);
+                    triggered = true;
                 }
+            }
+            if(triggered)
+            {
+                RemoveRange(attacker);
             }
         }
     }
@@ -128,6 +126,8 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
         }
         else if(threatType.Equals("Overwatch"))
         {
+            attacker.SetCondition(Condition.Overwatch, 1, true);
+            CombatLog.Log(attacker.GetName() + " establishes a kill zone!");
             myRange.Draw(false);
             TurnManager.OverwatchFinished();
         }
@@ -163,14 +163,7 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
             myRange = ConeToken.GetComponent<ThreatCone>();
             myRange.avoidOwner = attacker.transform;
             // flame attacks and semi auto spray use narrower ranges
-            if(type.Equals("Flame") || !w.CanFire("Auto"))
-            {
-                dimensions = new Vector3((float) w.getRange(attacker) * 0.66f,w.getRange(attacker),w.getRange(attacker));
-            }
-            else
-            {
-                dimensions = new Vector3(w.getRange(attacker)/2,w.getRange(attacker)/2,w.getRange(attacker)/2);
-            }
+            dimensions = new Vector3(15,10,15);
         }
         myRange.transform.localScale = dimensions;
         ThrowRange = w.getRange(attacker);
@@ -226,7 +219,7 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
 
     IEnumerator Scatter()
     {
-        RollResult ScatterRoll = attacker.AbilityCheck(w.Template.WeaponSkill.skillKey, w.Template.WeaponSkill.derivedAttribute, AttributeKey.PhysicalLimit, null , 3,0);
+        RollResult ScatterRoll = attacker.AbilityCheck(w.Template.WeaponSkill.skillKey, w.Template.WeaponSkill.derivedAttribute, AttributeKey.PhysicalLimit, null , 2,0);
         while(!ScatterRoll.Completed())
         {
             yield return new WaitForSeconds (0.5f);

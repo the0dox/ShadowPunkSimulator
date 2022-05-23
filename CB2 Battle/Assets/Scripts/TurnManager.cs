@@ -549,8 +549,9 @@ public class TurnManager : TurnActionsSR
         //only a valid target if on diferent teams (los restriction has been lifted temporarily)
         //if (TacticsAttack.HasValidTarget(target, attacker, ActiveWeapon))
         //{
-        if(target.GetTeam() != ActivePlayerStats.GetTeam())
+        if(target.GetTeam() != attacker.GetTeam())
         {
+            Debug.Log("send to ta");
             AttackSequence newAttack = TacticsAttack.Attack(target, attacker, ActiveWeapon, ROF);
             AttackQueue.Enqueue(newAttack);
             currentAction = null;

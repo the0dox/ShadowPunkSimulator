@@ -124,29 +124,32 @@ public class CharacterSaveData
     public void decompileEquipment(string[] newequipmentcode)
     {
         equipmentObjects.Clear();
-        for( int i = 0; i < newequipmentcode.Length; i++)
+        if(newequipmentcode != null)
         {
-            string code = newequipmentcode[i];
-            if(!code.Equals("empty"))
+            for( int i = 0; i < newequipmentcode.Length; i++)
             {
-                string[] codeDecompiled = code.Split('|');
-                //decompile
-                string name = codeDecompiled[0];
-                int stacks = int.Parse(codeDecompiled[1]);
-                string[] upgrades = codeDecompiled[2].Split(',');
-                Item newItem = ItemReference.GetItem(name,stacks,upgrades);
-                if(newItem != null)
+                string code = newequipmentcode[i];
+                if(!code.Equals("empty"))
                 {
-                    if(codeDecompiled.Length > 3)
+                    string[] codeDecompiled = code.Split('|');
+                    //decompile
+                    string name = codeDecompiled[0];
+                    int stacks = int.Parse(codeDecompiled[1]);
+                    string[] upgrades = codeDecompiled[2].Split(',');
+                    Item newItem = ItemReference.GetItem(name,stacks,upgrades);
+                    if(newItem != null)
                     {
-                        int clip = int.Parse(codeDecompiled[3]);
-                        Weapon castItem = (Weapon) newItem;
-                        castItem.SetClip(clip);
-                        AddItem(castItem);
-                    }
-                    else
-                    {
-                        AddItem(newItem);
+                        if(codeDecompiled.Length > 3)
+                        {
+                            int clip = int.Parse(codeDecompiled[3]);
+                            Weapon castItem = (Weapon) newItem;
+                            castItem.SetClip(clip);
+                            AddItem(castItem);
+                        }
+                        else
+                        {
+                            AddItem(newItem);
+                        }
                     }
                 }
             }
@@ -157,9 +160,10 @@ public class CharacterSaveData
     {
         string[] output;
         // an array of 1 should be artifically extended to avoid photon jank
-        if(equipmentObjects.Count == 1)
+        if(equipmentObjects.Count < 2)
         {
             output = new string[2];
+            output[0] = "empty";
             output[1] = "empty";
         }
         else

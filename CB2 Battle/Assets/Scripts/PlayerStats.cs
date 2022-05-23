@@ -90,6 +90,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     {
         pv.RPC("RPC_SetHP", RpcTarget.All, getWounds(), myData.GetAttribute(AttributeKey.PhysicalHealth));  
         pv.RPC("RPC_SetSP", RpcTarget.All, getStun(), myData.GetAttribute(AttributeKey.StunHealth));   
+        ResetMovement();
+    }
+
+    public void ResetMovement()
+    {
         pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.MoveWalk));
     }
 

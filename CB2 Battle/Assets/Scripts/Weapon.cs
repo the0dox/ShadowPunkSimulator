@@ -162,6 +162,7 @@ public class Weapon : Item
             if(complex)
             {
                 output.Add("Semi Auto Burst", "fireSAB");
+                output.Add("Overwatch", "Overwatch");
             }
         }
         else if(FireRate.Equals("BF") && clip > 0)
@@ -170,6 +171,7 @@ public class Weapon : Item
             if(complex)
             {
                 output.Add("Long Burst", "fireLB");
+                output.Add("Overwatch", "Overwatch");
             }
         }
         else if(FireRate.Equals("FA") && clip > 0)
@@ -178,6 +180,7 @@ public class Weapon : Item
             if(complex)
             {
                 output.Add("Full Auto Burst", "fireFAB");
+                output.Add("Overwatch", "Overwatch");
             }
         }
         if((Template.SingleShot ? 1:0) + (Template.SemiAuto ? 1:0) + (Template.BurstFire ? 1:0) + (Template.FullAuto ? 1:0) > 1)
@@ -207,6 +210,23 @@ public class Weapon : Item
         {
             clip = 0;
         }
+    }
+
+    // Returns the complex action firerate key that this weapon is currently capable of 
+    public string getHighestROF()
+    {
+        switch(FireRate)
+        {
+            case "SS":
+            return "SS";
+            case "SA":
+            return "SAB";
+            case "BF":
+            return "LF";
+            case "FA":
+            return "FAB";
+        }
+        return null;
     }
 
     //increments reloads by one half action, returns true when reload is complete

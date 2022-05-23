@@ -17,7 +17,7 @@ public class DebugWeaponTester : MonoBehaviour
     [SerializeField] int defenseDiceHigh = 6;
     [SerializeField] int defenseDiceLight = 14;
     [SerializeField] int armorlight = 0;
-    [SerializeField] int armorHeavh = 3;
+    [SerializeField] int armorHeavh = 4;
     [SerializeField] int healthlight = 10;
     [SerializeField] int healthHeavy = 14;   
     [SerializeField] int tests; 
@@ -46,6 +46,7 @@ public class DebugWeaponTester : MonoBehaviour
             int lightdefense = 0;
             int heavydefense = 0;
             
+            /*
 
             // roll attack/defend dice
             for(int j = 0; j < attackDice; j++)
@@ -69,13 +70,14 @@ public class DebugWeaponTester : MonoBehaviour
                     lightdefense++;
                 }
             }
+            */
 
             // roll damage;
             int damageRoll = Random.Range(1,1 + weaponDice) + weaponDamage;
 
 
             // hits light target
-            if(hits > lightdefense)
+            //if(hits > lightdefense)
             {
                 lightHits++;
                 damageLight += damageRoll;

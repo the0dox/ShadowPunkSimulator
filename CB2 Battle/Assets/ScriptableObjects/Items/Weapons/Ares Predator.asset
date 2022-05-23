@@ -25,15 +25,15 @@ MonoBehaviour:
   damageBonus: 2
   sizeDice: 4
   rangeClass: {fileID: 11400000, guid: be904d4e9ca9b2f47a8e5caddd4169b9, type: 2}
-  pen: 3
-  SingleShot: 0
-  SemiAuto: 1
-  BurstFire: 1
+  pen: 4
+  SingleShot: 1
+  SemiAuto: 0
+  BurstFire: 0
   FullAuto: 0
   WeaponSkill: {fileID: 11400000, guid: ad37561d6fb94f34d806288ac8864dd5, type: 2}
   WeaponSpecialization: 2
   accuracy: 5
-  clipMax: 15
+  clipMax: 5
   damageType: I
   blast: 0
   AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}

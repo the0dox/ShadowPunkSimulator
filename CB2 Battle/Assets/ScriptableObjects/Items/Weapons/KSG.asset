@@ -22,7 +22,7 @@ MonoBehaviour:
   upgrades: []
   Attributes: []
   damageBonus: 2
-  sizeDice: 6
+  sizeDice: 10
   rangeClass: {fileID: 11400000, guid: 303b3d0ca5f615d4a97d23e2e7094ded, type: 2}
   pen: -4
   SingleShot: 1

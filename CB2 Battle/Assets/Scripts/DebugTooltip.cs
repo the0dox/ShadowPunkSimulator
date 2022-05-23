@@ -75,6 +75,12 @@ public class DebugTooltip : MonoBehaviour
         DestroyMe();
     }
 
+    public void MovementResetButton()
+    {    
+        myStats.ResetMovement();
+        DestroyMe();
+    }
+
     public void StartTurnButton()
     {
         GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().StartTurn(myStats);

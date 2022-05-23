@@ -62,4 +62,5 @@ public enum Condition
     TerrainArmor,
     Momentum,
     AR,
+    Overwatch,
 }

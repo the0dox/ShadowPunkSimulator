@@ -16,6 +16,7 @@ public static class TacticsAttack
     // creates an attacksequence objects that contains a single attack sequence between an attacker and a target
     public static AttackSequence Attack(PlayerStats target, PlayerStats myStats, Weapon w, string type)
     {
+        Debug.Log("attack");
         AttackSequence output = new AttackSequence(target,myStats,w,type,0,false);
 
         int totalModifiers = 0;
@@ -39,27 +40,29 @@ public static class TacticsAttack
             }
         }
 
-        // Save cover 
-        Tile interceptingTile = GetCoverTile(myStats.transform.position, target.transform.position, true);
-        PlayerStats interceptingPlayer = IsDefendedByRook(myStats, target);
-        if(interceptingTile != null)
+        if(target.GetComponent<TacticsMovement>().moving)
         {
-            if(interceptingTile.IsStackedTile())
+            // Save cover 
+            Tile interceptingTile = GetCoverTile(myStats.transform.position, target.transform.position, true);
+            PlayerStats interceptingPlayer = IsDefendedByRook(myStats, target);
+            if(interceptingTile != null)
+            {
+                if(interceptingTile.IsStackedTile())
+                {
+                    output.coverRange = 4;
+                }
+                else
+                {
+                    output.coverRange = 2;
+                }
+                output.interceptingGameobject = interceptingTile.gameObject;
+            }
+            else if(interceptingPlayer != null)
             {
                 output.coverRange = 4;
+                output.interceptingGameobject = interceptingPlayer.gameObject;
             }
-            else
-            {
-                output.coverRange = 2;
-            }
-            output.interceptingGameobject = interceptingTile.gameObject;
         }
-        else if(interceptingPlayer != null)
-        {
-            output.coverRange = 4;
-            output.interceptingGameobject = interceptingPlayer.gameObject;
-        }
-
         RollResult attackRoll = new RollResult(myStats.myData, w, totalModifiers);
         output.attackRoll = attackRoll;
         return output;
@@ -650,6 +653,7 @@ public static class TacticsAttack
         modifiers.Add("direct", GetDirectBonus(thisAttack,type));
         modifiers.Add("flanking",GetFlankingPenalty(thisAttack,type));
         modifiers.Add("Momentum", GetMomentumPenalty(thisAttack, type));
+        modifiers.Add("Overwatch", GetOverwatchPenalty(thisAttack,type));
         return modifiers;
     }
 
@@ -812,7 +816,7 @@ public static class TacticsAttack
     {
         if(!attack && thisAttack.target.hasCondition(Condition.FullDefense))
         {
-            return thisAttack.target.myData.GetAttribute(AttributeKey.Willpower);
+            return thisAttack.target.myData.GetAttribute(AttributeKey.Body);
         }
         return 0;
     }
@@ -882,6 +886,15 @@ public static class TacticsAttack
         if(!attack && thisAttack.target.hasCondition(Condition.Momentum))
         {
             return 4;
+        }
+        return 0;
+    }
+
+    private static int GetOverwatchPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.hasCondition(Condition.Overwatch))
+        {
+            return -2;
         }
         return 0;
     }

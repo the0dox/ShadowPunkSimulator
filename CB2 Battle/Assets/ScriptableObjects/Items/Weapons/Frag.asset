@@ -34,7 +34,7 @@ MonoBehaviour:
   accuracy: 0
   clipMax: 0
   damageType: 
-  blast: 5
+  blast: 3
   AmmoSource: {fileID: 11400000}
   clipType: 0
   weaponClass: 2

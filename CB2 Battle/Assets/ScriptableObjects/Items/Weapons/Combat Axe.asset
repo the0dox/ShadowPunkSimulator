@@ -21,8 +21,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 44217e1759eab0c4f929e9d56d9b3846, type: 3}
   upgrades: []
   Attributes: []
-  diceSize: 2
   damageBonus: 0
+  sizeDice: 8
   rangeClass: {fileID: 11400000, guid: aa38a9dfa4bbabc42a4e7f4313df4148, type: 2}
   pen: 4
   SingleShot: 0
@@ -30,8 +30,8 @@ MonoBehaviour:
   BurstFire: 0
   FullAuto: 0
   WeaponSkill: {fileID: 11400000, guid: db421b279dacfda428b1a3d1be678922, type: 2}
-  WeaponSpecialization: 0
-  accuracy: 0
+  WeaponSpecialization: 1
+  accuracy: 4
   clipMax: 0
   damageType: 
   blast: 0

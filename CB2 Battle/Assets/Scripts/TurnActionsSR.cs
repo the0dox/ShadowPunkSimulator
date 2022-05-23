@@ -612,7 +612,7 @@ public class TurnActionsSR : UIButtonManager
         {
             UIPlayerInfo.UpdateCustomCommand("Select attack target");
             Weapon SpellAttack = (Weapon)ItemReference.GetItem("TerrainLob");
-            SpellAttack.SetAP(Mathf.FloorToInt(numTiles/2f));
+            SpellAttack.SetAP(numTiles);
             SpellAttack.SetDamage(numTiles);
             ActiveWeapon = SpellAttack;
             ClearTiles();

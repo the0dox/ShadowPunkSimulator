@@ -22,8 +22,8 @@ MonoBehaviour:
   icon: {fileID: 21300000, guid: 3243b6e208486c54999d9a2a7f01dff2, type: 3}
   upgrades: []
   Attributes: []
-  damageBonus: 5
-  sizeDice: 1
+  damageBonus: 4
+  sizeDice: 4
   rangeClass: {fileID: 11400000, guid: e33545b1087e3124ba75d142e868731c, type: 2}
   pen: 0
   SingleShot: 0
@@ -34,7 +34,7 @@ MonoBehaviour:
   WeaponSpecialization: 1
   accuracy: 5
   clipMax: 6
-  damageType: P
+  damageType: 
   blast: 0
   AmmoSource: {fileID: 11400000, guid: 1400f92434133f843b54f2e64e562195, type: 2}
   clipType: 5

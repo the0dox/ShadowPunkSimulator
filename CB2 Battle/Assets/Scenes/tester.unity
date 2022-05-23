@@ -156,7 +156,7 @@ MonoBehaviour:
   defenseDiceHigh: 6
   defenseDiceLight: 14
   armorlight: 0
-  armorHeavh: 3
+  armorHeavh: 4
   healthlight: 10
   healthHeavy: 14
   tests: 20

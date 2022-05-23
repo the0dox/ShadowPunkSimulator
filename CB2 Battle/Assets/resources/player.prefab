@@ -956,8 +956,6 @@ MonoBehaviour:
     team: 0
     playername: 
     Model: 
-    equipment: []
-    equipmentSize: 
     equipmentCode: []
     isMinion: 0
     ownerID: 0
