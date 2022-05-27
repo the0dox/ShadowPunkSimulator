@@ -17,8 +17,12 @@ MonoBehaviour:
   derivedAttribute: 12
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: "Negotiation represents your ability to charm their way through social
+    encounters. Negotiation can be used to improve an NPC\u2019s attitude towards
+    you by one step, potentially allowing you to ask for favors, information, or
+    extra pay. The threshold of negation tests can be lowered by using the information
+    you have on an NPC, such as playing to their desires or fears. "
+  limit: 25
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

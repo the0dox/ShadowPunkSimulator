@@ -17,8 +17,13 @@ MonoBehaviour:
   derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: 'Sneaking represents your character''s aptitude for evading detection.
+    A character can make sneaking checks as a half action during combat or at GM
+    discretion outside of combat. Sneaking cannot be attempted when an enemy has
+    any form of line of sight on you. When you attempt to move through the detection
+    radius of an enemy, they must make a perception check with a threshold equal
+    to your hits on the stealth roll in order to detect you. '
+  limit: 24
   Specializations: []
-  DroneEquivalent: 0
-  DroneAttributeEquivalent: 0
+  DroneEquivalent: 93
+  DroneAttributeEquivalent: 79

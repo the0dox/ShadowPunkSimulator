@@ -17,7 +17,9 @@ MonoBehaviour:
   derivedAttribute: 10
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: 'Artisan represents your character''s ability to craft things. A character
+    can use Artisan to craft anything from weapons to simple electronics. Artisan
+    is also used for certain magic aspects like Industrialism '
   limit: 23
   Specializations: []
   DroneEquivalent: 0

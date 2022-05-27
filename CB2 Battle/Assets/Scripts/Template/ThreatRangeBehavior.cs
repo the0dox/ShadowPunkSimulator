@@ -204,7 +204,7 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
         }
         else
         {
-            Destroy(gameObject);
+            gameObject.SetActive(false);
         }
     }
 

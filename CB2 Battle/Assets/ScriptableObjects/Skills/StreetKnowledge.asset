@@ -17,8 +17,11 @@ MonoBehaviour:
   derivedAttribute: 10
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: 'Street Knowledge represents the whispers and rumors your character
+    may have picked up on during their time on the streets. Street knowledge can
+    be used to recall the location of the cheapest night markets, or the names of
+    the most notorious gang members in Emerald City. '
+  limit: 23
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

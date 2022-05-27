@@ -59,17 +59,24 @@ public class BoardBehavior : MonoBehaviour
         return ClosestPos;
     }
 
-    // returns true if there is an empty tile in the direction dir relative to parent position
+    // returns true if there is an valid tile in the direction dir relative to parent position
     public static bool ValidNeighbor(Vector3 parent, Vector3 dir)
     {
         Vector3 newPos = parent + dir;
+        // return false if tile doesn't exist
         if(!Tiles.ContainsKey(newPos))
         {
             return false;
         }
+        // return false if tile has another tile stacked on top of it
         if(Tiles.ContainsKey(newPos + Vector3.up))
         {
             return false;
+        }
+        // return false if direction is diagonal and both paths to that tile are blocked
+        if(dir.x != 0 && dir.z != 0)
+        {
+            return (ValidNeighbor(parent,new Vector3(dir.x,0,0)) || ValidNeighbor(parent, new Vector3(0,0,dir.z)));
         }
         return true;
     }

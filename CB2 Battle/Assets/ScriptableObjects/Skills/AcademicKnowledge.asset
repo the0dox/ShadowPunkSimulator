@@ -18,7 +18,7 @@ MonoBehaviour:
   visible: 1
   Descriptor: []
   displayText: This represents any academic knowlege a runner may have picked up
-    in their background
+    in their background. Examples include History, Scientific Facts, or Mathematics.
   limit: 23
   Specializations: []
   DroneEquivalent: 0

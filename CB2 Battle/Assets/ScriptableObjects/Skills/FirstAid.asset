@@ -17,7 +17,10 @@ MonoBehaviour:
   derivedAttribute: 10
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: First Aid represents your character's medical knowledge. Without any
+    items, first Aid can only be used to stabilize a character with the dying condition
+    as a full action. But with medkits, first aid can be used to heal wounds. Critical
+    injuries cannot be healed with First Aid.
   limit: 23
   Specializations: []
   DroneEquivalent: 97

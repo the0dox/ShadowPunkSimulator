@@ -17,7 +17,11 @@ MonoBehaviour:
   derivedAttribute: 12
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: "Disguise represents your character\u2019s ability to perform social
+    stealth. Disguise can be used to impersonate a specific person, or just hide
+    your current identity. The difficulty of a disguise check is contextual to what
+    you are attempting to evade. It's easier to blend into a crowd than pose as the
+    administrative commissioner of Emerald City"
   limit: 25
   Specializations: []
   DroneEquivalent: 0

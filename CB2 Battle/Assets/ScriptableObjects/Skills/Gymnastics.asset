@@ -17,7 +17,10 @@ MonoBehaviour:
   derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: 'Gymnastics is a vital combat skill for agile runners. Gymnastics
+    is used for performing acrobatic feats like climbing across a scaffolding during
+    a firefight. Most importantly however, Gymnastics can be added to a defense test
+    by using the dodge reaction. '
   limit: 24
   Specializations: []
   DroneEquivalent: 0

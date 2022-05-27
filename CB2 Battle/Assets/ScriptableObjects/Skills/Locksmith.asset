@@ -18,7 +18,7 @@ MonoBehaviour:
   visible: 1
   Descriptor: []
   displayText: 
-  limit: 0
+  limit: 24
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

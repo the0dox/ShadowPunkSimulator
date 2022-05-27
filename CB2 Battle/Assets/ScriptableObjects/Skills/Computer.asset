@@ -17,7 +17,9 @@ MonoBehaviour:
   derivedAttribute: 10
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: "Computers represents your character\u2019s knowledge of computing.
+    Computers can be used to navigate net architecture or even perform cyberwarfare.
+    Computers is the primary skill employed by netrunners whilst hacking. "
   limit: 23
   Specializations: []
   DroneEquivalent: 97

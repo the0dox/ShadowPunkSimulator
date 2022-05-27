@@ -222,7 +222,7 @@ public class Weapon : Item
             case "SA":
             return "SAB";
             case "BF":
-            return "LF";
+            return "LB";
             case "FA":
             return "FAB";
         }
@@ -546,7 +546,7 @@ public class Weapon : Item
         
         tooltip += "\nRequired Skill: " + Template.WeaponSkill.name;
         tooltip += "\nSpecialization: " + Template.WeaponSkill.Specializations.ToArray()[Template.WeaponSpecialization];
-        tooltip += "\nAccuracy" + Template.accuracy;
+        tooltip += "\nAccuracy: " + Template.accuracy;
         tooltip += "\nArmor Penetration: " + Template.pen;
 
         if(IsWeaponClass(WeaponClass.melee))
@@ -560,9 +560,9 @@ public class Weapon : Item
         {
             tooltip += "\nReload: " + ReloadString();
             tooltip += "\nRate of Fire: " + ROFtoString(); 
-            tooltip += "\nClip: " + clip + "/" + clipMax;
-            if(AmmoSource != null)
+            if(AmmoSource != null && !AmmoSource.Equals(Template))
             {
+                tooltip += "\nClip: " + clip + "/" + clipMax;
                 tooltip += "\nAmmo type: " + AmmoSource.name;
             }
         }

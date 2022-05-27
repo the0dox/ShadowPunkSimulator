@@ -17,7 +17,9 @@ MonoBehaviour:
   derivedAttribute: 10
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: "Arcane represents your character\u2019s familiarity with the mystic
+    arts. Arcane can be used to sense the presence of magic or recall information
+    about the second world and its inhabitants. "
   limit: 23
   Specializations: []
   DroneEquivalent: 0

@@ -855,6 +855,7 @@ public class TurnActionsSR : UIButtonManager
     
     public void BlastAttack()
     {
+        UIPlayerInfo.UpdateCustomCommand("Select Blast Zone");
         currentAction = "ThreatRange";
         CreateThreatRange("Blast");
         ActivePlayer.GetValidAttackTargets(ActiveWeapon);
@@ -1167,15 +1168,19 @@ public class TurnActionsSR : UIButtonManager
         CurrentAttack.target.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
         CombatLog.Log(CurrentAttack.target.GetName() + " has to react against an incoming attack!");
         List<string> l = new List<string>();
-        l.Add("TotalDefense");
-        l.Add("Dodge");
-        if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
+        //minions don't get reactions
+        if(!CurrentAttack.target.myData.isMinion)
         {
-            if(CurrentAttack.target.CanParry())
+            l.Add("TotalDefense");
+            l.Add("Dodge");
+            if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
             {
-                l.Add("Parry");
+                if(CurrentAttack.target.CanParry())
+                {
+                    l.Add("Parry");
+                }
+                l.Add("Block");
             }
-            l.Add("Block");
         }
         l.Add("NoReaction");
         ConstructActions(l);

@@ -40,7 +40,7 @@ public static class TacticsAttack
             }
         }
 
-        if(target.GetComponent<TacticsMovement>().moving)
+        if(!myStats.hasCondition(Condition.Overwatch))
         {
             // Save cover 
             Tile interceptingTile = GetCoverTile(myStats.transform.position, target.transform.position, true);
@@ -653,7 +653,7 @@ public static class TacticsAttack
         modifiers.Add("direct", GetDirectBonus(thisAttack,type));
         modifiers.Add("flanking",GetFlankingPenalty(thisAttack,type));
         modifiers.Add("Momentum", GetMomentumPenalty(thisAttack, type));
-        modifiers.Add("Overwatch", GetOverwatchPenalty(thisAttack,type));
+        //modifiers.Add("Overwatch", GetOverwatchPenalty(thisAttack,type));
         return modifiers;
     }
 

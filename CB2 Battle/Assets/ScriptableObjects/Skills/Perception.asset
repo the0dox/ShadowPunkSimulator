@@ -17,8 +17,12 @@ MonoBehaviour:
   derivedAttribute: 11
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: 'Perception represents your character''s capacity to perceive the
+    physical world around them. Perception is used to view relevant details in your
+    environment. The threshold of perception checks can be lowered if a player specifies
+    what they are looking for. Perception can never be used to view entities on the
+    Astral Plane or in the Net. '
+  limit: 23
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

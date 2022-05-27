@@ -17,8 +17,10 @@ MonoBehaviour:
   derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: "Palming represents your character\u2019s nimbleness with their hands.
+    Palming can be used to hide items on one\u2019s person, steal items off of another
+    person without them knowing, or even picking traditional locks."
+  limit: 24
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

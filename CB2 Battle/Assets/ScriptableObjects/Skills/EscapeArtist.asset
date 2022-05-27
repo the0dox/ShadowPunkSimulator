@@ -17,8 +17,11 @@ MonoBehaviour:
   derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 'Escape Artist '
+  displayText: 'The Escape Artist skill represents your character''s flexibility.
+    Escape Artist can be used to escape the restrained condition as a full action,
+    with a threshold dependent on the nature of the restraints placed on the character.
+    Escape Artist can also be used to squeeze into tight places like vents. '
   limit: 24
   Specializations: []
-  DroneEquivalent: 0
-  DroneAttributeEquivalent: 0
+  DroneEquivalent: 93
+  DroneAttributeEquivalent: 79

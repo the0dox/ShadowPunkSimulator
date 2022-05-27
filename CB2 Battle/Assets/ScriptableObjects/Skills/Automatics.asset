@@ -17,7 +17,9 @@ MonoBehaviour:
   derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: "Automatics represents your character\u2019s skill with automatic
+    firearms. This skill only encompasses the submachine gun, automatic rifle, and
+    machine pistol weapon types. Light machine guns are a separate weapon category."
   limit: 0
   Specializations:
   - Assault Rifles

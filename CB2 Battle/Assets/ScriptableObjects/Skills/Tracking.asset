@@ -17,8 +17,11 @@ MonoBehaviour:
   derivedAttribute: 11
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: " Tracking represents your character\u2019s capacity to locate objects
+    or people based on clues in your environment. Tracking can be used to investigate
+    clues and judge who or what caused them. The threshold for tracking is lowered
+    if the player specifies what they are looking for. "
+  limit: 23
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

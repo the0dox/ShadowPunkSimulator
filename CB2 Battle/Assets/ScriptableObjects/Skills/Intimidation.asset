@@ -17,7 +17,10 @@ MonoBehaviour:
   derivedAttribute: 12
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: "Intimidation represents your character\u2019s ability to demoralize
+    their enemies both in and out of combat. Successfully intimidating a target will
+    grant extra information at GM discretion but lowers the opinion of the NPC by
+    one step. "
   limit: 25
   Specializations: []
   DroneEquivalent: 0

@@ -17,8 +17,10 @@ MonoBehaviour:
   derivedAttribute: 6
   visible: 1
   Descriptor: []
-  displayText: 
-  limit: 0
+  displayText: "Unarmed Combat represents your character\u2019s skill with the martial
+    arts. Attacks made without a weapon use unarmed combat. In addition, unarmed
+    combat can also be used to block incoming melee attacks.  "
+  limit: 24
   Specializations: []
   DroneEquivalent: 0
   DroneAttributeEquivalent: 0

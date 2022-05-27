@@ -14,10 +14,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 51
-  derivedAttribute: 7
+  derivedAttribute: 8
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: "Diving represents your character\u2019s aptitude for traversing underwater.
+    Characters are assumed to be able to swim in stable bodies of water, but a diving
+    check might be called by the GM when swimming under harsh conditions or for extended
+    periods of time. "
   limit: 24
   Specializations: []
   DroneEquivalent: 93
