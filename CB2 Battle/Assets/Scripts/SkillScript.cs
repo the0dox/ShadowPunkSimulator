@@ -16,7 +16,7 @@ public class SkillScript : MonoBehaviour
     public GameObject ButtonText; 
 
     public void Start()
-    {
+    { 
         transform.localScale = Vector3.one;
     }
 

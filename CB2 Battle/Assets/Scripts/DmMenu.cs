@@ -141,6 +141,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
         CameraButtons.UIFreeze(!DisplayInstance.activeInHierarchy);
         DisplayInstance.SetActive(!DisplayInstance.activeInHierarchy);
         PlayerScreenInstance.SetActive(false);
+        TurnManager.DebugTooltipToggle();
     }
 
     public void CreateCharacter()

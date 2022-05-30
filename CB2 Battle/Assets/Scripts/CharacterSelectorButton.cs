@@ -27,9 +27,8 @@ public class CharacterSelectorButton : MonoBehaviour
     private int ModelButtonXDisplacement = -67;
     private int ModelButtonYDisplacement = -20;
 
-    // To implement: choose spawning location
     // Spawning location 
-    private Vector3 spawningPos = new Vector3(-0.5f,0,0);
+    private Vector3 spawningPos = new Vector3(0,50f,0);
 
     // input: the save data this object will hold
     // called by DM menu when this object is created, saves its value to this object
@@ -71,7 +70,7 @@ public class CharacterSelectorButton : MonoBehaviour
     public void Edit()
     {
         DmMenu.DMDisplay(myData);
-        OnButtonPressed();
+        DmMenu.Toggle();
     }
 
     // creates a map token and downloads savedata into that token

@@ -13,6 +13,7 @@ public class TurnManager : TurnActionsSR
     private bool gameStart = false;
     public InitativeTrackerScript It;
     public static TurnManager instance;
+    public static DebugTooltip DebugTooltip;
     
     SortedList<float, PlayerStats> IntiativeActiveActors = new SortedList<float, PlayerStats>(); 
     SortedList<float, PlayerStats> IntiativeFinishedActors = new SortedList<float, PlayerStats>(); 
@@ -106,7 +107,8 @@ public class TurnManager : TurnActionsSR
                             GameObject DBT = Instantiate(DebugToolTipReference) as GameObject;
                             DBT.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
                             DBT.transform.position = Input.mousePosition;
-                            DBT.GetComponent<DebugTooltip>().UpdateStatIn(hit.collider.GetComponent<PlayerStats>());
+                            DebugTooltip = DBT.GetComponent<DebugTooltip>();
+                            DebugTooltip.UpdateStatIn(hit.collider.GetComponent<PlayerStats>());
                         }
                     break;
                     default:
@@ -339,7 +341,7 @@ public class TurnManager : TurnActionsSR
         }
         else
         {
-            Debug.LogError("Error: player not present in initative order!");
+            Debug.LogWarning("Error: player not present in initative order!");
         }
         PrintInitiative();   
     }
@@ -637,6 +639,31 @@ public class TurnManager : TurnActionsSR
         }
     }
 
+    public void PlacePlayer(GameObject newPlayer)
+    {
+        if(newPlayer != null)
+        {
+            Cancel();
+            ClearActions();
+            UIPlayerInfo.UpdateCustomCommand("Placing new token");
+            StartCoroutine(PlacePlayer_Delay(newPlayer));
+        }
+    }
+
+    IEnumerator PlacePlayer_Delay(GameObject newPlayer)
+    {
+        currentAction = "SelectLocation";
+        while(multipleTargets.Count == 0)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        Vector3 spawnPosition = multipleTargets[0].transform.position + new Vector3(0, 1.5f, 0);
+        newPlayer.transform.position = spawnPosition;
+        AddPlayer(newPlayer);
+        Cancel();
+        PrintInitiative();
+    }
+
     public void AddPlayer(GameObject newPlayer)
     {
         PlayerStats newps = newPlayer.GetComponent<PlayerStats>();
@@ -657,6 +684,7 @@ public class TurnManager : TurnActionsSR
 
     public void RemovePlayer(GameObject Player)
     {
+        Cancel();
         PlayerStats removedPlayer = Player.GetComponent<PlayerStats>();
         if(IntiativeActiveActors.Count == 1)
         {
@@ -751,6 +779,14 @@ public class TurnManager : TurnActionsSR
         else
         {
             StartTurn(ActiveDrone.droneMinion);
+        }
+    }
+
+    public static void DebugTooltipToggle()
+    {
+        if(DebugTooltip != null)
+        {
+            Destroy(DebugTooltip.gameObject);
         }
     }
 }

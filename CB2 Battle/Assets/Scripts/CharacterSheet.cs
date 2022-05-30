@@ -14,7 +14,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     // equipment page reference
     [SerializeField] private GameObject page2;
     // reference for editing savedata
-    private static CharacterSaveData ActivePlayer; 
+    private CharacterSaveData ActivePlayer; 
     // an indvidual field for displaying weapon stats
     [SerializeField] private GameObject WeaponDisplay;
     // unique inputfield that saves the players name
@@ -268,12 +268,12 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         Talent Talent = TalentReference.GetTalent((TalentKey)key);
         if(ActivePlayer.hasTalent(Talent.key))
         {
-            Debug.Log("removing talent");
+            //Debug.Log("removing talent");
             ActivePlayer.SetTalent(Talent.key, false);
         }
         else if(Talent.CanSelect(ActivePlayer))
         {
-            Debug.Log("adding talent");
+            //Debug.Log("adding talent");
             ActivePlayer.SetTalent(Talent.key, true);
         }
         TalentAdder.OnValueChanged();
@@ -359,7 +359,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         ActivePlayer = new CharacterSaveData(name, characteristics, specalizations, equipment,newTalents);
         if(newNPCHealth >= 0)
         {
-            Debug.Log("Unique npc health" + newNPCHealth);
+            //Debug.Log("Unique npc health" + newNPCHealth);
             NPCHealth = newNPCHealth;
         }
         UpdateStatsIn();
@@ -396,7 +396,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
         // if neither is active, then close
         if(!MasterActive && !ClientActive)
         {
-            Debug.Log("no one is active on sheet, deleting");
+            //Debug.Log("no one is active on sheet, deleting");
             UpdateStatsOut();
         }
     }

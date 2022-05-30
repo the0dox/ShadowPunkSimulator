@@ -111,10 +111,11 @@ public class SkillPromptBehavior : MonoBehaviour
         
         LimitDD.ClearOptions();
         List<Dropdown.OptionData> results = new List<Dropdown.OptionData>();
-        Dropdown.OptionData baseResponse = new Dropdown.OptionData();
         if(currentRoll.useWeapon)
         {
+            Dropdown.OptionData baseResponse = new Dropdown.OptionData();
             baseResponse.text = "Weapon Accuracy";
+            results.Add(baseResponse);
             LimitDD.interactable = false;
         }
         else
@@ -125,8 +126,9 @@ public class SkillPromptBehavior : MonoBehaviour
                 NewData.text = Key.ToString();
                 results.Add(NewData);
             }
-            AttributeDD.AddOptions(results);
-            AttributeDD.value = (int)currentRoll.secondField;
+            LimitDD.AddOptions(results);
+            LimitDD.value = (int)currentRoll.LimitKey;
+            LimitDD.interactable = true;
         }
         LimitDD.AddOptions(results);
     }
