@@ -385,11 +385,11 @@ public class TurnManager : TurnActionsSR
     //sorts initative order at the start of the new round. Rounds are larger than passes 
     public void StartNewRound()
     {
-        CombatLog.Log("New Round");
         gameStart = true;
         //InitativeOrder.Clear();
         IntiativeActiveActors.Clear(); 
         IntiativeFinishedActors.Clear();
+        It.UpdateRound();
 
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
         
@@ -514,7 +514,7 @@ public class TurnManager : TurnActionsSR
             {
                 entries.Add(outputStack.Pop());
             }
-            entries.Add("-----inactive-----");
+            entries.Add("!inactive");
             foreach(KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors)
             {  
                 outputStack.Push(kvp.Value.GetName() + ": " + Mathf.FloorToInt(kvp.Key));

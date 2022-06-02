@@ -56,13 +56,14 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         SetID(ID);
         if(pv.IsMine)
         {
-            pv.RPC("RPC_Init",RpcTarget.Others, myData.team, myData.Model, ID, ownerID);
+            pv.RPC("RPC_Init",RpcTarget.Others, myData.playername, myData.team, myData.Model, ID, ownerID);
         }
+        GetComponent<TooltipTrigger>().header = myData.playername;
         OnDownload();
     }
 
     [PunRPC]
-    void RPC_Init(int team, string model, int ID, int ownerID)
+    void RPC_Init(string playername, int team, string model, int ID, int ownerID)
     {
         NPCHealth = 0;
         NPCStun = 0;
@@ -84,6 +85,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         PlayerSpawner.ClientUpdateIDs(this);
         GetComponentInChildren<MeshFilter>().mesh = PlayerSpawner.GetPlayers()[model];
         DefaultColor = GetComponentInChildren<MeshRenderer>().material;
+        GetComponent<TooltipTrigger>().header = playername;
     }    
 
     public void OnDownload()

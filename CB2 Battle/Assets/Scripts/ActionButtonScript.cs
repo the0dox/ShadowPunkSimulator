@@ -18,7 +18,7 @@ public class ActionButtonScript : MonoBehaviour
     void Awake()
     {
         transform.SetParent(UIActionbar.current.transform);
-        transform.localScale = Vector3.one;
+        transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
     }
 
     // Called by whatevered instantiated the button to set its saved string and display name

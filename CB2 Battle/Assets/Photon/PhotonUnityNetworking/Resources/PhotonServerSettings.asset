@@ -124,6 +124,7 @@ MonoBehaviour:
   - RPC_UpdatedItemClient
   - RPC_UpdatedItemMaster
   - RPC_ChangeSpecialization
+  - RPC_UpdateRound
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

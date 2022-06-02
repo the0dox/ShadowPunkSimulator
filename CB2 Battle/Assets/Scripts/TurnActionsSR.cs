@@ -1256,20 +1256,16 @@ public class TurnActionsSR : UIButtonManager
     public void PushToolTips()
     {
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        Dictionary<Vector3, List<string>> output = new Dictionary<Vector3, List<string>>();
+        Dictionary<int, List<string>> output = new Dictionary<int, List<string>>();
         foreach(GameObject g in players)
         {
             PlayerStats selectedPlayer = g.GetComponent<PlayerStats>();
+            List<string> currentTooltip = new List<string>();
             if(currentAction.Equals("Attack"))
             {
-                output.Add(g.transform.position, TacticsAttack.GenerateTooltip(selectedPlayer,ActivePlayerStats,ActiveWeapon,FireRate));
+                currentTooltip = TacticsAttack.GenerateTooltip(selectedPlayer,ActivePlayerStats,ActiveWeapon,FireRate);
             }
-            else
-            {
-                List<string> currentTooltip = new List<string>();
-                currentTooltip.Add(selectedPlayer.ToString());
-                output.Add(g.transform.position, currentTooltip);   
-            }
+            output.Add(selectedPlayer.GetID(), currentTooltip); 
         }
         TooltipBehavior.UpdateToolTips(output);
     }

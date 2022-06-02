@@ -26,4 +26,9 @@ public class TooltipSystem : MonoBehaviour
     {
         current.tooltip.gameObject.SetActive(false);
     }
+
+    public static bool active()
+    {
+        return current.tooltip.gameObject.activeInHierarchy;
+    }
 }

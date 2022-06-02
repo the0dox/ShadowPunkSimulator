@@ -20,6 +20,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
     private Vector3 previousPosition = new Vector3();
     private float distance;
     public static TokenDragBehavior instance;
+    private bool displayWarning = false;
 
     void Awake()
     {
@@ -35,6 +36,7 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         }       
     }
 
+    // Master uses this to disable movement of any tokens
     public static void ToggleMovement(bool allow)
     {
         instance.pv.RPC("RPC_ToggleMovement",RpcTarget.All,allow ? 1:0);
@@ -90,11 +92,14 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
         {
             
             ClearPreviousPath();
-            
+
+            string header = "";
+            string content = "";
+
             if(next.parent != null)
             {
                 distance = Mathf.CeilToInt(next.distance);
-                TooltipSystem.show("     " + distance + " MP", "");
+                header = "     " + distance + "m";
                 while (next != null)
                 {
                     //add current tile to pathing and move on to the next
@@ -106,8 +111,15 @@ public class TokenDragBehavior : MonoBehaviourPunCallbacks
             else
             {
                 distance = 0;
-                TooltipSystem.show("Invalid move!", "");
+                header = "Invalid Move!";
             }         
+
+            // if I've already spent an action this turn, tell player they are infringing game rules
+            if(displayWarning)
+            {
+                content = "!action already spent";
+            }
+            TooltipSystem.show(header, content);
         }
         previousPosition = startingPos;
     }
