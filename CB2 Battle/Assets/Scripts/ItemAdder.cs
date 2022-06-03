@@ -124,6 +124,7 @@ public class ItemAdder : MonoBehaviour
         foreach(string itemKey in ItemReference.ItemTemplates().Keys)
         {
             GameObject newButton = Instantiate(SButton as GameObject);
+            newButton.SetActive(true);
             newButton.name = itemKey; 
             newButton.GetComponentInChildren<Text>().text = itemKey;
             newButton.transform.SetParent(SAdderContent);

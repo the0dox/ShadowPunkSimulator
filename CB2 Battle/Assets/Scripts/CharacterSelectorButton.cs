@@ -17,17 +17,15 @@ public class CharacterSelectorButton : MonoBehaviour
     [SerializeField] private GameObject CharacterSheet;
     // Window to display model options
     [SerializeField] private GameObject ModelDisplay;
+    [SerializeField] private RectTransform ModelDisplayContent;
     // Button Reference to display model options
     [SerializeField] private GameObject ActionButton;
+    // Index used for client side communication
     private int index;
+    // client side buttons don't have the full functionality and are marked as dummy
     bool isDummy = false;
 
-    private float ModelButtonStartingX = 100.5f;
-    private int ModelButtonStartingY = 40;
-    private int ModelButtonXDisplacement = -67;
-    private int ModelButtonYDisplacement = -20;
-
-    // Spawning location 
+    // Spawning location off camera to give the player the oppertunity to place the character
     private Vector3 spawningPos = new Vector3(0,50f,0);
 
     // input: the save data this object will hold
@@ -39,20 +37,11 @@ public class CharacterSelectorButton : MonoBehaviour
         myData = input;
         displayText.text = input.playername;
         Dictionary<string,Mesh> models = PlayerSpawner.GetPlayers();
-        float CurrentX = ModelButtonStartingX;
-        int CurrentY = ModelButtonStartingY;
         foreach(string s in models.Keys)
         {
             GameObject newButton = Instantiate(ActionButton) as GameObject;
             newButton.GetComponent<ModelButton>().SetData(s,myData,this);
-            newButton.transform.SetParent(ModelDisplay.transform);
-            if(CurrentX < -110)
-            {
-                CurrentX = ModelButtonStartingX;
-                CurrentY += ModelButtonYDisplacement;
-            }
-            newButton.transform.localPosition = new Vector3(CurrentX,CurrentY,0);
-            CurrentX += ModelButtonXDisplacement;
+            newButton.transform.SetParent(ModelDisplayContent);
         }
         isDummy = false;
     }

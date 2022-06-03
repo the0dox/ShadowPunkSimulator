@@ -15,7 +15,7 @@ public class SaveSystem : MonoBehaviourPunCallbacks
     {
         if(pv.IsMine)
         {
-            //int index = 0;
+            CreateSaveFile();
             string path = Application.persistentDataPath + "/save_data/characters";
             BinaryFormatter formatter = new BinaryFormatter();
             foreach(string file in  Directory.EnumerateFiles(path))

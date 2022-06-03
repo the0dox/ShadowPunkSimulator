@@ -132,6 +132,7 @@ public class SkillAdder : MonoBehaviour
         foreach(string skillname in SkillReference.SkillsTemplates().Keys)
         {
             GameObject newButton = Instantiate(SButton as GameObject);
+            newButton.SetActive(true);
             newButton.name = skillname; 
             newButton.GetComponentInChildren<Text>().text = skillname;
             newButton.transform.SetParent(SContent);

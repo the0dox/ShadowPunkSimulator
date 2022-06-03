@@ -16,6 +16,7 @@ public class DmMenu : MonoBehaviourPunCallbacks
     [SerializeField] private Text MDRtoggleStatus;
     [SerializeField] private GameObject ClientDisplay;
     [SerializeField] private PhotonView pv;
+    [SerializeField] private RectTransform content;
     private static GameObject DisplayInstance;
     private static GameObject PlayerScreenInstance;
     private List<GameObject> PrevSelectorButtons = new List<GameObject>();
@@ -189,22 +190,13 @@ public class DmMenu : MonoBehaviourPunCallbacks
         {
             Destroy(prevButton);
         }
-        CharacterSelectorPos = new Vector3(250,130,0);
         PlayerScreen.SetActive(true);
         foreach(int key in SavedCharacters.Keys)
         {
             GameObject newButton = Instantiate(SelectorButton) as GameObject;
-            newButton.transform.SetParent(PlayerScreen.transform);
-            newButton.transform.localPosition = CharacterSelectorPos;
+            newButton.transform.SetParent(content);
             newButton.GetComponent<CharacterSelectorButton>().SetData(key, SavedCharacters[key]);
-            newButton.transform.localScale = Vector3.one;
             PrevSelectorButtons.Add(newButton);
-            CharacterSelectorPos -= new Vector3(125,0,0);
-            if(CharacterSelectorPos.x < -250)
-            {
-                CharacterSelectorPos.x = 250;
-                CharacterSelectorPos.y -= 75;
-            }
         }
         
     }
@@ -313,22 +305,13 @@ public class DmMenu : MonoBehaviourPunCallbacks
         {
             Destroy(prevButton);
         }
-        CharacterSelectorPos = new Vector3(250,130,0);
         PlayerScreen.SetActive(true);
         foreach(int index in DummyCharacters.Keys)
         {
             GameObject newButton = Instantiate(SelectorButton) as GameObject;
-            newButton.transform.SetParent(PlayerScreen.transform);
-            newButton.transform.localPosition = CharacterSelectorPos;
+            newButton.transform.SetParent(content);
             newButton.GetComponent<CharacterSelectorButton>().SetDummyData(index, DummyCharacters[index]);
-            newButton.transform.localScale = Vector3.one;
             PrevSelectorButtons.Add(newButton);
-            CharacterSelectorPos -= new Vector3(125,0,0);
-            if(CharacterSelectorPos.x < -250)
-            {
-                CharacterSelectorPos.x = 250;
-                CharacterSelectorPos.y -= 75;
-            }
         }
     }
 
@@ -338,22 +321,14 @@ public class DmMenu : MonoBehaviourPunCallbacks
         {
             Destroy(prevButton);
         }
-        CharacterSelectorPos = new Vector3(250,130,0);
         PlayerScreen.SetActive(true);
         SavedScenes = SaveSystem.LoadScenes();
         foreach(SceneSaveData ssd in SavedScenes)
         {
             GameObject newButton = Instantiate(SceneButton) as GameObject;
-            newButton.transform.SetParent(PlayerScreen.transform);
-            newButton.transform.localPosition = CharacterSelectorPos;
+            newButton.transform.SetParent(content);
             newButton.GetComponent<SceneSelectorButton>().SetData(ssd);
             PrevSelectorButtons.Add(newButton);
-            CharacterSelectorPos -= new Vector3(125,0,0);
-            if(CharacterSelectorPos.x < -250)
-            {
-                CharacterSelectorPos.x = 250;
-                CharacterSelectorPos.y -= 75;
-            }
         }
     }
 

@@ -152,6 +152,7 @@ MonoBehaviour:
   EmptyImage: {fileID: 10917, guid: 0000000000000000f000000000000000, type: 0}
   backgroundImage: {fileID: 1471268883683683702}
   CrossOut: {fileID: 4094824635998045760}
+  Mysheet: {fileID: 0}
 --- !u!114 &2886155179867903502
 MonoBehaviour:
   m_ObjectHideFlags: 0

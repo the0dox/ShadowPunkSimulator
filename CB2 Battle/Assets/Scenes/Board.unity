@@ -269,6 +269,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 21dd8e74e8d4e194cb7b5fcaf2270ab3, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  background: {fileID: 0}
+  textInput: {fileID: 0}
+  TurnMaster: {fileID: 0}
+  myCanvas: {fileID: 0}
   pv: {fileID: 368160594}
 --- !u!1 &491316081
 GameObject:
@@ -1915,6 +1919,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4271897129898102202, guid: 5fc4b0d42525d3a48996ee8c0641854f, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 4271897129921254589, guid: 5fc4b0d42525d3a48996ee8c0641854f, type: 3}
+      propertyPath: m_IsActive
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 4271897130369411396, guid: 5fc4b0d42525d3a48996ee8c0641854f, type: 3}

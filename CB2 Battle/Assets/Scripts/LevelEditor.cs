@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class LevelEditor : UIButtonManager
+public class LevelEditor: MonoBehaviour
 {
     [SerializeField] private GameObject SelectedTile;
     [SerializeField] private GameObject indicator;
@@ -31,12 +31,10 @@ public class LevelEditor : UIButtonManager
     public void ChangeTileTexture(GameObject newTile)
     {
         SelectedTile = newTile;
-        GameObject tempBlock = Instantiate(SelectedTile) as GameObject;
-        Material newMat = tempBlock.GetComponent<MeshRenderer>().material;
+        Material newMat = newTile.GetComponent<MeshRenderer>().sharedMaterial;
         UIDisplay.GetComponent<MeshRenderer>().material = newMat;
         indicator.GetComponent<MeshRenderer>().material = newMat;
         indicator.GetComponent<MeshRenderer>().material.color = new Color(newMat.color.r,newMat.color.b,newMat.color.b,0.5f);
-        Destroy(tempBlock);
     }
 
 
@@ -49,13 +47,9 @@ public class LevelEditor : UIButtonManager
         if (Physics.Raycast(ray, out hit))
         {
             bool hitUi = false;
-            GameObject[] ui = GameObject.FindGameObjectsWithTag("Input");
-            foreach(GameObject g in ui)
+            if(EventSystem.current.IsPointerOverGameObject())
             {
-                if(EventSystem.current.IsPointerOverGameObject())
-                {
-                    hitUi = true;
-                }
+                hitUi = true;
             }
 
             if(!hitUi)
@@ -130,7 +124,7 @@ public class LevelEditor : UIButtonManager
         }
     }
 
-    override public void OnButtonPressed(string input)
+    public void OnButtonPressed(string input)
     {
         ChangeTileTexture(TileReference.Tile(input));
         UITileSelectorRef.Toggle();
