@@ -5,11 +5,11 @@ using UnityEngine.EventSystems;
 
 public class UITileSelector : MonoBehaviour
 {
-    private Vector3 CurrentPos;
     Dictionary<string,GameObject> DisplayTiles = new Dictionary<string, GameObject>();
     [SerializeField] GameObject buttonRef;
     [SerializeField] RectTransform content;
     [SerializeField] LevelEditor levelEditor;
+    public static UITileSelector instance;
 
     void Awake()
     {
@@ -26,6 +26,7 @@ public class UITileSelector : MonoBehaviour
                 button.GetComponent<TileButton>().SetData(DisplayTiles[s].GetComponent<Tile>());
             }
         }
+        instance = this;
         gameObject.SetActive(false);
     }
 
@@ -35,6 +36,7 @@ public class UITileSelector : MonoBehaviour
         if(EventSystem.current.currentSelectedGameObject.TryGetComponent<TileButton>(out button))
         {
             levelEditor.OnButtonPressed(button.GetData());
+            Toggle();
         }
     }
 

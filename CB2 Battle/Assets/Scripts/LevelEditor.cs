@@ -30,6 +30,7 @@ public class LevelEditor: MonoBehaviour
 
     public void ChangeTileTexture(GameObject newTile)
     {
+        UIDisplay.SetActive(true);
         SelectedTile = newTile;
         Material newMat = newTile.GetComponent<MeshRenderer>().sharedMaterial;
         UIDisplay.GetComponent<MeshRenderer>().material = newMat;
@@ -127,7 +128,11 @@ public class LevelEditor: MonoBehaviour
     public void OnButtonPressed(string input)
     {
         ChangeTileTexture(TileReference.Tile(input));
-        UITileSelectorRef.Toggle();
+    }
+
+    public void HideIndicator()
+    {
+        UIDisplay.SetActive(UIDisplay.activeInHierarchy);
     }
 
     private void CreateTile(Vector3 PlacementPos)
@@ -161,7 +166,8 @@ public class LevelEditor: MonoBehaviour
     {
         string name = NameIF.text;
         NameIF.text = null;
-        SceneSaveData newScene = new SceneSaveData(name, TileLocations);
+        Material groundMat = TileGround.GetMaterial();
+        SceneSaveData newScene = new SceneSaveData(name, TileLocations,groundMat);
         SaveSystem.SaveScene(newScene);
         CameraButtons.UIFreeze(false);
     }

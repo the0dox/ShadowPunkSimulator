@@ -24,6 +24,8 @@ public class UITooltipBehavior : MonoBehaviour
     private float canvasscaleY;
     // reference to the offset, offset is calculated once
     private Vector2 mouseOffset;
+    // reference to internal text offset
+    [SerializeField] private VerticalLayoutGroup textOffsetControl;
     
 
     // defined offsets of the tooltip syste 
@@ -59,6 +61,10 @@ public class UITooltipBehavior : MonoBehaviour
         }
         rectTransform.pivot = new Vector2(pivotX,pivotY);
         transform.position = mousepos;
+        float height = rectTransform.sizeDelta.y;
+        Debug.Log("height" + height);
+        textOffsetControl.padding.top = (int)height/10;
+        textOffsetControl.padding.bottom = (int)height/10;
         // check input 
         if(Input.GetMouseButtonUp(0))
         {

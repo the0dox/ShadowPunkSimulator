@@ -15,6 +15,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     [SerializeField] private TalentReference talr;
     [SerializeField] private ActionReference ar;
     [SerializeField] private PlayerSpawner ps;
+    [SerializeField] private MaterialReference mr;
     [SerializeField] private PhotonView pv;
     public static SceneSaveData LoadedScene;
 
@@ -28,7 +29,8 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         tr.Init();
         talr.Init();
         cr.Init();
-        ps.Init();  
+        ps.Init(); 
+        mr.Init(); 
         ar.Init();
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
@@ -60,7 +62,12 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         {
             PhotonNetwork.IsMessageQueueRunning = true;
             Dictionary<string,string> tileLocs = LoadedScene.GetTileLocations();
-            pv.RPC("RPC_LoadTile",RpcTarget.AllBuffered,tileLocs);
+            if(!LoadedScene.isOverworld())
+            {
+                int groundMaterialIndex = LoadedScene.GetGroundMaterialIndex();
+                pv.RPC("RPC_LoadGround", RpcTarget.All, groundMaterialIndex);
+            }
+            pv.RPC("RPC_LoadTile",RpcTarget.All,tileLocs);
             Instance.StartCoroutine(LoadOnStart());
         }
     }
@@ -148,6 +155,14 @@ public class GlobalManager : MonoBehaviourPunCallbacks
             newEntity.transform.position = pos;
         }
         BoardBehavior.Init();
+    }
+
+    [PunRPC]
+    void RPC_LoadGround(int groundMaterialIndex)
+    {
+        Debug.Log("setting ground material at index " + groundMaterialIndex);
+        Material groundMaterial = MaterialReference.GetMaterial(groundMaterialIndex);
+        TileGround.SetMaterial(groundMaterial);
     }
 
     [PunRPC]

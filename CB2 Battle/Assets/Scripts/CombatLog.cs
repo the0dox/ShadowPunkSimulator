@@ -29,8 +29,6 @@ public class CombatLog : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_Log(string text)
     {
-        // create new entry with this text
-        Debug.Log("creating object");
         GameObject newEntry = GameObject.Instantiate(entryReference, Vector3.zero, Quaternion.identity);
         newEntry.GetComponentInChildren<Text>().text = text;
         newEntry.transform.SetParent(content);

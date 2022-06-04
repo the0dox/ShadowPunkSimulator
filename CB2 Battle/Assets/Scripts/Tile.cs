@@ -36,7 +36,10 @@ public class Tile : MonoBehaviour
     void Start()
     {
         MapPosition = transform.position;
-        ScrolledBox.SetActive(false);
+        if(ScrolledBox != null)
+        {
+            ScrolledBox.SetActive(false);      
+        }
     }
     // Update is called once per frame
     public void  UpdateIndictator()
