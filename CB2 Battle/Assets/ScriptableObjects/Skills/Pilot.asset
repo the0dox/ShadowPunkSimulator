@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   defaultable: 1
   skillKey: 79
-  derivedAttribute: 7
+  derivedAttribute: 10
   visible: 1
   Descriptor: []
   displayText: Pilot is the skilled used to drive vehicles. Sim-techs also use this
@@ -22,4 +22,4 @@ MonoBehaviour:
   limit: 0
   Specializations: []
   DroneEquivalent: 98
-  DroneAttributeEquivalent: 58
+  DroneAttributeEquivalent: 10

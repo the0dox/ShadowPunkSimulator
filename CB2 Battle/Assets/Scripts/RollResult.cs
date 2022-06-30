@@ -129,7 +129,7 @@ public class RollResult
             {
                 this.firstField = AttributeKey.DroneHandling;
             }
-            this.secondField = AttributeKey.Pilot;
+            this.secondField = AttributeKey.Logic;
             LimitKey = AttributeKey.DroneRating;
         }
         else

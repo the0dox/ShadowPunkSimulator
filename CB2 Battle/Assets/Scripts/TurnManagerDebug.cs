@@ -259,7 +259,7 @@ public class TurnManagerDebug : TurnManager
         // if someone else is active, end their trun
         if(ActivePlayerStats != null && IntiativeActiveActors.ContainsValue(ActivePlayerStats))
         {
-            ActivePlayerStats.OnTurnEnd();
+            ActivePlayerStats.OnTurnEnd(halfActions);
             float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
             IntiativeFinishedActors.Add(initative,ActivePlayerStats);
             IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(ActivePlayerStats));

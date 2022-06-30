@@ -100,6 +100,12 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         pv.RPC("RPC_SetMove", RpcTarget.All, myData.GetAttribute(AttributeKey.MoveWalk));
     }
 
+    public void DisableHP()
+    {
+        HealthBar.enabled = false;
+        FatigueBar.enabled = false;
+    }
+
     [PunRPC]
     void RPC_SetMove(int remainingMove)
     {
@@ -193,7 +199,32 @@ public class PlayerStats : MonoBehaviourPunCallbacks
             int newStun = myData.GetAttribute(AttributeKey.SDamage) + damage;
             myData.SetAttribute(AttributeKey.SDamage, newStun, true);
         }
-        pv.RPC("RPC_SetSP", RpcTarget.AllBuffered, getStun(), myData.GetAttribute(AttributeKey.StunHealth));  
+        pv.RPC("RPC_SetSP", RpcTarget.All, getStun(), myData.GetAttribute(AttributeKey.StunHealth));  
+    }
+    
+    public void healStress(int damage)
+    {
+        if(!hasCondition(Condition.Winded))
+        {
+            if(team != 0)
+            {
+                NPCStun -= damage;
+                if(NPCStun < 0)
+                {
+                    NPCStun = 0;
+                }
+            }
+            else
+            {
+                int newStun = myData.GetAttribute(AttributeKey.SDamage) - damage;
+                if(newStun < 0)
+                {
+                    newStun = 0;
+                }
+                myData.SetAttribute(AttributeKey.SDamage, newStun, true);
+            }
+        }
+        pv.RPC("RPC_SetSP", RpcTarget.All, getStun(), myData.GetAttribute(AttributeKey.StunHealth));  
     }
 
     public int GetStat(AttributeKey key)
@@ -293,6 +324,15 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public float RollInitaitve()
     {
+        int baseIniative = 0;
+        if(hasCondition(Condition.AR))
+        {
+            baseIniative = myData.GetAttribute(AttributeKey.InitativeMatrix);
+        }
+        else
+        {
+            baseIniative = myData.GetAttribute(AttributeKey.InitativeStandard);
+        }
         int roll = 0;
         int initativeDice = 1;
         // adept talent grants +1 initative dice
@@ -314,7 +354,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {
             roll += Random.Range(1,7);
         }
-        return myData.GetAttribute(AttributeKey.InitativeStandard) + roll;
+        return baseIniative + roll;
     }
 
     public bool HoldingWeaponClass(WeaponClass desiredClass)
@@ -400,7 +440,15 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public bool hasCondition(Condition key)
     {
         ConditionTemplate templateKey = ConditionsReference.GetTemplate(key);
-        return Conditions.ContainsKey(templateKey);
+        if(templateKey != null)
+        {
+            return Conditions.ContainsKey(templateKey);
+        }
+        else
+        {
+            Debug.LogWarning("asking for " + key.ToString() + " condition but this condition is not recognized, has " + key.ToString() + " been added to the libray?");
+            return false;
+        }
     }
     public void RemoveCondition(Condition key)
     {
@@ -523,8 +571,17 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         }
     }
 
-    public void OnTurnEnd()
+    // called in the board scene when a player ends their turn
+    public void OnTurnEnd(int remainingHalfActions)
     {
+        if(remainingHalfActions > 1)
+        {
+            healStress(2);
+        }
+        else if (remainingHalfActions > 0)
+        {
+            healStress(1);
+        }
         List<ConditionTemplate> removedKeys = new List<ConditionTemplate>();
         foreach(ConditionTemplate Key in Conditions.Keys)
         {

@@ -10,5 +10,6 @@ public enum EffectKey
     RookDown,
     RookLeft,
     Armor,
-    Momentum
+    Momentum,
+    targeted
 }

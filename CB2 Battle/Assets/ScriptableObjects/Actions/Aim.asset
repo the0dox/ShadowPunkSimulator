@@ -12,10 +12,10 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
   m_Name: Aim
   m_EditorClassIdentifier: 
-  description: '[1 Half Action]: gain the aim condition.
+  description: '[1 Half Action]: gain the ''aim'' condition.
 
-    Aiming gives your next
-    attack a +1 die bonus. Aiming also resets your recoil (normally recoil resets
+    Aiming gives your
+    next attack a +1 die bonus. Aiming also resets your recoil (normally recoil resets
     at the end of a round).
 
 '

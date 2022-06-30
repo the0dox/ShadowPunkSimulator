@@ -23,5 +23,5 @@ MonoBehaviour:
   - Aerodynamic
   - Blades
   - Non-aerodynamic
-  DroneEquivalent: 0
-  DroneAttributeEquivalent: 0
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 10

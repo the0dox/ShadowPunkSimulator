@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
   m_Name: Total Defense
   m_EditorClassIdentifier: 
-  description: '[-10 initiative]: Add your BOD stat to defense.
+  description: '[-10 initiative]: Add your WIL stat to defense.
 
     This effect
     applies for the rest of the round.'

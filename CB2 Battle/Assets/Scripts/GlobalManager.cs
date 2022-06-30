@@ -62,11 +62,8 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         {
             PhotonNetwork.IsMessageQueueRunning = true;
             Dictionary<string,string> tileLocs = LoadedScene.GetTileLocations();
-            if(!LoadedScene.isOverworld())
-            {
-                int groundMaterialIndex = LoadedScene.GetGroundMaterialIndex();
-                pv.RPC("RPC_LoadGround", RpcTarget.All, groundMaterialIndex);
-            }
+            int groundMaterialIndex = LoadedScene.GetGroundMaterialIndex();
+            pv.RPC("RPC_LoadGround", RpcTarget.All, groundMaterialIndex);
             pv.RPC("RPC_LoadTile",RpcTarget.All,tileLocs);
             Instance.StartCoroutine(LoadOnStart());
         }
@@ -160,7 +157,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_LoadGround(int groundMaterialIndex)
     {
-        Debug.Log("setting ground material at index " + groundMaterialIndex);
+        //Debug.Log("setting ground material at index " + groundMaterialIndex);
         Material groundMaterial = MaterialReference.GetMaterial(groundMaterialIndex);
         TileGround.SetMaterial(groundMaterial);
     }

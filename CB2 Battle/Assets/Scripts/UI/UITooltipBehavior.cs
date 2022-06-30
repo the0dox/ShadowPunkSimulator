@@ -62,7 +62,6 @@ public class UITooltipBehavior : MonoBehaviour
         rectTransform.pivot = new Vector2(pivotX,pivotY);
         transform.position = mousepos;
         float height = rectTransform.sizeDelta.y;
-        Debug.Log("height" + height);
         textOffsetControl.padding.top = (int)height/10;
         textOffsetControl.padding.bottom = (int)height/10;
         // check input 

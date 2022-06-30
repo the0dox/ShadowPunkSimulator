@@ -69,6 +69,11 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
       }
    }
 
+   public Vector3 getCurrentTilePosition()
+   {
+      return GetTargetTile(gameObject).transform.position;
+   }
+
    public void FallingCheck()
    {
       RaycastHit Hit;
@@ -173,6 +178,21 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
       }
    
       StartCoroutine(moveDelay());
+   }
+
+   public void HoldPush(GameObject hitObject)
+   {
+      StartCoroutine(pushDelay(hitObject));
+   }
+
+   IEnumerator pushDelay(GameObject hitObject)
+   {
+      while(moving)
+      {
+         yield return new WaitForSeconds(0.2f);
+      }
+      yield return new WaitForSeconds(0.5f);
+      TacticsAttack.ResolvePush(GetComponent<PlayerStats>(),hitObject);
    }
 
    IEnumerator moveDelay()
@@ -421,5 +441,14 @@ public class TacticsMovement : MonoBehaviourPunCallbacks
          return true;
       }
       return false;
+   }
+
+   public void SetPosition(Vector3 newPosition)
+   {
+      pv.RPC("RPC_Set_Position",RpcTarget.All, newPosition.x, newPosition.y, newPosition.z);
+   }
+   [PunRPC] void RPC_Set_Position(float x, float y, float z)
+   {
+      transform.position = new Vector3( x, y, z);
    }
 }

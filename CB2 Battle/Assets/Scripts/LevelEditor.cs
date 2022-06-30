@@ -158,6 +158,7 @@ public class LevelEditor: MonoBehaviour
     public void AddPlayer(GameObject input)
     {
         input.GetComponent<Collider>().enabled = false;
+        input.GetComponent<PlayerStats>().DisableHP();
         Player = input;
         indicator.SetActive(false);
     }

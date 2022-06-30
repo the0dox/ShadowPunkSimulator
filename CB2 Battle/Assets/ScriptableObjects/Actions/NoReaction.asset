@@ -12,6 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
   m_Name: NoReaction
   m_EditorClassIdentifier: 
-  description: Roll defense with no modifiers or cost
+  description: Roll defense with no modifiers or cost.
   icon: {fileID: 21300000, guid: cdaec390ec41b754492c5a1787a107ab, type: 3}
   code: NoReaction

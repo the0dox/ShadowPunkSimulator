@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   key: 14
   description: Your body can react to stimuli your brain is still processsing. You
-    gain +1 phsyical initative die, allowing you to act quicker and more frequently
+    gain +1 physical initative die, allowing you to act quicker and more frequently
     in combat
   prerequisites: 0c000000
   conflictsWith: 

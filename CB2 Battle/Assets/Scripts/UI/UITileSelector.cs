@@ -3,14 +3,21 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 
+// Tile Selector allows a level creator to change the material type of their blocks
 public class UITileSelector : MonoBehaviour
 {
+    // A dicitionary that ties buttons to individual tile names
     Dictionary<string,GameObject> DisplayTiles = new Dictionary<string, GameObject>();
+    // reference to a simple button
     [SerializeField] GameObject buttonRef;
+    // reference to a content organizer for the display
     [SerializeField] RectTransform content;
+    // reference to the game logic of the leve editor
     [SerializeField] LevelEditor levelEditor;
+    // used to reference tile selector statically, there should never be more than one tile selector
     public static UITileSelector instance;
 
+    // On startup, generate buttons that correspond to each of the known tile types and hides itself
     void Awake()
     {
         DisplayTiles = TileReference.Tiles();
@@ -30,6 +37,7 @@ public class UITileSelector : MonoBehaviour
         gameObject.SetActive(false);
     }
 
+    // When a button is clicked, set level editors current tile texture based on the button clicked
     public void OnClicked()
     {
         TileButton button;
@@ -40,6 +48,7 @@ public class UITileSelector : MonoBehaviour
         }
     }
 
+    // Either enable or disable the UI display
     public void Toggle()
     {
         CameraButtons.UIFreeze(!gameObject.activeInHierarchy);

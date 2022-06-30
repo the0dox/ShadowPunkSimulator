@@ -104,7 +104,9 @@ public static class AttribueReference
     AttributeKey.DroneArmor,
     AttributeKey.DroneSensor,
     AttributeKey.DronePiloting,
-    AttributeKey.DroneRating
+    AttributeKey.DroneRating,
+    AttributeKey.AttributePoints,
+    AttributeKey.SkillPoints,
     };
 
     public static AttributeKey DroneEquivalent(AttributeKey Attribute)
@@ -225,5 +227,7 @@ public enum AttributeKey
     DroneArmor,
     DroneSensor,
     DronePiloting,
-    DroneRating
+    DroneRating,
+    AttributePoints,
+    SkillPoints,
 }

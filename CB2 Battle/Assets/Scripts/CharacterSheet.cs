@@ -46,6 +46,7 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     // Uploading data is different depending on if we are editing save data of a map token
     public void UpdateStatsOut()
     {
+        ActivePlayer.CalculateCharacteristics();
         /* if this is called client side send my changes to the server
         if(!pv.IsMine)
         {

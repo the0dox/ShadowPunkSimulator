@@ -33,6 +33,8 @@ public class LineDragBehavior : MonoBehaviour
     int maxRootDistance = -1;
     // reference to the owners location
     Vector3 ownerLocation;
+    // height of the drag behavior
+    private int height;
     // reference to an indicator for the range 
     [SerializeField] private GameObject rangeIndicator; 
 
@@ -42,17 +44,17 @@ public class LineDragBehavior : MonoBehaviour
     }
 
     // set parameters for a line that originates from the owner
-    public void SetParameters(int maximumLength, Vector3 ownerLocation , bool avoidPlayers, Photon.Realtime.Player owner)
+    public void SetParameters(Photon.Realtime.Player owner, int maximumLength, Vector3 ownerLocation , bool avoidPlayers, int height = 1)
     {
         instance = this;
-        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumLength, false, ownerLocation,  avoidPlayers, -1, owner.ActorNumber);
+        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumLength, false, ownerLocation,  avoidPlayers, -1, owner.ActorNumber, height);
     }
 
     // set parameters for a line that doesnt have a specified root
-    public void SetParameters(int maximumLength, Vector3 ownerLocation , bool avoidPlayers, int maxRootDistance, Photon.Realtime.Player owner)
+    public void SetParameters(Photon.Realtime.Player owner, int maximumLength, Vector3 ownerLocation , bool avoidPlayers, int maxRootDistance, int height)
     {
         instance = this;
-        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumLength, true, ownerLocation,  avoidPlayers, maxRootDistance, owner.ActorNumber);
+        pv.RPC("RPC_SetParameters",RpcTarget.All, maximumLength, true, ownerLocation,  avoidPlayers, maxRootDistance, owner.ActorNumber, height);
     }
 
     // called by turn actions to delete this object
@@ -63,7 +65,7 @@ public class LineDragBehavior : MonoBehaviour
     }
 
     [PunRPC]
-    void RPC_SetParameters(int maximumLength, bool Freeroot, Vector3 ownerLocation, bool avoidPlayers, int maxDistance,int actorID)
+    void RPC_SetParameters(int maximumLength, bool Freeroot, Vector3 ownerLocation, bool avoidPlayers, int maxDistance, int actorID, int height)
     {
         // if this is my player let me control this
         if(PhotonNetwork.LocalPlayer.ActorNumber == actorID || pv.IsMine)
@@ -72,14 +74,17 @@ public class LineDragBehavior : MonoBehaviour
             this.length = maximumLength;
             this.avoidPlayers = avoidPlayers;
             this.maxRootDistance = maxDistance;
-            if(!Freeroot)
-            {
-                SetRoot(ownerLocation,true);
-            }
-            else
+            this.height = height;
+            if(Freeroot)
             {
                 rangeIndicator.SetActive(true);
                 rangeIndicator.transform.localScale = new Vector3((maxDistance*2) + 1f, 2, (maxDistance*2) + 1f);
+            }
+            else
+            {
+                Debug.Log("set root");
+                rangeIndicator.SetActive(false);
+                SetRoot(ownerLocation,true);
             }
         }
         // else hide me
@@ -133,6 +138,16 @@ public class LineDragBehavior : MonoBehaviour
                     FinishedDrag();
                 }
             }
+            // right click will cancel current root
+            else if(Input.GetMouseButtonUp(1))
+            {
+                // can't cancel owner root line behavior
+                if(rootSet && !root.Equals(ownerLocation))
+                {
+                    rootSet = false;
+                    ClearPreviousPath();
+                }
+            }
         }
     }
 
@@ -166,18 +181,6 @@ public class LineDragBehavior : MonoBehaviour
         previousPosition = startingPos;
     }
 
-    // On releasing the mouse button, send the drag position to all clients  
-    private void PlaceToken()
-    {
-        if(myToken != null)
-        {
-            PlayerStats myStats = myToken.GetComponent<PlayerStats>();
-            myToken.GetComponent<TacticsMovement>().PaintCurrentTile("");
-            int id = myStats.GetID();
-            pv.RPC("RPC_PlaceToken", RpcTarget.All, id, myPath.ToArray(), length);
-        }
-    }
-
     // Clears all of the path indicators
     private void ClearPreviousPath()
     {
@@ -192,22 +195,20 @@ public class LineDragBehavior : MonoBehaviour
         myPath.Clear();
     }
 
-    // Places the token in all clients
-    [PunRPC]
-    void RPC_PlaceToken(int tokenID, Vector3[] Path, float distance)
-    {
-        myToken = PlayerSpawner.IDtoPlayer(tokenID).GetComponent<TacticsMovement>();
-        myToken.GetComponent<PlayerStats>().SpendMovement(distance);
-        myToken.moveToTile(Path);
-    }
-
     // On holding the mouse down, save the player and begin dragging them
     private void SetRoot(Vector3 newRoot, bool ownerRoot)
     {
+        if(ownerRoot)
+        {
+            rootSet = true;
+            this.root = ownerLocation;
+            rootTile = BoardBehavior.GetTile(BoardBehavior.GetClosestTile(ownerLocation + Vector3.down)); 
+        }
         // only take in valid locations
-        if(newRoot != Vector3.one)
+        else if(newRoot != Vector3.one)
         {
             Vector3 startingPos = BoardBehavior.GetClosestTile(transform.position);
+            
             // if a maxrootdistance is specified enforce distance
             if(maxRootDistance < 0 || Mathf.FloorToInt(Vector3.Distance(startingPos, ownerLocation)) <= (maxRootDistance))
             {
@@ -215,47 +216,46 @@ public class LineDragBehavior : MonoBehaviour
                 rootTile = BoardBehavior.GetTile(startingPos);  
 
                 // only set if either I don't care to avoid players, or the tile selected is null
-                if(rootTile.GetOccupant() == null || !avoidPlayers || ownerRoot) 
+                if(rootTile.GetOccupant() == null || !avoidPlayers) 
                 {
                     Debug.Log("setting root at " + newRoot);
                     this.root = startingPos;
                     rootSet = true;
                     //dont want to call this every frame, only calculate path if this position is different from last frame
-                    
-                    BoardBehavior.ComputeAdjacencyLists(1);
-                    Queue<Tile> process = new Queue<Tile>();
-                    process.Enqueue(rootTile);
-                    if(rootTile != null)
-                    {
-                        rootTile.visited = true;
+                }
+            }
+        } 
+        BoardBehavior.ComputeAdjacencyLists(height);
+        Queue<Tile> process = new Queue<Tile>();
+        process.Enqueue(rootTile);
+        if(rootTile != null)
+        {
+            rootTile.visited = true;
 
-                        while (process.Count > 0) 
-                        {
-                            Tile t = process.Dequeue();
-                            if (t.distance < length) 
-                            {    
-                                foreach (Tile tile in t.adjacencyList)
+            while (process.Count > 0) 
+            {
+                Tile t = process.Dequeue();
+                if (t.distance < length) 
+                {    
+                    foreach (Tile tile in t.adjacencyList)
+                    {
+                        PlayerStats occupant = tile.GetOccupant();
+                        if(occupant == null && ValidTile(tile))
+                        { 
+                            if (!tile.visited)
+                            {
+                                //selectableTiles.Add(t);
+                                tile.visited = true;
+                                float distanceCost = 1;
+                                if(t.diagonalList.Contains(tile))
                                 {
-                                    PlayerStats occupant = tile.GetOccupant();
-                                    if(occupant == null && ValidTile(tile))
-                                    { 
-                                        if (!tile.visited)
-                                        {
-                                            //selectableTiles.Add(t);
-                                            tile.visited = true;
-                                            float distanceCost = 1;
-                                            if(t.diagonalList.Contains(tile))
-                                            {
-                                            distanceCost = 1.5f;
-                                            }
-                                            tile.distance = distanceCost + t.distance;
-                                            if(tile.distance <= length)
-                                            {
-                                            tile.parent = t;
-                                            process.Enqueue(tile);
-                                            }
-                                        }
-                                    }
+                                distanceCost = 1.5f;
+                                }
+                                tile.distance = distanceCost + t.distance;
+                                if(tile.distance <= length)
+                                {
+                                tile.parent = t;
+                                process.Enqueue(tile);
                                 }
                             }
                         }

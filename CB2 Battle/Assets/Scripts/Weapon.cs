@@ -213,17 +213,29 @@ public class Weapon : Item
     }
 
     // Returns the complex action firerate key that this weapon is currently capable of 
-    public string getHighestROF()
+    public string getFirerateKey(bool complex)
     {
         switch(FireRate)
         {
             case "SS":
             return "SS";
             case "SA":
+            if(complex)
+            {
+                return "SA";
+            }   
             return "SAB";
             case "BF":
+            if(complex)
+            {
+                return "BF";
+            }   
             return "LB";
             case "FA":
+            if(complex)
+            {
+                return "FA";
+            }   
             return "FAB";
         }
         return null;

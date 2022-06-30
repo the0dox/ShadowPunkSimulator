@@ -12,11 +12,12 @@ public class DebugWeaponTester : MonoBehaviour
         }
     }
 
-    // Start is called before the first frame update
+    /* Start is called before the first frame update
     [SerializeField] int attackDice = 10;
     [SerializeField] int defenseDiceHigh = 6;
     [SerializeField] int defenseDiceLight = 14;
     [SerializeField] int armorlight = 0;
+    */
     [SerializeField] int armorHeavh = 4;
     [SerializeField] int healthlight = 10;
     [SerializeField] int healthHeavy = 14;   
@@ -28,8 +29,8 @@ public class DebugWeaponTester : MonoBehaviour
         int weaponDamage = Random.Range(1,10);
         int weaponPen = Random.Range(-5,5); 
 
-        int minHitsTK = 0;
-        int maxHitsTK  = 100;
+        //int minHitsTK = 0;
+        //int maxHitsTK  = 100;
 
         int lightKills = 0;
         int heavyKills = 0;
@@ -37,13 +38,13 @@ public class DebugWeaponTester : MonoBehaviour
         int damageHeavy = 0;
         int lightHits = 0;
         int heavyHits = 0;
-        int currentHTK = 0;
+        //int currentHTK = 0;
 
         // run 100 attacks
         for(int i = 0; i < 500; i++)
         {
             int hits = 0;
-            int lightdefense = 0;
+            //int lightdefense = 0;
             int heavydefense = 0;
             
             /*

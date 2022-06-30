@@ -12,11 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
   m_Name: Run
   m_EditorClassIdentifier: 
-  description: '[Free Action]: Gain the running condition.
+  description: '[Full Action]: Gain the running condition.
 
     Running doubles your
     movement. While running you gain a +2 to defend against attacks. But you also
-    take a -2 penalty to attack with ranged weapons. By running you lose your free
-    action each pass until the end of the round.'
+    take a -2 penalty to attack with ranged weapons. Running presists between turns
+    but not rounds.'
   icon: {fileID: 21300000, guid: 5db07e9f657ceba44b4e95af66c9d1f2, type: 3}
   code: Run

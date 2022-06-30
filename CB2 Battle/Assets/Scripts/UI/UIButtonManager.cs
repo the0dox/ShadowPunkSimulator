@@ -2,17 +2,23 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Photon.Pun;
+
+// ButtonManager is the basic logic component that every scene with game logic should have some variation of. 
+// ButtonManager is extended by other classes for specific scenes that require different kinds of buttons 
+
 public class UIButtonManager : MonoBehaviourPunCallbacks
 {
+    // used for multiplayer syncing
     [SerializeField] protected private PhotonView pv;
-    private Vector3 StartingLine = new Vector3(-300,80,0);
 
-    //creates a set of interactable buttons can key = text value = method called
+    // creates a set of interactable buttons can key = text value = method called
     public void ConstructActions(Dictionary<string, string> d)
     {
         pv.RPC("RPC_ConstructActions",RpcTarget.MasterClient,d);
     }
 
+    // Instead of construction smart buttons on all clients, button manager creates a set of photon objects on the masters side
+    // these buttons have a simple code that can be viewed on client side
     [PunRPC]
     public void RPC_ConstructActions(Dictionary<string, string> d)
     {
@@ -29,6 +35,7 @@ public class UIButtonManager : MonoBehaviourPunCallbacks
         }
     }
 
+    // Clears all active buttons
     [PunRPC]
     public void RPC_ClearActions()
     {

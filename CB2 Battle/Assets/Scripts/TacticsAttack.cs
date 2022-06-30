@@ -140,6 +140,16 @@ public static class TacticsAttack
         ApplyCalledShots(currentAttack);
     }
 
+    public static void DealStress(PlayerStats target, int stress)
+    {
+        target.takeStun(stress);
+        if(target.getStun() > target.myData.GetAttribute(AttributeKey.StunHealth))
+        {
+            CombatLog.Log(target.GetName() + " is overwhelmed by stress!");
+            target.SetCondition(Condition.Broken, 0, true);
+        }
+    }
+
     public static int CalculateSoak(AttackSequence currentAttack)
     {
         int armor = currentAttack.target.GetAP();
@@ -179,6 +189,28 @@ public static class TacticsAttack
         bool apply = false;
         if(currentAttack.ActiveWeapon != null)
         {
+            if(currentAttack.attacker.myData.hasTalent(TalentKey.TelemetryRounds))
+            {
+                currentAttack.target.SetCondition(Condition.TelemetryRounds,1,true);
+            }
+            if(currentAttack.attacker.hasCondition(Condition.Flurry))
+            {
+                currentAttack.attacker.SetCondition(Condition.FlurrySecondary, 0, false);
+                if(currentAttack.attacker.SecondaryWeapon != null)
+                {
+                    TacticsAttack.Attack(currentAttack.target, currentAttack.attacker, currentAttack.attacker.SecondaryWeapon, currentAttack.attacker.SecondaryWeapon.getFirerateKey(false));
+                }
+            }
+            if(currentAttack.attacker.hasCondition(Condition.Dropkick))
+            {
+                // 1,0,0
+                Vector3 attackerPosition = currentAttack.attacker.transform.position;
+                Vector3 targetPosition = currentAttack.target.transform.position;
+                Vector3 direction = targetPosition - attackerPosition;
+                direction = new Vector3(direction.x, 0, direction.z).normalized;
+                Debug.Log("realtive direction vector" + direction);
+                TacticsAttack.Push(currentAttack.target, direction, 3);
+            }
             if(currentAttack.attacker.hasCondition(Condition.Disarm))
             {
                 string popuptext = " has no weapon to disarm";
@@ -225,6 +257,98 @@ public static class TacticsAttack
                 CombatLog.Log("By landing a called shot " + currentAttack.attacker.GetName() + " enters momentum!");
                 currentAttack.attacker.SetCondition(Condition.Momentum, -1, true);
             }
+        }
+    }
+
+    /*
+    target: a player that is being pushed a certain distance
+    direction: the absolute direction the target is being pushed
+    distance: the number of tiles back a target is being pushed
+
+    pushes a target a certain distance, with game logic for crashing into other objects/falling off of ledges
+    */
+    public static void Push(PlayerStats target, Vector3 direction, int distance)
+    {
+        Debug.LogWarning("push is untested");
+        Vector3[] tempArray = new Vector3[distance];
+        TacticsMovement targetMovement = target.GetComponent<TacticsMovement>();
+        tempArray[0] = targetMovement.getCurrentTilePosition();
+        GameObject HitObject = null;
+        int endIndex = distance;
+        for(int i = 1; i < distance; i++)
+        {
+            // if we haven't ended prematurely, check next tile
+            if(endIndex == distance)
+            {
+                Vector3 potentialSpace = tempArray[i-1] + direction;
+                // if tile is empty, player has fallen over a ledge, stop movement
+                if(!BoardBehavior.GetTile(potentialSpace))
+                {
+                    tempArray[i] = potentialSpace;
+                    endIndex = i;
+                }
+                // if tile can be moved into, check for occupant
+                else if(BoardBehavior.ValidNeighbor(potentialSpace,Vector3.up))
+                {
+                    PlayerStats occupant = BoardBehavior.GetTile(potentialSpace).GetOccupant();
+                    // if Tile has an occupant
+                    if(occupant != null)
+                    {  
+                        HitObject = occupant.gameObject;
+                        endIndex = i-1;
+                    }
+                    // if Tile is not blocked, add to path and continue
+                    else
+                    {
+                        tempArray[i] = potentialSpace;
+                    }
+                }
+                // if tile cannot be moved into because a Tile is present
+                else
+                {
+                    HitObject = BoardBehavior.GetTile(potentialSpace + Vector3.up).gameObject;
+                    endIndex = i-1;
+                }
+            }
+        }
+        // Trim path and move target along path
+        Vector3[] pathArray = new Vector3[endIndex];
+        for(int i = 0; i < endIndex; i++)
+        {
+            pathArray[i] = tempArray[i];
+        }
+        targetMovement.moveToTile(pathArray);
+        // send info pushed player
+        targetMovement.HoldPush(HitObject);
+    }
+
+    // recieve info back from pushed player to resolve effects for being pushed
+    public static void ResolvePush(PlayerStats target, GameObject HitObject)
+    {
+        TacticsMovement targetMovement = target.GetComponent<TacticsMovement>();
+        // Apply effects if the player hits something
+        if(HitObject != null)
+        {
+            PlayerStats hitPlayer;
+            Tile hitTile;
+            // if the player hit a tile
+            if(HitObject.TryGetComponent<Tile>(out hitTile))
+            {
+                target.takeDamage(hitTile.StructurePoints);
+                hitTile.DamageCover(target.myData.GetAttribute(AttributeKey.Body)/2);
+            }
+            // if the player hit another player
+            else if(HitObject.TryGetComponent<PlayerStats>(out hitPlayer))
+            {
+                target.takeDamage(hitPlayer.myData.GetAttribute(AttributeKey.Body)/2);
+                hitPlayer.takeDamage(target.myData.GetAttribute(AttributeKey.Body)/2);
+                hitPlayer.SetCondition(Condition.Prone, -1, true);
+            }
+            target.SetCondition(Condition.Prone, -1, true);
+        }
+        else
+        {
+            targetMovement.FallingCheck();
         }
     }
 
@@ -469,7 +593,7 @@ public static class TacticsAttack
             }
             else
             {
-                defenseDice += target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Pilot);
+                defenseDice += target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Logic);
             }
             foreach(string key in defenseModifiers.Keys)
             {
@@ -652,7 +776,12 @@ public static class TacticsAttack
         modifiers.Add("presence", GetIntimidationPenalty(thisAttack, type));
         modifiers.Add("direct", GetDirectBonus(thisAttack,type));
         modifiers.Add("flanking",GetFlankingPenalty(thisAttack,type));
-        modifiers.Add("Momentum", GetMomentumPenalty(thisAttack, type));
+        modifiers.Add("momentum", GetMomentumPenalty(thisAttack, type));
+        modifiers.Add("broken", GetBrokenPenalty(thisAttack, type));
+        modifiers.Add("height", GetHeightAdvantage(thisAttack,type));
+        modifiers.Add("flurry", GetFlurryPenalty(thisAttack,type));
+        modifiers.Add("AR", GetARPenalty(thisAttack,type));
+        modifiers.Add("Telemetry",GetTelemetryBonus(thisAttack,type));
         //modifiers.Add("Overwatch", GetOverwatchPenalty(thisAttack,type));
         return modifiers;
     }
@@ -816,7 +945,7 @@ public static class TacticsAttack
     {
         if(!attack && thisAttack.target.hasCondition(Condition.FullDefense))
         {
-            return thisAttack.target.myData.GetAttribute(AttributeKey.Body);
+            return thisAttack.target.myData.GetAttribute(AttributeKey.Willpower);
         }
         return 0;
     }
@@ -895,6 +1024,69 @@ public static class TacticsAttack
         if(attack && thisAttack.attacker.hasCondition(Condition.Overwatch))
         {
             return -2;
+        }
+        return 0;
+    }
+
+    private static int GetBrokenPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(!attack && thisAttack.target.hasCondition(Condition.Broken))
+        {
+            return -4;
+        }
+        else if(attack && thisAttack.attacker.hasCondition(Condition.Broken))
+        {
+            return -4;
+        }
+        return 0;
+    }
+
+    private static int GetHeightAdvantage(AttackSequence thisAttack, bool attack)
+    {
+        if(attack)
+        {
+            float difference = (thisAttack.attacker.transform.position - thisAttack.target.transform.position).y;
+            // if attacker is above, provide an aim bonus
+            if(difference >= 2)
+            {
+                return 2;
+            }
+            // if attacker is below, apply aim penalty
+            else if(difference <= -2)
+            {
+                return -2;
+            }
+        }
+        return 0;
+    }
+
+    public static int GetFlurryPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && (thisAttack.attacker.hasCondition(Condition.Flurry)|| (thisAttack.attacker.hasCondition(Condition.FlurrySecondary))))
+        {
+            return -3;
+        }
+        return 0;
+    }
+
+    public static int GetARPenalty(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && (thisAttack.attacker.hasCondition(Condition.AR)))
+        {
+            if(thisAttack.attacker.myData.hasTalent(TalentKey.HotSimAR))
+            {
+                return -1;
+            }
+            return -2;
+        }
+        return 0;
+    }
+
+    public static int GetTelemetryBonus(AttackSequence thisAttack, bool attack)
+    {
+        if(attack && thisAttack.attacker.myData.isMinion && thisAttack.target.hasCondition(Condition.TelemetryRounds))
+        {
+            return 4;
         }
         return 0;
     }

@@ -151,7 +151,7 @@ public class AttackSequence
         int pool = 0;
         if(target.myData.isMinion)
         {
-            pool = target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Pilot) + totalModifiers;
+            pool = target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Logic) + totalModifiers;
         }
         else
         {

@@ -102,7 +102,7 @@ public class Tile : MonoBehaviour
     }
 
     //adds neighbors to adjacency list
-    public void FindNeighbors(float jumpHeight)
+    public void FindNeighbors(int jumpHeight)
     {
         reset();
         CheckTile(Vector3.forward, jumpHeight,false);
@@ -116,9 +116,9 @@ public class Tile : MonoBehaviour
         CheckTile(-topleft,jumpHeight,true);
     }
 
-    public void CheckTile(Vector3 direction, float jumpHeight, bool diagonal)
+    public void CheckTile(Vector3 direction, int jumpHeight, bool diagonal)
     {
-        for(int i = -1; i < jumpHeight; i++)
+        for(int i = -(int)jumpHeight; i < jumpHeight; i++)
         {
             Vector3 currentDir = new Vector3(direction.x, direction.y + i, direction.z);
             if(BoardBehavior.ValidNeighbor(transform.position, currentDir))

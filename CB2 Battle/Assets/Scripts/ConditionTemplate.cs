@@ -16,6 +16,9 @@ public class ConditionTemplate : ScriptableObject
     [SerializeField] public bool clearOnAttack;
     [SerializeField] public Condition conditionKey;
     [SerializeField] public EffectKey effectKey;
+    [SerializeField] public bool buff;
+    [SerializeField] public bool debuff;
+    [SerializeField] public Sprite icon;
     public int GetModifier(string key)
     {
         if(!string.IsNullOrEmpty(key) && !key.Equals(IgnoreKey))

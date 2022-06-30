@@ -3,14 +3,17 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
+using Photon.Pun;
 
 // UI tool used to edit a ground tile object in real time. This class assumes there is a groundTile in the current scene
-public class UIGroundEditor : MonoBehaviour
+public class UIGroundEditor : MonoBehaviourPunCallbacks
 {
     // reference to a dummy button that is copied to create every texture option
     [SerializeField] GameObject buttonRef;
     // reference to the layout group that organizes new buttons
     [SerializeField] RectTransform content;
+    // used for multiplayer communication
+    [SerializeField] private PhotonView pv;
     // reference to the index each button represetns
     private List<GameObject> buttons;
 
@@ -19,15 +22,21 @@ public class UIGroundEditor : MonoBehaviour
     {
         buttons = new List<GameObject>();
         Material[] allMaterials = MaterialReference.Materials();
-        for(int i = 0; i < allMaterials.Length; i++)
+        if(allMaterials != null)
         {
-            Texture2D newTexture = (Texture2D)allMaterials[i].mainTexture;
-            Sprite displayImage = Sprite.Create(newTexture, new Rect(0,0,newTexture.width, newTexture.height) , new Vector2(0.5f, 0.5f));
-            GameObject newButton = Instantiate(buttonRef) as GameObject;
-            newButton.SetActive(true);
-            newButton.GetComponent<Image>().sprite = displayImage;
-            newButton.transform.SetParent(content);
-            buttons.Add(newButton);
+            for(int i = 0; i < allMaterials.Length; i++)
+            {
+                Texture2D newTexture = (Texture2D)allMaterials[i].mainTexture;
+                if(newTexture != null)
+                {
+                    Sprite displayImage = Sprite.Create(newTexture, new Rect(0,0,newTexture.width, newTexture.height) , new Vector2(0.5f, 0.5f));
+                    GameObject newButton = Instantiate(buttonRef) as GameObject;
+                    newButton.SetActive(true);
+                    newButton.GetComponent<Image>().sprite = displayImage;
+                    newButton.transform.SetParent(content);
+                    buttons.Add(newButton);
+                }
+            }
         }
         gameObject.SetActive(false);
     }
@@ -40,10 +49,16 @@ public class UIGroundEditor : MonoBehaviour
         if(buttons.Contains(clickedButton))
         {
             int materialIndex = buttons.IndexOf(clickedButton);
-            Material newMaterial = MaterialReference.GetMaterial(materialIndex);
-            TileGround.SetMaterial(newMaterial);
-            Toggle();
+            pv.RPC("RPC_OnClicked",RpcTarget.All,materialIndex);
         }
+        Toggle();
+    }
+
+    [PunRPC]
+    void RPC_OnClicked(int materialIndex)
+    {
+        Material newMaterial = MaterialReference.GetMaterial(materialIndex);
+        TileGround.SetMaterial(newMaterial); 
     }
 
     // enable or disables the gameobject panel 

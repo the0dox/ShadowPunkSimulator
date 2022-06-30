@@ -76,7 +76,8 @@ public class OverworldManager : UIButtonManager
         {
             leadScripts.Add(g.GetComponent<LeadScript>());
         }
-        SceneSaveData overworldScene = new SceneSaveData("Overworld",OverworldTokens,null);
+        Material groundMat = TileGround.GetMaterial();
+        SceneSaveData overworldScene = new SceneSaveData("Overworld",OverworldTokens,groundMat);
         overworldScene.AddLeads(leadScripts);
         SaveSystem.SaveScene(overworldScene);
         Debug.Log("scene saved with " + players.Length + " tokens and " + leads.Length + " leads ");

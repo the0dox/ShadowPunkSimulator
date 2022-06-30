@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: Overwatch
   m_EditorClassIdentifier: 
   description: "[Full Action]: Establish a kill zone until the start of your next
-    turn. \nThe first time an enemy moves into your kill zone, you get to take a
-    reaction shot at a slight penalty."
+    turn. \nThe first time an enemy moves into your kill zone, you get a free attack
+    at your highest firerate."
   icon: {fileID: 21300000, guid: 56f6e1700a43bd843a562dc0fed00234, type: 3}
   code: Overwatch

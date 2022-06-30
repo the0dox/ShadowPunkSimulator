@@ -50,7 +50,7 @@ public class TurnActionsSR : UIButtonManager
     {
         currentAction = null;
         List<string> l = new List<string>();
-        
+        TokenDragBehavior.ToggleMovement(false);
         if(ActivePlayerStats.hasCondition(Condition.Prone))
         {
             l.Add("Stand");
@@ -59,6 +59,7 @@ public class TurnActionsSR : UIButtonManager
         {
             l.Add("Prone");
             l.Add("Run");
+            //l.Add("Jump");
         }
         l.Add("Cancel");
         ConstructActions(l);
@@ -67,12 +68,12 @@ public class TurnActionsSR : UIButtonManager
     public void Run()
     {
         ActivePlayerStats.Run();
-        if(ActivePlayerStats.myData.hasTalent(TalentKey.Adept))
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Momentum))
         {
             CombatLog.Log(ActivePlayerStats.GetName() + " enters a state of momentum!");
             ActivePlayerStats.SetCondition(Condition.Momentum, -1, true);
         }
-        SpendFreeAction();
+        halfActions -= 2;
         Cancel();
     }
 
@@ -81,6 +82,68 @@ public class TurnActionsSR : UIButtonManager
     {
         ActivePlayerStats.Prone();
         SpendFreeAction();
+        Cancel();
+    }
+
+    public void Jump()
+    {
+        StartCoroutine(JumpDelay());
+
+    }
+
+    IEnumerator JumpDelay()
+    {
+        ClearActions();
+        
+        GameObject dragToken = PhotonNetwork.Instantiate("LineDragToken", ActivePlayerStats.transform.position, Quaternion.identity);
+        LineDragBehavior line = dragToken.GetComponent<LineDragBehavior>();
+        line.SetParameters(DmMenu.GetOwner(ActivePlayerStats), 1, ActivePlayerStats.transform.position, true, 5);
+        while(!line.finished)
+        {
+            yield return new WaitForSeconds(0.2f);
+        }
+        Vector3[] path = line.GetPath().ToArray();
+        Debug.Log("length" + path.Length);
+        if(path.Length == 2)
+        {
+            Vector3 distance = path[1] - path[0];
+            float distanceY = distance.y;
+            bool jumpingDown = distanceY > 0;
+            Debug.Log("Player is trying to jump y tiles");
+            int thresholdY = Mathf.CeilToInt(Mathf.Abs(distanceY));
+            int jumpModifier = 0;
+            Debug.Log("jumping down: " + jumpingDown);
+            /*
+            if(ActivePlayerStats.myData.hasTalent(TalentKey.Courier))
+            {
+                jumpModifier += 5;
+            }
+            */
+            RollResult jumpRoll = new RollResult(ActivePlayerStats.myData, AttributeKey.Gymnastics, thresholdY, jumpModifier);
+            while(!jumpRoll.Completed())
+            {
+                yield return new WaitForSeconds(0.2f);
+            }
+            if(jumpRoll.Passed())
+            {
+                CombatLog.Log(ActivePlayerStats.GetName() + "gets at least [" + thresholdY + "] hits and successfully jumps up!");
+                ActivePlayer.moveToTile(path);
+
+            }
+            else
+            {
+                CombatLog.Log(ActivePlayerStats.GetName() + "fails to gets at least [" + thresholdY + "] hits and cannot make the jump!");
+                if(jumpingDown)
+                {
+                    Vector3 fallVector = new Vector3(path[0].x, ActivePlayer.transform.position.y, path[0].z);
+                    Debug.Log(ActivePlayer.transform.position.ToString() + " ->" + fallVector);
+                    ActivePlayer.SetPosition(fallVector);
+                    ActivePlayer.FallingCheck();
+                }
+            }
+            line.RemoveLine();
+            SpendFreeAction();
+        }
         Cancel();
     }
 
@@ -285,7 +348,7 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Inspire","Inspire");
         }
-        if(ActivePlayerStats.myData.hasTalent(TalentKey.SingleOut))
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.FocusFlank))
         {
             d.Add("Tactics Focus: Flanking","FlankingStyle");
         }
@@ -309,7 +372,18 @@ public class TurnActionsSR : UIButtonManager
         {
             d.Add("Drone Menu", "Drone");
         }
+        /*
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.TwoWeaponFighting))
+        {
+            d.Add("TwoWeaponFighting","TwoWeaponFighting");   
+        }
+        if(ActivePlayerStats.myData.hasTalent(TalentKey.Dropkick) && ActivePlayerStats.hasCondition(Condition.Momentum))
+        {
+            d.Add("Dropkick","Dropkick");
+        }
+        */
         d.Add("Cancel","Cancel");
+        
         ConstructActions(d);
     }
 
@@ -384,6 +458,20 @@ public class TurnActionsSR : UIButtonManager
         ConstructActions(d);
     }
 
+    public void TwoWeaponFighting()
+    {
+        Debug.LogWarning("TWF talent is untested");
+        ActivePlayerStats.SetCondition(Condition.Flurry,0,true);
+        ActiveWeapon = ActivePlayerStats.PrimaryWeapon;
+        UIPlayerInfo.UpdateCustomCommand("Select Attack Target");
+        currentAction = "Attack";
+        FireRate = ActiveWeapon.getFirerateKey(false);
+        PushToolTips();
+        ActivePlayer.GetValidAttackTargets(ActiveWeapon);
+        List<string> l = new List<string>{"Cancel"};
+        ConstructActions(l);
+    }
+
     IEnumerator RookDelay()
     {
         UIPlayerInfo.UpdateCustomCommand("Select a direction to block");
@@ -430,6 +518,7 @@ public class TurnActionsSR : UIButtonManager
         halfActions = 2;
         CombatLog.Log(ActivePlayerStats.GetName() + " uses Adrenaline to make an additional attack this turn!");
         PopUpText.CreateText("Adrenaline!", Color.red, ActivePlayerStats.gameObject);
+        TacticsAttack.DealStress(ActivePlayerStats,3);
         ActivePlayerStats.SetCondition(Condition.Winded, 0, false);
         Cancel();
     }
@@ -471,6 +560,7 @@ public class TurnActionsSR : UIButtonManager
             PopUpText.CreateText("Resisted!", Color.yellow, target.gameObject);
         }
         halfActions-= 2;
+        TacticsAttack.DealStress(ActivePlayerStats,1);
         Cancel();
     }
 
@@ -510,6 +600,7 @@ public class TurnActionsSR : UIButtonManager
             CombatLog.Log(ActivePlayerStats.GetName() + " fails to assist their ally!");
         }
         halfActions--;
+        TacticsAttack.DealStress(ActivePlayerStats,1);
         Cancel();
     }
 
@@ -547,6 +638,7 @@ public class TurnActionsSR : UIButtonManager
             CombatLog.Log(ActivePlayerStats.GetName() + " fails to inspire their team!");
         }
         halfActions-= 2;
+        TacticsAttack.DealStress(ActivePlayerStats,1);
         Cancel();
     }
 
@@ -564,7 +656,7 @@ public class TurnActionsSR : UIButtonManager
     }
     if(InspireRoll.Passed())
     {
-        int hits = Mathf.CeilToInt((float)InspireRoll.GetHits()/2f);
+        int hits = InspireRoll.GetHits();
         int myTeam = ActivePlayerStats.GetTeam();
         GameObject[] allPlayers = GameObject.FindGameObjectsWithTag("Player");
         for(int i = 0; i < allPlayers.Length; i++)
@@ -580,10 +672,11 @@ public class TurnActionsSR : UIButtonManager
     }
     else
     {
-        PopUpText.CreateText("Inspire Failed!", Color.red, ActivePlayerStats.gameObject);
+        PopUpText.CreateText("Style Failed!", Color.red, ActivePlayerStats.gameObject);
         CombatLog.Log(ActivePlayerStats.GetName() + " fails to lead their team!");
     }
     halfActions-= 2;
+        TacticsAttack.DealStress(ActivePlayerStats,2);
     Cancel();
     }
 
@@ -617,6 +710,7 @@ public class TurnActionsSR : UIButtonManager
             ActiveWeapon = SpellAttack;
             ClearTiles();
             fireSS();
+            TacticsAttack.DealStress(ActivePlayerStats, 1);
         }
         else
         {
@@ -642,7 +736,7 @@ public class TurnActionsSR : UIButtonManager
             UIPlayerInfo.UpdateCustomCommand("Draw Barrier Within Range");
             GameObject dragToken = PhotonNetwork.Instantiate("LineDragToken", ActivePlayerStats.transform.position, Quaternion.identity);
             LineDragBehavior line = dragToken.GetComponent<LineDragBehavior>();
-            line.SetParameters(SpellRoll.GetHits(), ActivePlayerStats.transform.position, true, 10, DmMenu.GetOwner(ActivePlayerStats));
+            line.SetParameters(DmMenu.GetOwner(ActivePlayerStats), SpellRoll.GetHits(), ActivePlayerStats.transform.position, true, 10, 1);
             while(!line.finished)
             {
                 yield return new WaitForSeconds(0.2f);
@@ -654,14 +748,14 @@ public class TurnActionsSR : UIButtonManager
                 GlobalManager.CreateTile(location + new Vector3(0,2,0),"TileIndustrail01");
             }
             line.RemoveLine();
-            halfActions -= 2;
-            Cancel();
         }
         else
         {
             CombatLog.Log(ActivePlayerStats.GetName() + " fails to manifest their spell!");
-            Cancel();
         }
+        TacticsAttack.DealStress(ActivePlayerStats, 2);
+        halfActions -= 2;
+        Cancel();
     }
 
     public void SpellArmor()
@@ -709,6 +803,7 @@ public class TurnActionsSR : UIButtonManager
         CombatLog.Log(ActivePlayerStats.GetName() + " creates armor out of terrain for (" + armorBonus + ") turns!");
         ClearTiles();
         halfActions-= 2;
+        TacticsAttack.DealStress(ActivePlayerStats, 2);
         Cancel();
     }
 
@@ -718,6 +813,15 @@ public class TurnActionsSR : UIButtonManager
     {
         ActivePlayerStats.RemoveCondition(Condition.Momentum);
         CombatLog.Log(ActivePlayerStats.GetName() + " uses their momentum to attack and reposition in the same turn!");
+        TacticsAttack.DealStress(ActivePlayerStats,2);
+        SpendFreeAction();
+        Cancel();
+    }
+
+    public void Dropkick()
+    {
+        ActivePlayerStats.RemoveCondition(Condition.Momentum);
+        ActivePlayerStats.SetCondition(Condition.Dropkick, 0, true);
         SpendFreeAction();
         Cancel();
     }
@@ -1173,6 +1277,12 @@ public class TurnActionsSR : UIButtonManager
         {
             l.Add("TotalDefense");
             l.Add("Dodge");
+            /*
+            if(CurrentAttack.target.myData.hasTalent(TalentKey.BladeParry) && CurrentAttack.target.HoldingWeaponClass(WeaponClass.melee))
+            {
+                l.Add("BladeParry");
+            }
+            */
             if(CurrentAttack.ActiveWeapon.IsWeaponClass(WeaponClass.melee))
             {
                 if(CurrentAttack.target.CanParry())
@@ -1261,7 +1371,7 @@ public class TurnActionsSR : UIButtonManager
         {
             PlayerStats selectedPlayer = g.GetComponent<PlayerStats>();
             List<string> currentTooltip = new List<string>();
-            if(currentAction.Equals("Attack"))
+            if(!string.IsNullOrEmpty(currentAction) && currentAction.Equals("Attack"))
             {
                 currentTooltip = TacticsAttack.GenerateTooltip(selectedPlayer,ActivePlayerStats,ActiveWeapon,FireRate);
             }
@@ -1288,10 +1398,9 @@ public class TurnActionsSR : UIButtonManager
         {
             halfActions = 0;
         }
+        currentAction = "Move";
         ActiveWeapon = null;
         ActiveDrone = null;
-        ConstructActions();
-        Move();
         FireRate = null;
         target = null;
         ValidTargets = null;
@@ -1299,13 +1408,15 @@ public class TurnActionsSR : UIButtonManager
         multipleTargetsLimit = 0;
         MaxSelectionRange = -1;
         multipleTargets = new List<GameObject>();
-        UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
-        PushToolTips();
         GlobalManager.ClearBoard();
         StopAllCoroutines();
         if(ActivePlayer != null)
         {
+            PushToolTips();
+            ConstructActions();
             ActivePlayer.PaintCurrentTile("current");
+            Move();
+            UIPlayerInfo.UpdateDisplay(ActivePlayerStats, halfActions, freeActions);
         }
         TokenDragBehavior.ToggleMovement(true);
     }

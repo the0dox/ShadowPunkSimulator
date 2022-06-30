@@ -13,7 +13,7 @@ public enum TalentKey
     Face,
     Direct,
     Inspire,
-    SingleOut,
+    FocusFlank,
     // Industrialist Class
     Industrialist,
     SpellWall,
@@ -28,6 +28,16 @@ public enum TalentKey
     SimTech,
     SimTechProficiency,
     HotSimAR,
+    // Additional
+    BladeParry,
+    TwoWeaponFighting,
+    Courier,
+    SingleOut,
+    Encourage,
+    SpellTerrainPrison,
+    SpellTerrainProjectileExplosive,
+    TelemetryRounds
+
     
 }
 

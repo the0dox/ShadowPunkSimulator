@@ -15,6 +15,11 @@ MonoBehaviour:
   IgnoreKey: 
   Modifiers: 0
   duration: 0
-  clearOnTurnEnd: 0
+  clearOnTurnEnd: 1
   clearOnMove: 0
+  clearOnAttack: 0
   conditionKey: 11
+  effectKey: 0
+  buff: 0
+  debuff: 0
+  icon: {fileID: 0}

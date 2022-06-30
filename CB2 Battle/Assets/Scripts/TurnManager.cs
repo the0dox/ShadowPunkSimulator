@@ -65,27 +65,17 @@ public class TurnManager : TurnActionsSR
                 }
             }
             //Where all possible actions take place
-            if (ActivePlayer != null && CurrentAttack == null && !CameraButtons.UIActive()) 
+            if (ActivePlayer != null) 
             {
-            if(ActivePlayer.finishedMoving())
-            {
-                ActivePlayerStats.OnMovementEnd();
-                Cancel();
-            }
-            CheckMouse();
-            switch(currentAction)
-            {
-                case "Move":
-                break;
-                case "Stand":
-                    ActivePlayerStats.RemoveCondition(Condition.Prone);
-                    PopUpText.CreateText("Standing!", Color.green, ActivePlayerStats.gameObject);
-                    halfActions--;
+                if(ActivePlayer.finishedMoving())
+                {
+                    ActivePlayerStats.OnMovementEnd();
                     Cancel();
-                break;
-                default:
-                    break;
                 }
+            }
+            if(!CameraButtons.UIActive())
+            {
+                CheckMouse();
             }
         }
     }
@@ -102,7 +92,7 @@ public class TurnManager : TurnActionsSR
                 switch(currentAction)
                     {
                     case "Move":
-                        if(hit.collider.tag == "Player" && !ActivePlayer.moving)
+                        if(hit.collider.tag == "Player")
                         {
                             GameObject DBT = Instantiate(DebugToolTipReference) as GameObject;
                             DBT.transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform);
@@ -239,7 +229,7 @@ public class TurnManager : TurnActionsSR
         // if someone else is active, end their trun
         if(ActivePlayerStats != null && IntiativeActiveActors.ContainsValue(ActivePlayerStats))
         {
-            ActivePlayerStats.OnTurnEnd();
+            ActivePlayerStats.OnTurnEnd(halfActions);
             float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
             IntiativeFinishedActors.Add(initative,ActivePlayerStats);
             IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(ActivePlayerStats));
@@ -429,16 +419,6 @@ public class TurnManager : TurnActionsSR
     private float RollInitaitve(PlayerStats ps)
     {
         float initiative = ps.RollInitaitve() + (float)ps.GetStat(AttributeKey.Agility)/10f;
-        if(ps.hasCondition(Condition.Winded))
-        {
-            PopUpText.CreateText("Winded!", Color.yellow, ps.gameObject);
-            ps.RemoveCondition(Condition.Winded);
-            initiative -= 10;
-            if(initiative < 0)
-            {
-                initiative = 0; 
-            }
-        }
         return initiative;
     }
 
@@ -469,7 +449,7 @@ public class TurnManager : TurnActionsSR
 
     // called by the player manually ends the turn and transfers the activeplayer to the inactive iniative list
     public void EndTurn(){
-        ActivePlayerStats.OnTurnEnd();
+        ActivePlayerStats.OnTurnEnd(halfActions);
         // minions do not participate in the initative order
         if(IntiativeActiveActors.ContainsValue(ActivePlayerStats))
         {
@@ -531,15 +511,20 @@ public class TurnManager : TurnActionsSR
     //any special effects from conditions
     public void ApplyConditions()
     {
-        if(ActivePlayerStats.hasCondition(Condition.Running))
-        {
-            freeActions = 0;
-        }
         if(ActivePlayerStats.Grappling())
         {
             PopUpText.CreateText("Grappling!", Color.red, ActivePlayerStats.gameObject);
             ActivePlayerStats.SpendAction("reaction");
             currentAction = "Grapple";
+        }
+        if(ActivePlayerStats.hasCondition(Condition.Broken))
+        {
+            CombatLog.Log(ActivePlayerStats.GetName() + " is broken and cannot take actions!");
+            halfActions = 0;
+            freeActions = 0;
+            ActivePlayerStats.healStress(99);
+            PopUpText.CreateText("Broken", Color.red, ActivePlayer.gameObject);
+            ActivePlayerStats.RemoveCondition(Condition.Broken);
         }
     }
 
@@ -553,7 +538,6 @@ public class TurnManager : TurnActionsSR
         //{
         if(target.GetTeam() != attacker.GetTeam())
         {
-            Debug.Log("send to ta");
             AttackSequence newAttack = TacticsAttack.Attack(target, attacker, ActiveWeapon, ROF);
             AttackQueue.Enqueue(newAttack);
             currentAction = null;
@@ -658,7 +642,7 @@ public class TurnManager : TurnActionsSR
             yield return new WaitForSeconds(0.2f);
         }
         Vector3 spawnPosition = multipleTargets[0].transform.position + new Vector3(0, 1.5f, 0);
-        newPlayer.transform.position = spawnPosition;
+        newPlayer.GetComponent<TacticsMovement>().SetPosition(spawnPosition);
         AddPlayer(newPlayer);
         Cancel();
         PrintInitiative();
@@ -721,6 +705,34 @@ public class TurnManager : TurnActionsSR
         SubtractIniative(CurrentAttack.target,5);
         ClearActions();
     }
+    
+    public void BladeParry()
+    {
+        Debug.LogWarning("bladeparry is untested");
+        Weapon targetWeapon = null;
+        int weaponBonus = 0;
+        if(CurrentAttack.target.PrimaryWeapon != null)
+        {
+            targetWeapon = CurrentAttack.target.PrimaryWeapon;
+        }
+        else if(CurrentAttack.target.SecondaryWeapon != null)
+        {
+            targetWeapon = CurrentAttack.target.SecondaryWeapon;
+        }
+        if(targetWeapon != null)
+        {
+            weaponBonus = CurrentAttack.target.myData.GetAttribute(targetWeapon.Template.WeaponSkill.skillKey);
+            if(CurrentAttack.target.myData.hasSpecialization(targetWeapon))
+            {
+                Debug.Log("is specialized!");
+                weaponBonus += 2;
+            }
+        } 
+        TacticsAttack.Defend(CurrentAttack,weaponBonus);
+        SubtractIniative(CurrentAttack.target,5);
+        ClearActions();
+    }
+
 
     public void Block()
     {
@@ -772,6 +784,7 @@ public class TurnManager : TurnActionsSR
             }
         }
         ActiveDrone = droneEquipment[0];
+        ActivePlayerStats.takeStun(1);
         if(!ActiveDrone.deployed)
         {
             CreateMinion();

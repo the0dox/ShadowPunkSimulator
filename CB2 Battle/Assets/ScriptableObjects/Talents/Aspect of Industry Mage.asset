@@ -20,7 +20,10 @@ MonoBehaviour:
 
     As a mage your role is to provide magic support to your allies,
     enhancing them with your own abilities while protecting them from foes from the
-    astral plane.'
+    astral plane.
+
+
+    The magic stat of industrialism is Intuition.'
   prerequisites: 
   conflictsWith: 00000000040000000c000000
   Icon: {fileID: 21300000, guid: 700e093068b2ed64a947ff2cd747032f, type: 3}

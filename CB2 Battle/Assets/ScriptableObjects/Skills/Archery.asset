@@ -20,5 +20,5 @@ MonoBehaviour:
   displayText: Archery is your proficiency with bows and crossbows.
   limit: 0
   Specializations: []
-  DroneEquivalent: 0
-  DroneAttributeEquivalent: 0
+  DroneEquivalent: 98
+  DroneAttributeEquivalent: 10

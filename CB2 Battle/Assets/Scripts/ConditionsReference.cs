@@ -63,4 +63,9 @@ public enum Condition
     Momentum,
     AR,
     Overwatch,
+    Broken,
+    Flurry,
+    FlurrySecondary,
+    Dropkick,
+    TelemetryRounds
 }

@@ -13,7 +13,11 @@ MonoBehaviour:
   m_Name: Sim Rig
   m_EditorClassIdentifier: 
   key: 18
-  description: 
+  description: "The Sim Rig is a contraversial piece of cyberware. \nFor some reason
+    or another you have the skills to use one.\n\nYou gain proficiency with Simulation
+    Rigs and begin play with a low quality Sim Rig only you know how to use. This
+    custom Sim Rig cannot be uninstalled or sold, but it can be upgraded/replaced
+    with the purchase of a new one."
   prerequisites: 11000000
   conflictsWith: 
   Icon: {fileID: 21300000, guid: 3dbe4f0df2498ff4dad5f664274e221c, type: 3}

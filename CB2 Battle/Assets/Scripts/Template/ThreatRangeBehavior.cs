@@ -67,8 +67,8 @@ public class ThreatRangeBehavior : MonoBehaviourPunCallbacks
                 //if target is moving and an enemy!
                 if(t.GetComponent<TacticsMovement>().moving && target.GetTeam() != attacker.GetTeam())
                 {
-                    Debug.Log("triggerd firing at " + w.getHighestROF() +" target "+ target.GetName() + " attacker " + attacker.GetName());
-                    TurnManager.RollToHit(target,w.getHighestROF(),w,attacker);
+                    Debug.Log("triggerd firing at " + w.getFirerateKey(true) +" target "+ target.GetName() + " attacker " + attacker.GetName());
+                    TurnManager.RollToHit(target,w.getFirerateKey(true),w,attacker);
                     triggered = true;
                 }
             }

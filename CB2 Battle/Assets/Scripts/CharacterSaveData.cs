@@ -8,7 +8,7 @@ using UnityEngine;
 public class CharacterSaveData
 {
     // Basic character stats Shadowrunner
-    public int[] attribues = new int[100]; 
+    public int[] attribues = new int[150]; 
     public bool[] talents = new bool[100];
     
     // Skills Shadowrunner
@@ -99,8 +99,8 @@ public class CharacterSaveData
     // a dictionary when the player is created 
     public string[] CompileStats()
     {
-        string[] convertedAttributes = new string[100];
-        for(int i = 0; i < 100; i++)
+        string[] convertedAttributes = new string[150];
+        for(int i = 0; i < 150; i++)
         {
             string convertedAttribute = attribues[i].ToString();
             convertedAttributes[i] = convertedAttribute;
@@ -110,8 +110,8 @@ public class CharacterSaveData
 
     public void DecompileStats(string[]newAttributes)
     {
-        int[] convertedAttributes = new int[100];
-        for(int i = 0; i < 100; i++)
+        int[] convertedAttributes = new int[150];
+        for(int i = 0; i < 150; i++)
         {
             int convertedInt = 0;
             int.TryParse(newAttributes[i], out convertedInt);
@@ -255,6 +255,41 @@ public class CharacterSaveData
     // whenever characteristics are set, updates all abilities/stats that are dependent on those conditions
     public void CalculateCharacteristics()
     {
+        //base attributes cannot be less than 1
+        if(GetAttribute(AttributeKey.Body) < 1)
+        {
+            SetAttribute(AttributeKey.Body,1,false);
+        }
+        if(GetAttribute(AttributeKey.Agility) < 1)
+        {
+            SetAttribute(AttributeKey.Agility,1,false);
+        }
+        if(GetAttribute(AttributeKey.Reaction) < 1)
+        {
+            SetAttribute(AttributeKey.Reaction,1,false);
+        }
+        if(GetAttribute(AttributeKey.Strength) < 1)
+        {
+            SetAttribute(AttributeKey.Strength,1,false);
+        }
+        if(GetAttribute(AttributeKey.Willpower) < 1)
+        {
+            SetAttribute(AttributeKey.Willpower,1,false);
+        }
+        if(GetAttribute(AttributeKey.Logic) < 1)
+        {
+            SetAttribute(AttributeKey.Logic,1,false);
+        }
+        if(GetAttribute(AttributeKey.Charisma) < 1)
+        {
+            SetAttribute(AttributeKey.Charisma,1,false);
+        }
+        if(GetAttribute(AttributeKey.Intuition) < 1)
+        {
+            SetAttribute(AttributeKey.Intuition,1,false);
+        }
+        
+
         // Base Initative = reaction + Intuition
         SetAttribute(AttributeKey.InitativeStandard,GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
         // Astral initative = Intuition * 2
@@ -276,9 +311,9 @@ public class CharacterSaveData
         // Health max = [Physical / 2] + 8 
         float healthBonus = (float)(GetAttribute(AttributeKey.Body));
         SetAttribute(AttributeKey.PhysicalHealth, Mathf.CeilToInt(healthBonus) + 8, false);
-        // Stun max = [Willpower / 2] + 8 
+        // Stun max = [Willpower / 2] + 2 
         float StunBonus = (float)(GetAttribute(AttributeKey.Willpower));
-        SetAttribute(AttributeKey.StunHealth, Mathf.CeilToInt(StunBonus) + 8, false);
+        SetAttribute(AttributeKey.StunHealth, Mathf.CeilToInt(StunBonus/2) + 2, false);
         SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) + 6,false);
         SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.MoveWalk) * 2, false);
         // COMPOSURE (CHA + WIL)
@@ -291,10 +326,33 @@ public class CharacterSaveData
         SetAttribute(AttributeKey.Memory, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Willpower),false);
         // DEFENSE (REF + INT)
         SetAttribute(AttributeKey.Defense, GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
-        // RECOILCOMP = 1 + S/3
+        // RECOILCOMP = 1 + S/2
         SetAttribute(AttributeKey.RecoilComp, 1 + Mathf.CeilToInt(GetAttribute(AttributeKey.Strength)/2),false);
         // ESSENSE = 6 - penalties
+        if(hasTalent(TalentKey.Industrialist))
+        {
+            SetAttribute(AttributeKey.Magic, GetAttribute(AttributeKey.Intuition),false);
+        }
+
         SetAttribute(AttributeKey.Essense, 6, false);
+        int attributeTotal = -8;
+        attributeTotal += GetAttribute(AttributeKey.Body);
+        attributeTotal += GetAttribute(AttributeKey.Agility);
+        attributeTotal += GetAttribute(AttributeKey.Reaction);
+        attributeTotal += GetAttribute(AttributeKey.Strength);
+        attributeTotal += GetAttribute(AttributeKey.Willpower);
+        attributeTotal += GetAttribute(AttributeKey.Logic);
+        attributeTotal += GetAttribute(AttributeKey.Charisma);
+        attributeTotal += GetAttribute(AttributeKey.Intuition);
+        SetAttribute(AttributeKey.AttributePoints, attributeTotal, false);
+
+        int skillTotal = 0;
+        foreach(KeyValuePair<string, SkillTemplate> kvp in SkillReference.SkillsTemplates())
+        {
+            AttributeKey skillKey = kvp.Value.skillKey;
+            skillTotal += GetAttribute(skillKey);
+        }
+        SetAttribute(AttributeKey.SkillPoints, skillTotal, false);
     }
 
     public void setSpecialization(string skillKey, int SpecializationIndex)
@@ -315,6 +373,18 @@ public class CharacterSaveData
         //Debug.Log("my index: " + skillSpecialization[skillKey] + " desired index " + SpecializationIndex);
         return skillSpecialization[skillKey] == SpecializationIndex+1;
     }
+    
+    public bool hasSpecialization(Weapon weapon)
+    {
+        if(weapon != null && weapon.Template != null)
+        {
+            int SpecializationIndex = weapon.Template.WeaponSpecialization;
+            string skillKey = weapon.Template.WeaponSkill.name;
+            return hasSpecialization(skillKey, SpecializationIndex);
+        }
+        return false;
+    }
+
 
     public int GetSpecializationIndex(string skillKey)
     {
