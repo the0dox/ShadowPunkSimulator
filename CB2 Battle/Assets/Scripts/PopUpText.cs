@@ -18,6 +18,13 @@ public class PopUpText : MonoBehaviourPunCallbacks
    private static Dictionary<Vector3, Queue<GameObject>> DisplayQueue = new Dictionary<Vector3, Queue<GameObject>>();
     [SerializeField] private PhotonView pv;
     private static PhotonView spv;
+    private static Dictionary<Color, string> colorCodes = new Dictionary<Color, string>
+    {
+        {Color.yellow, "y"},
+        {Color.green, "g"},
+        {Color.red, "r"},
+        {Color.cyan, "c"}
+    };
     void Start()
     {
         spv = pv;
@@ -29,29 +36,30 @@ public class PopUpText : MonoBehaviourPunCallbacks
 
     public static void CreateText(string input, Color c, GameObject location)
     {
-        float[] colorcode = new float[4];
-        colorcode[0] = c.r;
-        colorcode[0] = c.b;
-        colorcode[0] = c.g;
-        colorcode[0] = c.a;
+        string punColorCode = colorCodes[c];
         
-        spv.RPC("RPC_SaveText", RpcTarget.All, input, colorcode, location.transform.position);
+        spv.RPC("RPC_SaveText", RpcTarget.All, input, punColorCode, location.transform.position);
     }
 
     [PunRPC]
-    void RPC_SaveText(string input, float[] colorcode, Vector3 location)
+    void RPC_SaveText(string input, string punColorDode, Vector3 location)
     {
-        Color c = Color.yellow; //new Color(colorcode[0],colorcode[1],colorcode[2],colorcode[3]);
+        Color myColor = Color.yellow;
+        foreach(Color key in colorCodes.Keys)
+        {
+            if(colorCodes[key].Equals(punColorDode))
+            {
+                myColor = key;
+            }
+        }
         if(!DisplayQueue.ContainsKey(location))
         {
             DisplayQueue.Add(location, new Queue<GameObject>());
         }
         GameObject current = Instantiate(DisplayText, new Vector3(0,0,0), Quaternion.identity);
-        current.name = "findme";
-        current.GetComponent<DisplayTextScript>().SetInfo(c, input, location);
+        current.GetComponent<DisplayTextScript>().SetInfo(myColor, input, location);
         current.SetActive(false);
         DisplayQueue[location].Enqueue(current);
-        Debug.Log("making text" + DisplayQueue.Count + current.name);
     }
 
     static IEnumerator InstantiatorCoroutine()
@@ -63,7 +71,6 @@ public class PopUpText : MonoBehaviourPunCallbacks
             {
                 if(DisplayQueue[location].Count != 0)
                 {
-                    Debug.Log("setting active");
                     DisplayQueue[location].Peek().SetActive(true);
                 }
             }
@@ -91,4 +98,5 @@ public class PopUpText : MonoBehaviourPunCallbacks
     {
         DisplayQueue[location].Dequeue();
     }
+
 }

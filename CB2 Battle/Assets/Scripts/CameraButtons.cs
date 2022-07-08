@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using Photon.Pun;
 
 // controls camera movement, and enables for a full screen freeze 
 public class CameraButtons : MonoBehaviour
@@ -71,6 +72,10 @@ public class CameraButtons : MonoBehaviour
             {
                 BirdsEye();
             }
+            else if (Input.GetKeyDown(KeyCode.C))
+            {
+                Recenter();
+            }
         }
     }
     // Rotates the camera left
@@ -101,6 +106,12 @@ public class CameraButtons : MonoBehaviour
         }
         BirdsEyeView = !BirdsEyeView;
     }
+
+    public void Recenter()
+    {
+        gameObject.transform.position = new Vector3(-1,0,-4);
+    }
+
     // input: the new state of the ui
     // Can be used to either freeze or unfreeze the camera
     public static void UIFreeze(bool input)

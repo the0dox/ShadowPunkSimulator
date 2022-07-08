@@ -12,10 +12,16 @@ public class SceneSaveData
     public float[] LeadMax = new float[5];
     private string name;
     private bool Overworld = false;
+    private int groundMaterialIndex = 0;
 
-    public SceneSaveData (string name, Dictionary<Vector3,GameObject> input)
+    public SceneSaveData (string name, Dictionary<Vector3,GameObject> input, Material groundMat)
     {
         this.name = name;
+        if(groundMat != null)
+        {
+            groundMaterialIndex = MaterialReference.GetMaterialIndex(groundMat);
+            Debug.Log("saving scene with material " + groundMaterialIndex);
+        }
         foreach(Vector3 pos in input.Keys)
         {
             GameObject entity = input[pos];
@@ -23,12 +29,12 @@ public class SceneSaveData
             if(entity.tag.Equals("Tile"))
             {
                 TileLocations.Add(PosString,entity.name.Split('(')[0]);
-                Debug.Log(entity.name.Split('(')[0] + ": " + entity.name + "x: " + PosString.Split(',')[0] + "y: " + PosString.Split(',')[1] + "z: " + PosString.Split(',')[2]);
+                //Debug.Log(entity.name.Split('(')[0] + ": " + entity.name + "x: " + PosString.Split(',')[0] + "y: " + PosString.Split(',')[1] + "z: " + PosString.Split(',')[2]);
             }
             else if(entity.tag.Equals("Player"))
             {
                 PlayerLocations.Add(PosString,entity.GetComponent<PlayerStats>().playername);
-                Debug.Log(PosString + ": " + entity.GetComponent<PlayerStats>().playername);
+                //Debug.Log(PosString + ": " + entity.GetComponent<PlayerStats>().playername);
             }
         }
     }
@@ -84,6 +90,11 @@ public class SceneSaveData
     public string GetName()
     {
         return name;
+    }
+
+    public int GetGroundMaterialIndex()
+    {
+        return groundMaterialIndex;
     }
 
     public bool isOverworld()

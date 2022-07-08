@@ -86,6 +86,48 @@ MonoBehaviour:
   - RPC_AskPlayers
   - RPC_GetDummyPlayers
   - RPC_ScatterMove
+  - RPC_SetHP
+  - RPC_SetSP
+  - RPC_Move
+  - RPC_SetMove
+  - RPC_MoveToTile
+  - RPC_PlaceToken
+  - RPC_List_Single
+  - RPC_ToggleMovement
+  - RPC_DestroyTile
+  - RPC_AssignCharacter
+  - RPC_ClientDisplay
+  - RPC_StartTurn
+  - RPC_ResetBoard
+  - RPC_FallDelay
+  - RPC_ClearTargets
+  - RPC_FinishedLoading
+  - RPC_ShowActionsOnly
+  - RPC_ShowAllInfo
+  - RPC_SetLocation
+  - RPC_Send_Direction_Info
+  - RPC_SetSpecialEffect
+  - RPC_SetParameters
+  - RPC_FinishedDrag
+  - RPC_CreateTile
+  - RPC_CustomCommand
+  - RPC_SetCamera
+  - RPC_OnNameUpdated
+  - RPC_UpdatedAttributeClient
+  - RPC_UpdatedAttributeMaster
+  - RPC_OnExit
+  - RPC_ShowExisitingClient
+  - RPC_DontSync
+  - RPC_UpdatedTalentMaster
+  - RPC_UpdatedTalentClient
+  - RPC_Show
+  - RPC_UpdatedItemClient
+  - RPC_UpdatedItemMaster
+  - RPC_ChangeSpecialization
+  - RPC_UpdateRound
+  - RPC_LoadGround
+  - RPC_Set_Position
+  - RPC_OnClicked
   DisableAutoOpenWizard: 1
   ShowSettings: 0
   DevRegionSetOnce: 1

@@ -12,7 +12,10 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     [SerializeField] private ItemReference ir;
     [SerializeField] private TileReference tr;
     [SerializeField] private ConditionsReference cr;
+    [SerializeField] private TalentReference talr;
+    [SerializeField] private ActionReference ar;
     [SerializeField] private PlayerSpawner ps;
+    [SerializeField] private MaterialReference mr;
     [SerializeField] private PhotonView pv;
     public static SceneSaveData LoadedScene;
 
@@ -24,15 +27,17 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         sr.Init();
         ir.Init();
         tr.Init();
+        talr.Init();
         cr.Init();
-        ps.Init();  
+        ps.Init(); 
+        mr.Init(); 
+        ar.Init();
         SceneManager.sceneLoaded += OnSceneLoaded;
     }
     [PunRPC]
     void RPC_Start()
     {
         Debug.Log("Built");
-        
     }
 
     //Loads a level onto the board stage
@@ -57,7 +62,9 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         {
             PhotonNetwork.IsMessageQueueRunning = true;
             Dictionary<string,string> tileLocs = LoadedScene.GetTileLocations();
-            pv.RPC("RPC_LoadTile",RpcTarget.AllBuffered,tileLocs);
+            int groundMaterialIndex = LoadedScene.GetGroundMaterialIndex();
+            pv.RPC("RPC_LoadGround", RpcTarget.All, groundMaterialIndex);
+            pv.RPC("RPC_LoadTile",RpcTarget.All,tileLocs);
             Instance.StartCoroutine(LoadOnStart());
         }
     }
@@ -71,12 +78,14 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         yield return new WaitForSeconds(0.01f);
         foreach(Vector3 pos in playerEntities.Keys)
         {
+            yield return new WaitForSeconds(0.01f);
             PlayerSpawner.CreatePlayer(playerEntities[pos],pos, false);
         }
         GameObject GM = GameObject.FindGameObjectWithTag("GameController");
         if(GM.TryGetComponent<TurnManager>(out TurnManager tm))
         {
-            tm.SortQueue();
+            tm.StartNewRound();
+            pv.RPC("RPC_FinishedLoading",RpcTarget.All);
         }
         else if (GM.TryGetComponent<LevelEditor>(out LevelEditor le))
         {
@@ -97,6 +106,39 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         LoadedScene = null;
     }
 
+    public static void ClearBoard()
+    {
+        Instance.pv.RPC("RPC_ResetBoard", RpcTarget.All);
+    }
+
+    [PunRPC] 
+    void RPC_ResetBoard()
+    {
+        BoardBehavior.ClearBoard();
+    }
+
+    public static void RemoveTile(Tile destroyedTile)
+    {
+        Instance.pv.RPC("RPC_DestroyTile",RpcTarget.AllBuffered,destroyedTile.transform.position);
+    }
+
+    public static void CreateTile(Vector3 location, string tileName)
+    {
+        Instance.pv.RPC("RPC_CreateTile",RpcTarget.AllBuffered, location, tileName);
+    }
+
+    [PunRPC]
+    void RPC_DestroyTile(Vector3 destroyKey)
+    {
+        BoardBehavior.RemoveTile(destroyKey);
+    }
+
+    [PunRPC]
+    void RPC_CreateTile(Vector3 location, string tileName)
+    {
+        BoardBehavior.CreateTile(location, tileName);
+    }
+
     [PunRPC]
     void RPC_LoadTile(Dictionary<string,string> TileLocations)
     {
@@ -106,8 +148,37 @@ public class GlobalManager : MonoBehaviourPunCallbacks
             Vector3 pos = new Vector3(float.Parse(posSplit[0]),float.Parse(posSplit[1]),float.Parse(posSplit[2]));
             GameObject Tile = TileReference.Tile(TileLocations[posKey]);
             GameObject newEntity = Instantiate(Tile) as GameObject;
+            newEntity.GetComponent<Tile>().reset();
             newEntity.transform.position = pos;
         }
         BoardBehavior.Init();
+    }
+
+    [PunRPC]
+    void RPC_LoadGround(int groundMaterialIndex)
+    {
+        //Debug.Log("setting ground material at index " + groundMaterialIndex);
+        Material groundMaterial = MaterialReference.GetMaterial(groundMaterialIndex);
+        TileGround.SetMaterial(groundMaterial);
+    }
+
+    [PunRPC]
+    void RPC_FinishedLoading()
+    {
+        CameraButtons.UIFreeze(false);
+        LoadingScreenBehavior.FinishedLoading();
+    }
+
+    void OnPhotonPlayerDisconnected()
+    {
+        Debug.Log("disconnected");
+        SceneManager.LoadScene("LostConnection");
+    }
+
+    public override void OnMasterClientSwitched(Photon.Realtime.Player newMasterClient)
+    {
+        PhotonNetwork.Disconnect();
+        Debug.Log("disconnected");
+        SceneManager.LoadScene("LostConnection");
     }
 }

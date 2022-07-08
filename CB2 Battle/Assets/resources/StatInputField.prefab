@@ -224,6 +224,7 @@ GameObject:
   - component: {fileID: 8225659303201318210}
   - component: {fileID: 8225659303201318208}
   - component: {fileID: 8225659303201318211}
+  - component: {fileID: 3428646587755463210}
   m_Layer: 5
   m_Name: StatInputField
   m_TagString: Input
@@ -251,7 +252,7 @@ RectTransform:
   m_AnchorMin: {x: 0.5, y: 0.5}
   m_AnchorMax: {x: 0.5, y: 0.5}
   m_AnchoredPosition: {x: -185.1, y: 197.6}
-  m_SizeDelta: {x: 76.4234, y: 53.0708}
+  m_SizeDelta: {x: 55, y: 55}
   m_Pivot: {x: 0.5, y: 0.5}
 --- !u!222 &8225659303201318210
 CanvasRenderer:
@@ -350,11 +351,27 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 05c68078c03a3424580d2b7f83eff086, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  stat: 
   value: 0
   TextObject: {fileID: 8225659305141709078}
   Placeholder: {fileID: 8225659304072095052}
   IF: {fileID: 8225659303201318208}
+  stat: 0
+  tooltipTrigger: {fileID: 3428646587755463210}
+  baseDescription: 
+--- !u!114 &3428646587755463210
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 8225659303201318239}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 72676a4f24e232640a0e1614698b881b, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  content: 
+  header: 
 --- !u!1 &8225659304072095052
 GameObject:
   m_ObjectHideFlags: 0

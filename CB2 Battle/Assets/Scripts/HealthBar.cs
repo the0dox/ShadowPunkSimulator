@@ -18,7 +18,12 @@ public class HealthBar : MonoBehaviour
 
     public void UpdateHealth(int currentHealth, int maxHealth)
     {
-        Bar.fillAmount = (float)currentHealth / maxHealth;  
+        float fill = (float) (maxHealth - currentHealth) / maxHealth;  
+        if(fill < 0)
+        {
+            fill = 0;
+        }
+        Bar.fillAmount = fill;
     }
 
     public void ToggleBar()

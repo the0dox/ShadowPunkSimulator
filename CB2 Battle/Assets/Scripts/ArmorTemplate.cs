@@ -6,8 +6,6 @@ using UnityEngine;
 [CreateAssetMenu(fileName = "Armor", menuName = "ScriptableObjects/Armor")]
 public class ArmorTemplate : ItemTemplate
 {
-    // locations covered by armor
-    [SerializeField] public string[] Parts;
     // damage reduction provided by armor
     [SerializeField] public int AP;
     // special rules for armor

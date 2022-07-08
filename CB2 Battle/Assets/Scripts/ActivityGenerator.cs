@@ -202,15 +202,18 @@ public class ActivityGenerator : MonoBehaviour
             Dropdown.OptionData baseResponse = new Dropdown.OptionData();
             baseResponse.text = "None";
             results.Add(baseResponse);
-            foreach(Skill s in PlayerSelection[0].Skills)
+            /*
+            foreach(string s in PlayerSelection[0].myData.attribues)
             {
-                if(s.hasSkillDescriptor("Investigation"))
+                SkillTemplate currentSkill = SkillReference.GetSkill(s);
+                if(currentSkill.Descriptor.Equals("Investigation"))
                 {
                     Dropdown.OptionData newData = new Dropdown.OptionData(); 
-                    newData.text = s.name;
+                    newData.text = s;
                     results.Add(newData);
                 }
             }
+            */
             SkillField.GetComponent<Dropdown>().AddOptions(results);
         }
         else
@@ -286,7 +289,7 @@ public class ActivityGenerator : MonoBehaviour
                     modifier += 10;
                 }
             }   
-            RollResult LeadResult = PlayerSelection[0].AbilityCheck(SkillChoice,modifier,"Lead");
+            RollResult LeadResult = PlayerSelection[0].AbilityCheck(AttributeKey.AcademicKnowledge);
             StartCoroutine(waitForResult(LeadResult, name));
         }
     }
@@ -301,10 +304,10 @@ public class ActivityGenerator : MonoBehaviour
         if(input.Passed())
         {
             int dieroll = Random.Range(1,11);
-            string usedStat = SkillReference.GetSkill(input.GetSkillType()).characterisitc;
-            int statScoreBonus = input.getOwner().GetStatScore(usedStat);
+            string usedStat = "";//SkillReference.GetSkill(input.GetSkillType()).derivedAttribute;
+            int statScoreBonus = 0; // input.getOwner().GetAttribute(usedStat);
             extrahours = dieroll + statScoreBonus;
-            CombatLog.Log(input.getOwner().GetName() + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
+            CombatLog.Log(input.getOwner().playername + " succedes on their check and makes 1d10 + " + usedStat + " score = ( <" + dieroll + "> + " + statScoreBonus + " = " + extrahours + ") hours of progress!");
             extrahours += input.GetDOF();
             CombatLog.Log("Each degree of success (" + input.GetDOF() + ") counts for one more hour of progress!");
         }

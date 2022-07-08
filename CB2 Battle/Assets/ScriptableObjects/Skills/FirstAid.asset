@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: FirstAid
+  m_EditorClassIdentifier: 
+  defaultable: 1
+  skillKey: 55
+  derivedAttribute: 10
+  visible: 1
+  Descriptor: []
+  displayText: First Aid represents your character's medical knowledge. Without any
+    items, first Aid can only be used to stabilize a character with the dying condition
+    as a full action. But with medkits, first aid can be used to heal wounds. Critical
+    injuries cannot be healed with First Aid.
+  limit: 23
+  Specializations: []
+  DroneEquivalent: 97
+  DroneAttributeEquivalent: 10

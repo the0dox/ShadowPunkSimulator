@@ -24,6 +24,19 @@ public class SkillReference : MonoBehaviour
         return Library[name];
     }
 
+    public static SkillTemplate GetSkill(AttributeKey skillKey)
+    {
+        foreach(string key in Library.Keys)
+        {
+            SkillTemplate template = Library[key];
+            if(template.skillKey.Equals(skillKey))
+            {
+                return template;
+            }
+        }
+        throw new System.NullReferenceException();
+    }
+
     public static Dictionary<string, SkillTemplate> SkillsTemplates()
     {
         return Library;

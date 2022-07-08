@@ -6,10 +6,15 @@ using Photon.Pun;
 // game master object that needs to be present in a scene to spawn characters, creates characters based of of charactersave data
 public class PlayerSpawner : MonoBehaviourPunCallbacks
 {
+    // Empty player object that is spawned
     [SerializeField] private GameObject PlayerReference;
+    // Reference for the friendly color applied to new player objects 
     [SerializeField] private Material PlayerMaterial;
+    // Reference for the enemy color applied to new player objects
     [SerializeField] private Material NPCMaterial;
+    // List of all .obj files used for character models
     [SerializeField] private List<GameObject> Models;
+    // Each new player is given a unique ID (different from their owner ID) which can be quickly sent through RPCs
     private static Dictionary<int, PlayerStats> IDs = new Dictionary<int, PlayerStats>();
     public static Material SPlayerMaterial;
     public static Material SNPCMaterial;
@@ -32,15 +37,34 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
     }
 
-    public static void CreatePlayer(string csdname,Vector3 pos, bool controlable)
+    // owner: player who deployed the drone
+    // template: the Drone item that is being converted into a new player object
+    // pos: the spawn location of the player
+    public static GameObject CreatePlayer(PlayerStats owner, Drone template, Vector3 pos)
     {
-        pv.RPC("RPC_CreatePlayer",RpcTarget.MasterClient,csdname,pos,controlable);
+        CharacterSaveData csd = new CharacterSaveData(owner, template);
+        return CreatePlayer(csd, pos, false);
     }
 
-    [PunRPC]
-    void RPC_CreatePlayer(string csdname,Vector3 pos, bool controlable)
+    // csdname: name of a desired charactersavedata to be spawned
+    // pos: the spawn location of the player
+    // controlable: if set to true player is treated as a game token, else it cannot be interacted with
+    public static GameObject CreatePlayer(string csdname, Vector3 pos, bool controlable)
     {
         CharacterSaveData csd = DmMenu.GetCSD(csdname);
+        if(csd != null)
+        {
+            return CreatePlayer(csd, pos, controlable);
+        }
+        Debug.LogWarning("Error: charactersave invalid charactersavedata sent to player spawner, no player will be spawned");
+        return null;
+    }
+
+    // csd: charactersave data to be downloaded into the new player
+    // pos: the spawn location of the player
+    // controlable: if set to true player is treated as a game token, else it cannot be interacted with
+    public static GameObject CreatePlayer(CharacterSaveData csd,Vector3 pos, bool controlable)
+    {
         // Create Character with no model at position
         GameObject EmptyPlayer = PhotonNetwork.Instantiate("Player", pos, Quaternion.identity);
         EmptyPlayer.transform.position = pos;
@@ -57,7 +81,9 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         }
         // Initalize the player 
         int ID = IDs.Count;
-        EmptyPlayer.GetComponent<PlayerStats>().DownloadSaveData(csd, ID);
+        // Assign playerowner
+        int ownerID = DmMenu.GetOwner(csd).ActorNumber;
+        EmptyPlayer.GetComponent<PlayerStats>().DownloadSaveData(csd, ID, ownerID);
         EmptyPlayer.GetComponent<TacticsMovement>().Init();
         IDs.Add(ID,EmptyPlayer.GetComponent<PlayerStats>());
 
@@ -65,7 +91,14 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
         GameObject GC = GameObject.FindGameObjectWithTag("GameController");
         if(GC.TryGetComponent<TurnManager>(out TurnManager tm))
         {
-            tm.AddPlayer(EmptyPlayer);
+            if(controlable)
+            {
+                tm.PlacePlayer(EmptyPlayer);
+            }
+            else
+            {
+                tm.AddPlayer(EmptyPlayer);
+            }
         }
         else if(GC.TryGetComponent<OverworldManager>(out OverworldManager om))
         {
@@ -78,6 +111,7 @@ public class PlayerSpawner : MonoBehaviourPunCallbacks
                 GC.GetComponent<LevelEditor>().AddPlayer(EmptyPlayer);
             }
         }
+        return EmptyPlayer;
     }
 
     public static PlayerStats IDtoPlayer(int id)

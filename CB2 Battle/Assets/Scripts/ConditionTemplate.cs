@@ -8,38 +8,24 @@ using UnityEngine;
 public class ConditionTemplate : ScriptableObject
 {  
     // characteristics of the condition object
-    [SerializeField] public string[] Stats;
-    [SerializeField] public int[] Modifiers;
+    [SerializeField] public string IgnoreKey;
+    [SerializeField] public int Modifiers;
     [SerializeField] public int duration;
-    [SerializeField] public bool clearOnStart;  
-    
-    [SerializeField] public Dictionary<string, int> StatReference = new Dictionary<string, int>();
-
-    //
-    public int GetModifier(string skill)
+    [SerializeField] public bool clearOnTurnEnd;  
+    [SerializeField] public bool clearOnMove;
+    [SerializeField] public bool clearOnAttack;
+    [SerializeField] public Condition conditionKey;
+    [SerializeField] public EffectKey effectKey;
+    [SerializeField] public bool buff;
+    [SerializeField] public bool debuff;
+    [SerializeField] public Sprite icon;
+    public int GetModifier(string key)
     {
-        CreateReference();
-        if(StatReference.ContainsKey(skill))
+        if(!string.IsNullOrEmpty(key) && !key.Equals(IgnoreKey))
         {
-            //Debug.Log(name + " modifies " + skill + " by " + StatReference[skill]);
-            return StatReference[skill];
+            return Modifiers;
         }
         return 0;
     }
 
-    public void CreateReference()
-    {
-        if(StatReference.Count == 0)
-        {
-            for (int i = 0; i < Stats.Length; i++)
-            {
-                StatReference.Add(Stats[i], Modifiers[i]);
-            }
-        }
-    }
-
-    public bool isCondition(string type)
-    {
-        return type.Equals(name);
-    }
 }

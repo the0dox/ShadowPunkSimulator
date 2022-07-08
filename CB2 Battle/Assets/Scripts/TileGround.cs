@@ -5,12 +5,15 @@ using UnityEngine;
 public class TileGround : MonoBehaviour
 {
     [SerializeField] private GameObject TileRef;
+    [SerializeField] private MeshRenderer myMesh;
     private static GameObject STileRef;
+    private static MeshRenderer SmyMesh;
     private static Dictionary<Vector3,GameObject> myTiles = new Dictionary<Vector3, GameObject>();
 
-    void Start()
+    void Awake()
     {
         STileRef = TileRef;
+        SmyMesh = myMesh;
         transform.position = new Vector3(0,0.5f,0);
     }
 
@@ -30,5 +33,15 @@ public class TileGround : MonoBehaviour
             }
         }
         return myTiles; 
+    }
+
+    public static void SetMaterial(Material newGroundMat)
+    {
+        SmyMesh.material = newGroundMat;
+    }
+
+    public static Material GetMaterial()
+    {
+        return SmyMesh.sharedMaterial;
     }
 }

@@ -1,0 +1,22 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e9b4cee9722b340a3e714a0d739400, type: 3}
+  m_Name: Spell Create Barrier
+  m_EditorClassIdentifier: 
+  key: 9
+  description: "Concentrate power in your stance to erect a wall for you and your
+    allies \n\nCreate barrier is a full action wherein you roll spellcasting + magic
+    to create a 2 tile high wall with width equal to your number of hits the barrier
+    is made of weak material."
+  prerequisites: 08000000
+  conflictsWith: 
+  Icon: {fileID: 21300000, guid: 437894dd1e3924f4a8a11f593b2a3e2a, type: 3}

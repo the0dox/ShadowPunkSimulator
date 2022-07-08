@@ -11,6 +11,7 @@ public class Tile : MonoBehaviour
     public bool selectable = false; 
     public bool attack = false;
     public bool selectableRunning = false; 
+    public bool blank = false;
     public List<Tile> adjacencyList = new List<Tile>();
     public List<Tile> diagonalList = new List<Tile>();
 
@@ -20,7 +21,7 @@ public class Tile : MonoBehaviour
     public float distance = 0; 
 
     public int ArmorValue = 8;
-    public int TotalAV;
+    public int StructurePoints = 4;
     public Vector3 MapPosition;
 
     public static Vector3 topright = new Vector3(1,0,1);
@@ -28,11 +29,17 @@ public class Tile : MonoBehaviour
     public static Vector3 topleft = new Vector3(1,0,-1);
     public GameObject indicator;
     private MeshFilter myFilter;
+    [SerializeField] private Material transMat;
+    [SerializeField] private Material solidMat;
+    [SerializeField] private GameObject ScrolledBox;
 
     void Start()
     {
         MapPosition = transform.position;
-        TotalAV = ArmorValue;
+        if(ScrolledBox != null)
+        {
+            ScrolledBox.SetActive(false);      
+        }
     }
     // Update is called once per frame
     public void  UpdateIndictator()
@@ -44,28 +51,33 @@ public class Tile : MonoBehaviour
             indicator.GetComponent<Renderer>().material.color = currentColor;
             if (current)
             {
-                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);;
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);
             }
             else if (target)
-            {
-                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);;
+            {   
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color =  new Color(0,1,0,0.75f);
             }
             else if (selectable)
             {
-                indicator.GetComponent<Renderer>().material.color = new Color(0,1,1,0.75f);;
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color = new Color(0,1,1,0.75f);
             }
             else if (attack)
             {
-                indicator.GetComponent<Renderer>().material.color = new Color(1,0,0,0.75f);;
+                indicator.GetComponent<Renderer>().material = solidMat;
+                indicator.GetComponent<Renderer>().material.color = new Color(1,0,0,0.75f);
             }
             else if (selectableRunning)
             {
+                indicator.GetComponent<Renderer>().material = solidMat;
                 indicator.GetComponent<Renderer>().material.color = new Color(1,0.92f,0.016f,0.75f);
             }
             else
             {
+                indicator.GetComponent<Renderer>().material = transMat;
                 currentColor = indicator.GetComponent<Renderer>().material.color;
-                currentColor.a = 0.25f;
                 indicator.GetComponent<Renderer>().material.color = currentColor;
             }
         
@@ -85,11 +97,12 @@ public class Tile : MonoBehaviour
         distance = 0; 
         adjacencyList = new List<Tile>();
         diagonalList = new List<Tile>();
+        ScrolledBox.SetActive(false);
         UpdateIndictator();
     }
 
     //adds neighbors to adjacency list
-    public void FindNeighbors(float jumpHeight)
+    public void FindNeighbors(int jumpHeight)
     {
         reset();
         CheckTile(Vector3.forward, jumpHeight,false);
@@ -103,9 +116,9 @@ public class Tile : MonoBehaviour
         CheckTile(-topleft,jumpHeight,true);
     }
 
-    public void CheckTile(Vector3 direction, float jumpHeight, bool diagonal)
+    public void CheckTile(Vector3 direction, int jumpHeight, bool diagonal)
     {
-        for(int i = -1; i < jumpHeight; i++)
+        for(int i = -(int)jumpHeight; i < jumpHeight; i++)
         {
             Vector3 currentDir = new Vector3(direction.x, direction.y + i, direction.z);
             if(BoardBehavior.ValidNeighbor(transform.position, currentDir))
@@ -130,29 +143,92 @@ public class Tile : MonoBehaviour
         return null; 
     }
 
-    public int CoverReduction(int damage, int AP)
+    public void HitCover(AttackSequence incomingAttack)
     {
-        if(ArmorValue < (damage + AP))
+        CombatLog.Log("by getting between 0-" + incomingAttack.coverRange +  " hits, " + incomingAttack.attacker.GetName() + " hits cover!");
+
+        int damage = incomingAttack.ActiveWeapon.RollDamage() + incomingAttack.ActiveWeapon.GetDamageBonus();
+        int AP = incomingAttack.ActiveWeapon.Template.pen;
+
+        int soak = ArmorValue - AP;
+
+        if(soak < 0)
         {
-            ArmorValue--;
-            float percentage = ((float)TotalAV)/ArmorValue;
-            
-            if(ArmorValue < 1)
-            {
-                CombatLog.Log("Cover is sufficiently damaged that it provides no AP");
-            }
-            else
-            {
-                CombatLog.Log("Cover is reduced to " + ArmorValue + "AP");
-            }
-        return ArmorValue + 1;
+            soak = 0;
         }
-        return ArmorValue;
+        damage -= soak;
+        if(damage > 0)
+        {
+            int netDamage = TacticsAttack.AmmoExpenditure[incomingAttack.FireRate]; 
+            BoardBehavior.DistributeCoverDamage(transform.position, netDamage);
+        }
+        else
+        {
+            PopUpText.CreateText("-0", Color.yellow, gameObject);
+        }
+    }
+
+    // damage cover without spreading feature
+    public void HitCover(Weapon incomingWeapon)
+    {
+        int damage = incomingWeapon.RollDamage() + incomingWeapon.GetDamageBonus();
+        int AP = incomingWeapon.Template.pen;
+        int soak = ArmorValue - AP;
+        if(soak < 0)
+        {
+            soak = 0;
+        }
+        damage -= soak;
+        if(damage > 0)
+        {
+            StructurePoints -= damage;
+            if(StructurePoints < 1)
+            {
+                GlobalManager.RemoveTile(this);
+            }
+        }
+    }
+
+    public int DamageCover(int damage)
+    {
+        // blank tiles cannot be destroyed
+        if(blank)
+        {
+            Debug.LogError("Error: cannot damage blank tiles, is the tile selector method functioning properly?");
+            return -1;
+        }
+        int netDamage = damage - StructurePoints;
+        StructurePoints -= damage;
+        PopUpText.CreateText("-" + damage, Color.red, gameObject);
+        if(StructurePoints < 1)
+        {
+            GlobalManager.RemoveTile(this);
+        }
+        Debug.Log("remaining damage:" + netDamage);
+        return netDamage;
+    }
+
+    public bool IsStackedTile()
+    {
+        Tile underTile = BoardBehavior.GetTile(transform.position + Vector3.down);
+        if(underTile != null)
+        {
+            if (!underTile.blank)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public void OnScrolled(bool on)
+    {
+        ScrolledBox.SetActive(on);
     }
 
 
     public void DestroyMe()
     {
-        DestroyImmediate(this);
+        Destroy(gameObject);
     }
 }

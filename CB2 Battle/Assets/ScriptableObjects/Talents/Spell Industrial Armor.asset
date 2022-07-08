@@ -1,0 +1,27 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e9b4cee9722b340a3e714a0d739400, type: 3}
+  m_Name: Spell Industrial Armor
+  m_EditorClassIdentifier: 
+  key: 11
+  description: 'You manipulate your environment to encase yourself in a layer of
+    protective armor.
+
+
+    Industrial armor is a full action roll armorer + magic
+    check to grant to themselves or an ally for a duration equal to the number of
+    hits. As an additional cost to cast this spell you must select up to 5 adjacent
+    tiles to the target to create the armor. Each tile destroyed grants 1 point of
+    armor'
+  prerequisites: 08000000
+  conflictsWith: 
+  Icon: {fileID: 21300000, guid: 22955e5e0af89ba49952a3661b3f1315, type: 3}

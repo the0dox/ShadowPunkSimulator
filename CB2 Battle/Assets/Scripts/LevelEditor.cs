@@ -4,7 +4,7 @@ using UnityEngine;
 using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
-public class LevelEditor : UIButtonManager
+public class LevelEditor: MonoBehaviour
 {
     [SerializeField] private GameObject SelectedTile;
     [SerializeField] private GameObject indicator;
@@ -30,13 +30,12 @@ public class LevelEditor : UIButtonManager
 
     public void ChangeTileTexture(GameObject newTile)
     {
+        UIDisplay.SetActive(true);
         SelectedTile = newTile;
-        GameObject tempBlock = Instantiate(SelectedTile) as GameObject;
-        Material newMat = tempBlock.GetComponent<MeshRenderer>().material;
+        Material newMat = newTile.GetComponent<MeshRenderer>().sharedMaterial;
         UIDisplay.GetComponent<MeshRenderer>().material = newMat;
         indicator.GetComponent<MeshRenderer>().material = newMat;
         indicator.GetComponent<MeshRenderer>().material.color = new Color(newMat.color.r,newMat.color.b,newMat.color.b,0.5f);
-        Destroy(tempBlock);
     }
 
 
@@ -49,13 +48,9 @@ public class LevelEditor : UIButtonManager
         if (Physics.Raycast(ray, out hit))
         {
             bool hitUi = false;
-            GameObject[] ui = GameObject.FindGameObjectsWithTag("Input");
-            foreach(GameObject g in ui)
+            if(EventSystem.current.IsPointerOverGameObject())
             {
-                if(EventSystem.current.IsPointerOverGameObject())
-                {
-                    hitUi = true;
-                }
+                hitUi = true;
             }
 
             if(!hitUi)
@@ -130,10 +125,14 @@ public class LevelEditor : UIButtonManager
         }
     }
 
-    override public void OnButtonPressed(string input)
+    public void OnButtonPressed(string input)
     {
         ChangeTileTexture(TileReference.Tile(input));
-        UITileSelectorRef.Toggle();
+    }
+
+    public void HideIndicator()
+    {
+        UIDisplay.SetActive(UIDisplay.activeInHierarchy);
     }
 
     private void CreateTile(Vector3 PlacementPos)
@@ -159,6 +158,7 @@ public class LevelEditor : UIButtonManager
     public void AddPlayer(GameObject input)
     {
         input.GetComponent<Collider>().enabled = false;
+        input.GetComponent<PlayerStats>().DisableHP();
         Player = input;
         indicator.SetActive(false);
     }
@@ -167,7 +167,8 @@ public class LevelEditor : UIButtonManager
     {
         string name = NameIF.text;
         NameIF.text = null;
-        SceneSaveData newScene = new SceneSaveData(name, TileLocations);
+        Material groundMat = TileGround.GetMaterial();
+        SceneSaveData newScene = new SceneSaveData(name, TileLocations,groundMat);
         SaveSystem.SaveScene(newScene);
         CameraButtons.UIFreeze(false);
     }

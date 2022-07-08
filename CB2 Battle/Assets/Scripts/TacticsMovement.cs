@@ -5,28 +5,25 @@ using Photon.Pun;
 // While nearly all player info is handled by Playerstats, Tacticsmovement covers all player movement.
 // Note that tacticsmovement Doesn't know the gamelogic of movement, it can't calculate how far a player can move
 // It needs to be supplied with the playerstats
-public class TacticsMovement : MonoBehaviour
+public class TacticsMovement : MonoBehaviourPunCallbacks
 {
    List<Tile> selectableTiles = new List<Tile>();
    GameObject[] tiles; 
 
-   Stack<Tile> path = new Stack<Tile>();
+   Stack<Vector3> path = new Stack<Vector3>();
    Tile currentTile;
 
-   public bool moving = false!;
-   public float initative = 0;
+   public bool moving = false;
    public bool finishedMove = false;
-   public float jumpHeight = 2;
+   public int jumpHeight = 2;
+   public float fallSpeed = 4;
    public float moveSpeed = 4; 
    public Weapon activeWeapon;
-   public bool halfMove;
-   
-
    Vector3 velocity = new Vector3();
    Vector3 heading = new Vector3();
    float halfHeight = 0;
-
    Vector3 jumpTick = new Vector3(0,1,0);
+   public bool draggable = true;
    [SerializeField] private PhotonView pv;
    
    void Start()
@@ -63,12 +60,47 @@ public class TacticsMovement : MonoBehaviour
 
    public void GetCurrentTile()
    {
+      
       currentTile = GetTargetTile(gameObject);
       if(currentTile != null)
       {
          currentTile.current = true; 
          currentTile.UpdateIndictator();
       }
+   }
+
+   public Vector3 getCurrentTilePosition()
+   {
+      return GetTargetTile(gameObject).transform.position;
+   }
+
+   public void FallingCheck()
+   {
+      RaycastHit Hit;
+      Physics.Raycast(transform.position, Vector3.down, out Hit, 50, LayerMask.GetMask("Obstacle"));
+      if(Hit.collider != null) 
+      {
+         Vector3 fallTarget = BoardBehavior.GetClosestTile(Hit.point);
+         int fallDistance = Mathf.FloorToInt(Vector3.Distance(transform.position, fallTarget));
+         if(fallDistance > 1)
+         {
+            TokenDragBehavior.ToggleMovement(false);
+            CombatLog.Log(GetComponent<PlayerStats>().GetName() + "falls!");
+            //changetoPun
+            pv.RPC("RPC_FallDelay",RpcTarget.All, fallTarget, fallDistance);
+         }
+      }
+      else
+      {
+         Debug.Log("error: player has fallen off the map");
+         TurnManager.instance.RemovePlayer(gameObject);
+      } 
+   }
+
+   [PunRPC]
+   void RPC_FallDelay(Vector3 fallTarget, int distance)
+   {
+      StartCoroutine(fallDelay(fallTarget, distance));
    }
 
    public Tile GetTargetTile(GameObject target)
@@ -82,20 +114,13 @@ public class TacticsMovement : MonoBehaviour
 
    public void ComputeAdjacencyLists()
    {
-      foreach (GameObject tile in tiles)
-      {
-         Tile t = tile.GetComponent<Tile>();
-         t.FindNeighbors(jumpHeight);
-      }
+      BoardBehavior.ComputeAdjacencyLists(jumpHeight);
    }
 
-   public void FindSelectableTiles(int move, int doubleMove, int team)
+   public void FindTiles()
    {
-      pv.RPC("RPC_Walk", RpcTarget.All ,move,doubleMove, team);
-   }
-   [PunRPC]
-   void RPC_Walk(int move, int doubleMove, int team)
-   {
+      PlayerStats myStats = GetComponent<PlayerStats>();
+      float distance = (float)myStats.GetMovement();
       ComputeAdjacencyLists();
       GetCurrentTile();
 
@@ -109,35 +134,16 @@ public class TacticsMovement : MonoBehaviour
          while (process.Count > 0) 
          {
             Tile t = process.Dequeue();
-
-            selectableTiles.Add(t);
-            PlayerStats occupant = t.GetOccupant();
-            if(occupant == null || occupant.GetTeam() == team)
-            { 
-               if (t.distance <= move)
+            if (t.distance < distance) 
+            {    
+               foreach (Tile tile in t.adjacencyList)
                {
+                  PlayerStats occupant = tile.GetOccupant();
                   if(occupant == null)
-                  {
-                     t.selectable = true;
-                     t.UpdateIndictator(); 
-                  }
-               }
-               else
-               {
-                  if(occupant == null)
-                  {
-                     t.selectableRunning = true;
-                     t.UpdateIndictator(); 
-                  }
-               }
-               if (t.distance < doubleMove) {     
-
-                  foreach (Tile tile in t.adjacencyList)
-                  {
-                     
+                  { 
                      if (!tile.visited)
                      {
-                        tile.parent = t;
+                        selectableTiles.Add(t);
                         tile.visited = true;
                         float distanceCost = 1;
                         if(t.diagonalList.Contains(tile))
@@ -145,7 +151,11 @@ public class TacticsMovement : MonoBehaviour
                            distanceCost = 1.5f;
                         }
                         tile.distance = distanceCost + t.distance;
-                        process.Enqueue(tile);
+                        if(tile.distance <= distance)
+                        {
+                           tile.parent = t;
+                           process.Enqueue(tile);
+                        }
                      }
                   }
                }
@@ -153,87 +163,68 @@ public class TacticsMovement : MonoBehaviour
          }
       }
    }
-   public void FindChargableTiles(int charge, int team)
+
+   public void moveToTile(Vector3[] pathArray)
    {
-      pv.RPC("RPC_Charge",RpcTarget.All,charge,team);
-   }
-
-   [PunRPC] 
-   void RPC_Charge(int charge, int team)
-   {
-      ComputeAdjacencyLists();
-      GetCurrentTile();
-
-      Queue<Tile> process = new Queue<Tile>();
-
-      process.Enqueue(currentTile);
-      if(currentTile != null)
-      {
-         currentTile.visited = true;
-
-         while (process.Count > 0) 
-         {
-            Tile t = process.Dequeue();
-
-            selectableTiles.Add(t);
-
-            if(t.distance > 4) {
-               List<Tile> adjacentTiles = t.adjacencyList;
-               foreach (Tile adjacentTile in adjacentTiles)
-               {
-                  if (adjacentTile.GetOccupant() != null && adjacentTile.GetOccupant().GetTeam() != team)
-                  {
-                     if(t.GetOccupant() == null)
-                     {
-                        t.selectableRunning = true;
-                        t.UpdateIndictator();
-                     }
-                  }
-               }
-            }
-
-            if (t.distance < charge && (t.GetOccupant() == null || t.GetOccupant().GetTeam() == team)) {     
-
-               foreach (Tile tile in t.adjacencyList)
-               {
-                  
-                  if (!tile.visited)
-                  {
-                     tile.parent = t;
-                     tile.visited = true;
-                     float distanceCost = 1;
-                     if(t.diagonalList.Contains(tile))
-                     {
-                        distanceCost = 1.5f;
-                     }
-                     tile.distance = distanceCost + t.distance;
-                     process.Enqueue(tile);
-                  }
-               }
-            } 
-         }
-      }
-   }
-
-   public void moveToTile(Tile tile)
-   {
-      //action economy for full/half move
-      halfMove = tile.selectable; 
-
       //reset any previous movement
       path.Clear();
-
-      tile.target = true;
-      tile.UpdateIndictator();
-      moving = true; 
+      moving = true;
       
-      Tile next = tile;
       //until we reach the location
-      while (next != null)
+      for (int i = 0; i < pathArray.Length; i++)
       {
          //add current tile to pathing and move on to the next
-         path.Push(next);
-         next = next.parent;
+         path.Push(pathArray[i]);
+      }
+   
+      StartCoroutine(moveDelay());
+   }
+
+   public void HoldPush(GameObject hitObject)
+   {
+      StartCoroutine(pushDelay(hitObject));
+   }
+
+   IEnumerator pushDelay(GameObject hitObject)
+   {
+      while(moving)
+      {
+         yield return new WaitForSeconds(0.2f);
+      }
+      yield return new WaitForSeconds(0.5f);
+      TacticsAttack.ResolvePush(GetComponent<PlayerStats>(),hitObject);
+   }
+
+   IEnumerator moveDelay()
+   {
+      while(moving)
+      {  
+         Move();
+         yield return new WaitForEndOfFrame(); 
+      }
+   }
+
+   IEnumerator fallDelay(Vector3 fallTarget, int distance)
+   {
+      bool falling = true;
+      fallTarget.y += 1.5f;
+      Vector3 fallDir = new Vector3(0, fallSpeed, 0);
+      while(falling)
+      {
+         if((transform.position.y - fallTarget.y) >= 0.05f)
+         {
+            transform.position -= fallDir * Time.deltaTime; 
+         }
+         else
+         {
+            transform.position = fallTarget;
+            falling = false;
+         }
+         yield return new WaitForEndOfFrame();
+      }
+      if(pv.IsMine)
+      {
+         TurnManager.instance.FallComplete(this,distance);
       }
    }
 
@@ -242,8 +233,7 @@ public class TacticsMovement : MonoBehaviour
       //if our stack still has move orders, we can move
       if (path.Count > 0)
       {
-         Tile t = path.Peek();
-         Vector3 target = t.transform.position;
+         Vector3 target = path.Peek();
          //ensure player is standing on top of the tile
          target.y += 1.5f;
 
@@ -272,7 +262,7 @@ public class TacticsMovement : MonoBehaviour
                }
                else
                {
-                   Vector3 newLevel = new Vector3(transform.position.x, target.y, transform.position.z);
+                  Vector3 newLevel = new Vector3(transform.position.x, target.y, transform.position.z);
                   transform.position = newLevel;
                }
             }
@@ -311,6 +301,8 @@ public class TacticsMovement : MonoBehaviour
          finishedMove = true;
       }
    }
+
+
 
    public void RemoveSelectableTiles()
    {
@@ -355,6 +347,22 @@ public class TacticsMovement : MonoBehaviour
          else if(TacticsAttack.HasValidTarget(target,myStats,w))
          {
             p.GetComponent<TacticsMovement>().PaintCurrentTile("attack");
+         }
+      }
+   }
+
+   public void GetValidAllys(int distance)
+   {
+      RemoveSelectableTiles();
+      ComputeAdjacencyLists();
+      GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
+      PlayerStats myStats = gameObject.GetComponent<PlayerStats>();
+      foreach (GameObject p in players)
+      {
+         PlayerStats target = p.GetComponent<PlayerStats>();
+         if(target.GetTeam() == myStats.GetTeam())
+         {
+            p.GetComponent<TacticsMovement>().PaintCurrentTile("selectableRunning");
          }
       }
    }
@@ -413,14 +421,34 @@ public class TacticsMovement : MonoBehaviour
       finishedMove = false;
    }
 
+   public void OnTurnStart()
+   {
+      GetCurrentTile();
+      ResetMove();
+      FallingCheck();
+   }
+
    public bool finishedMoving()
    {
-      bool output = finishedMove;
-      if(output)
+      if(finishedMove)
       {
+         foreach (Tile t in selectableTiles)
+         {
+            t.reset();
+         }
+         selectableTiles.Clear();
          finishedMove = false;
          return true;
       }
       return false;
+   }
+
+   public void SetPosition(Vector3 newPosition)
+   {
+      pv.RPC("RPC_Set_Position",RpcTarget.All, newPosition.x, newPosition.y, newPosition.z);
+   }
+   [PunRPC] void RPC_Set_Position(float x, float y, float z)
+   {
+      transform.position = new Vector3( x, y, z);
    }
 }

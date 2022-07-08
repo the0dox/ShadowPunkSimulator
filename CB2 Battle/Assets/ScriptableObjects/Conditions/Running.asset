@@ -12,7 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: f1f0852cd1f52964cb2d51f6f0398d13, type: 3}
   m_Name: Running
   m_EditorClassIdentifier: 
-  Stats: []
-  Modifiers: 
-  duration: 0
+  IgnoreKey: Running
+  Modifiers: -2
+  duration: 1
   clearOnStart: 1
+  conditionKey: 6

@@ -7,48 +7,22 @@ using UnityEngine;
 [System.Serializable]
 public class CharacterSaveData
 {
-    // Basic character stats
-    private int BS = 20;
-    private int WS = 20;
-    private int S = 20;
-    private int T = 20;
-    private int A = 20;
-    private int INT = 20;
-    private int PER = 20;
-    private int WP = 20;
-    private int FEL = 20;
-    private int Wounds = 5;
-    private int MaxWounds = 5;
-    private int MoveHalf = 0;
-    private int MoveFull = 0;
-    private int MoveCharge = 0;
-    private int MoveRun = 0;
-    private int Head = 0;
-    private int Body = 0;
-    private int RightArm = 0;
-    private int LeftArm = 0;
-    private int RightLeg = 0;
-    private int LeftLeg = 0;
-    private int Fatigue = 0;
-    private int Critical = 0;
-    private int Fate = 0;
-    private int FateMax = 0;
-    private int Gelt = 0;
-    private int Income = 0;
+    // Basic character stats Shadowrunner
+    public int[] attribues = new int[150]; 
+    public bool[] talents = new bool[100];
+    
+    // Skills Shadowrunner
+    public Dictionary<string, int> skillSpecialization = new Dictionary<string, int>();
+    // non ttrpg stats used for game logic
     public int team = 0; 
-    public int ID;
     public string playername;
     // Name of mesh model
     public string Model;
-    // Each entry is a unique skill name for the skillreference
-    
-    private string[] SkillNames = new string[50];
-    // Each entry is the levels the player has in the skill of the same index
-    private int[] SkillLevels = new int[50]; 
-    // Each entry is a unique skill name for the itemReference
-    public string[] equipment = new string[20];
-    // Each entry is the number of each equipment piece a player has of the same index
-    public int[] equipmentSize = new int[20];
+    // Condensed list of equipment and there properties, only modified on load and save
+    public string[] equipmentCode; 
+    public List<Item> equipmentObjects = new List<Item>();
+    public bool isMinion = false;
+    public int ownerID;
     
     // Playable: whether to create an NPC or Player character
     // Creates a new Save Data with default skills and hit locations
@@ -66,264 +40,456 @@ public class CharacterSaveData
             Model = "Renegade";
             team = 1;
         }
-        BasicSkills();
-        StandardHitLocations();
+        foreach(AttributeKey key in AttribueReference.keys)
+        {
+            SetAttribute(key, 0, false);
+        }
+        foreach(string skillKey in SkillReference.SkillsTemplates().Keys)
+        {
+            setSpecialization(skillKey,-1);
+        }
+        CalculateCharacteristics();
     }
 
-    // Saves a set of basic skills every player will have to SkillNames and SkillLevels
-    private void BasicSkills()
+    public CharacterSaveData(string playername, string[] attribues, Dictionary<string,int> specalizations, string[] newequipment, Dictionary<int, bool> newTalents)
     {
-        Dictionary<string, SkillTemplate> templates = SkillReference.SkillsTemplates(); 
-        foreach (string key in templates.Keys)
+        this.playername = playername;
+        this.skillSpecialization = specalizations;
+        DecompileStats(attribues);
+        decompileEquipment(newequipment);
+        DecompileTalents(newTalents);
+    }
+
+    // used for creating drones
+    public CharacterSaveData(PlayerStats owner, Drone minionTemplate)
+    {
+        isMinion = true;
+        Model = minionTemplate.Template.model;
+        this.ownerID = owner.ID;
+        this.playername = owner.GetName() + "'s " + minionTemplate.GetName();
+        this.team = owner.GetTeam();
+        SetAttribute(AttributeKey.DroneHandling, minionTemplate.Template.Handling, false);
+        SetAttribute(AttributeKey.DroneStructure, minionTemplate.Template.Structure, false);
+        SetAttribute(AttributeKey.DroneArmor, minionTemplate.Template.Armor, false);
+        SetAttribute(AttributeKey.DroneSensor, minionTemplate.Template.Sensor, false);
+        SetAttribute(AttributeKey.DronePiloting, minionTemplate.Template.Piloting, false);
+        SetAttribute(AttributeKey.DroneRating, minionTemplate.Template.rating, false);
+        SetAttribute(AttributeKey.Body, minionTemplate.Template.Structure,false);
+        SetAttribute(AttributeKey.Agility, minionTemplate.Template.Speed, false);
+        CalculateCharacteristics();
+        equipmentObjects.Add(ItemReference.GetItem(minionTemplate.Template.Weapon.name));
+    }
+
+    public void OnLoad()
+    {
+        if(equipmentObjects == null)
         {
-            // Advanced skills are excluded
-            if(templates[key].basic)
+            equipmentObjects = new List<Item>();
+        }   
+        decompileEquipment(equipmentCode);
+    }
+
+    public void OnSave()
+    {
+        equipmentCode = compileEquipment();
+        equipmentObjects = null;
+    }
+    
+    // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
+    // a dictionary when the player is created 
+    public string[] CompileStats()
+    {
+        string[] convertedAttributes = new string[150];
+        for(int i = 0; i < 150; i++)
+        {
+            string convertedAttribute = attribues[i].ToString();
+            convertedAttributes[i] = convertedAttribute;
+        }
+        return convertedAttributes;
+    }
+
+    public void DecompileStats(string[]newAttributes)
+    {
+        int[] convertedAttributes = new int[150];
+        for(int i = 0; i < 150; i++)
+        {
+            int convertedInt = 0;
+            int.TryParse(newAttributes[i], out convertedInt);
+            convertedAttributes[i] = convertedInt;
+        }
+        this.attribues = convertedAttributes;
+    }
+
+
+    public void decompileEquipment(string[] newequipmentcode)
+    {
+        equipmentObjects.Clear();
+        if(newequipmentcode != null)
+        {
+            for( int i = 0; i < newequipmentcode.Length; i++)
             {
-                // By default all skills are level 0, untrained
-                addSkill(new Skill(templates[key], 0));
+                string code = newequipmentcode[i];
+                if(!code.Equals("empty"))
+                {
+                    string[] codeDecompiled = code.Split('|');
+                    //decompile
+                    string name = codeDecompiled[0];
+                    int stacks = int.Parse(codeDecompiled[1]);
+                    string[] upgrades = codeDecompiled[2].Split(',');
+                    Item newItem = ItemReference.GetItem(name,stacks,upgrades);
+                    if(newItem != null)
+                    {
+                        if(codeDecompiled.Length > 3)
+                        {
+                            int clip = int.Parse(codeDecompiled[3]);
+                            Weapon castItem = (Weapon) newItem;
+                            castItem.SetClip(clip);
+                            AddItem(castItem);
+                        }
+                        else
+                        {
+                            AddItem(newItem);
+                        }
+                    }
+                }
             }
         }
-    }
+    }  
 
-    // Determines what a body part is hit depending on the hit result, same for all humanoids
-    // To implement: new hitlocations for monsters/vehicles
-    public Dictionary<int,string> StandardHitLocations()
+    public string[] compileEquipment()
     {
-        Dictionary<int,string> HitLocations = new Dictionary<int, string>();
-        HitLocations.Add(10, "Head");
-        HitLocations.Add(20, "RightArm");
-        HitLocations.Add(30, "LeftArm");
-        HitLocations.Add(70, "Body");
-        HitLocations.Add(85, "RightLeg");
-        HitLocations.Add(100, "LeftLeg");
-        return HitLocations;
+        string[] output;
+        // an array of 1 should be artifically extended to avoid photon jank
+        if(equipmentObjects.Count < 2)
+        {
+            output = new string[2];
+            output[0] = "empty";
+            output[1] = "empty";
+        }
+        else
+        {
+            output = new string[equipmentObjects.Count];
+        }
+        int index = 0;
+        foreach(Item item in equipmentObjects)
+        {
+            string name = item.GetName();
+            string stack = "" + item.GetStacks();
+            
+            //compile
+            string code = name + "|" + stack + "|" + item.CompileUpgrades();
+            if(item.GetType().Equals(typeof(Weapon)))
+            {
+                Weapon weaponcast = (Weapon)item;
+                int clip = weaponcast.getClip();
+                code+="|" + clip;
+            }
+            //Debug.Log(code);
+            output[index] = code;
+            index++; 
+        }
+        return output;
     }
 
     // Dictionaries can't be saved, so stats are saved as indvidual ints and are converted into 
     // a dictionary when the player is created 
-    public Dictionary<string,int> GetStats()
+    public int[] GetStats()
     {
-        Dictionary<string, int> output = new Dictionary<string, int>();
-        output.Add("BS",BS);
-        output.Add("WS",WS);
-        output.Add("S",S);
-        output.Add("T",T);
-        output.Add("A",A);
-        output.Add("INT",INT);
-        output.Add("PER",PER);
-        output.Add("WP",WP);
-        output.Add("FEL",FEL);
-        output.Add("Wounds",Wounds);
-        output.Add("MaxWounds",MaxWounds);
-        output.Add("MoveHalf",MoveHalf);
-        output.Add("MoveFull",MoveFull);
-        output.Add("MoveCharge",MoveCharge);
-        output.Add("MoveRun",MoveRun);
-        output.Add("Head",Head);
-        output.Add("RightArm",RightArm);
-        output.Add("LeftArm",LeftArm);
-        output.Add("Body",Body);
-        output.Add("RightLeg",RightLeg);
-        output.Add("LeftLeg",LeftLeg);
-        output.Add("Critical",Critical);
-        output.Add("Fatigue", Fatigue);
-        output.Add("Fate",Fate);
-        output.Add("FateMax",FateMax);
-        output.Add("Gelt",Gelt);
-        output.Add("Income",Income);
-        return output;
+        return attribues;
     }
 
     // Key: Specific stat being modified
     // Value: New value of modified stat
     // updates a stat's value 
-    public void SetStat(string key, int value)
+    public void SetAttribute(AttributeKey key, int value, bool calculate)
     {
-        switch (key)
+        attribues[(int)key] = value;
+        if(calculate)
         {
-            case "BS":
-            BS = value;
-            break;
-            case "WS":
-            WS = value;
-            break;
-            case "S":
-            S = value;
-            break;
-            case "T":
-            T = value;
-            break;
-            case "A":
-            A = value;
-            break;
-            case "INT":
-            INT = value;
-            break;
-            case "PER":
-            PER = value;
-            break;
-            case "WP":
-            WP = value;
-            break;
-            case "FEL":
-            FEL = value;
-            break;
-            case "Wounds":
-            Wounds = value;
-            break;
-            case "MaxWounds":
-            MaxWounds = value;
-            break;
-            case "MoveHalf":
-            MoveHalf = value;
-            break;
-            case "MoveFull":
-            MoveFull = value;
-            break;
-            case "MoveCharge":
-            MoveCharge = value;
-            break;
-            case "MoveRun":
-            MoveRun = value;
-            break;
-            case "Head":
-            Head = value;
-            break;
-            case "RightArm":
-            RightArm = value;
-            break;
-            case "LeftArm":
-            LeftArm = value;
-            break;
-            case "Body":
-            Body = value;
-            break;
-            case "RightLeg":
-            RightLeg = value;
-            break;
-            case "LeftLeg":
-            LeftLeg = value;
-            break;
-            case "Fatigue":
-            Fatigue = value;
-            break;
-            case "Critical":
-            Critical = value;
-            break;
-            case "Fate":
-            Fate = value;
-            break;
-            case "FateMax":
-            FateMax = value;
-            break;
-            case "Gelt":
-            Gelt = value;
-            break;
-            case "Income":
-            Income = value;
-            break;
+            CalculateCharacteristics();
         }
     }
 
-    // Converts SkillNames and Skill Levels into a list of skill objects that playerstats can read
-    public Dictionary<string,int> GetSkills()
+    public void SetTalent(TalentKey key, bool value)
     {
-        Dictionary<string, int> output = new Dictionary<string, int>();
-        for(int i = 0; i < 50; i++)
+        talents[(int)key] = value;
+        //enforce TalentRules
+        foreach(KeyValuePair<TalentKey, Talent> kvp in TalentReference.getLibraries())
         {
-            if(SkillNames[i] != null)
+            if(!kvp.Value.CanSelect(this))
             {
-                output.Add( SkillNames[i],SkillLevels[i]);
+                talents[(int)kvp.Key] = false;
             }
+        }
+    }
+
+    public int GetAttribute(AttributeKey key)
+    {
+        return attribues[(int)key];
+    }
+
+    public int GetOwnerAttribute(AttributeKey key)
+    {
+        if(isMinion)
+        {
+            return getOwner().myData.GetAttribute(key);
+        }
+        return 0;
+    }
+
+    public PlayerStats getOwner()
+    {
+        return PlayerSpawner.IDtoPlayer(ownerID);
+    }
+
+    public bool hasTalent(TalentKey key)
+    {
+        return talents[(int)key];
+    }
+
+    public RollResult AbilityCheck(AttributeKey skillKey, int threshold = 0, int modifier = 0)
+    {
+        return new RollResult(this, skillKey, threshold, modifier);
+    }
+
+    // whenever characteristics are set, updates all abilities/stats that are dependent on those conditions
+    public void CalculateCharacteristics()
+    {
+        //base attributes cannot be less than 1
+        if(GetAttribute(AttributeKey.Body) < 1)
+        {
+            SetAttribute(AttributeKey.Body,1,false);
+        }
+        if(GetAttribute(AttributeKey.Agility) < 1)
+        {
+            SetAttribute(AttributeKey.Agility,1,false);
+        }
+        if(GetAttribute(AttributeKey.Reaction) < 1)
+        {
+            SetAttribute(AttributeKey.Reaction,1,false);
+        }
+        if(GetAttribute(AttributeKey.Strength) < 1)
+        {
+            SetAttribute(AttributeKey.Strength,1,false);
+        }
+        if(GetAttribute(AttributeKey.Willpower) < 1)
+        {
+            SetAttribute(AttributeKey.Willpower,1,false);
+        }
+        if(GetAttribute(AttributeKey.Logic) < 1)
+        {
+            SetAttribute(AttributeKey.Logic,1,false);
+        }
+        if(GetAttribute(AttributeKey.Charisma) < 1)
+        {
+            SetAttribute(AttributeKey.Charisma,1,false);
+        }
+        if(GetAttribute(AttributeKey.Intuition) < 1)
+        {
+            SetAttribute(AttributeKey.Intuition,1,false);
+        }
+        
+
+        // Base Initative = reaction + Intuition
+        SetAttribute(AttributeKey.InitativeStandard,GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
+        // Astral initative = Intuition * 2
+        SetAttribute(AttributeKey.InitativeAstral, GetAttribute(AttributeKey.Intuition) * 2, false);
+        // Matrix initative = Data processing + Intuition
+        SetAttribute(AttributeKey.InitativeMatrix, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Intuition),false);
+        // Mental Limit = [(Logic x 2) + Intuition + Willpower] / 3
+        float MentalLimit = (float)(GetAttribute(AttributeKey.Logic) * 2 + GetAttribute(AttributeKey.Intuition) + GetAttribute(AttributeKey.Willpower));
+        MentalLimit /= 3f;
+        SetAttribute(AttributeKey.MentalLimit, Mathf.CeilToInt(MentalLimit),false);
+        // Physical Limit = [(Strength x 2) + Body + Reaction] / 3 (round up)
+        float PhysicalLimit = (float)(GetAttribute(AttributeKey.Strength) * 2 + GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Reaction));
+        PhysicalLimit /= 3f;
+        SetAttribute(AttributeKey.PhysicalLimit, Mathf.CeilToInt(PhysicalLimit),false);
+        // Social Limit = [(Charisma x 2) + Willpower + Essence] / 3 (round up) 
+        float SocialLimit = (float)(GetAttribute(AttributeKey.Charisma) * 2 + GetAttribute(AttributeKey.Willpower) + GetAttribute(AttributeKey.Essense));
+        SocialLimit /= 3f;
+        SetAttribute(AttributeKey.SocialLimit, Mathf.CeilToInt(SocialLimit), false);
+        // Health max = [Physical / 2] + 8 
+        float healthBonus = (float)(GetAttribute(AttributeKey.Body));
+        SetAttribute(AttributeKey.PhysicalHealth, Mathf.CeilToInt(healthBonus) + 8, false);
+        // Stun max = [Willpower / 2] + 2 
+        float StunBonus = (float)(GetAttribute(AttributeKey.Willpower));
+        SetAttribute(AttributeKey.StunHealth, Mathf.CeilToInt(StunBonus/2) + 2, false);
+        SetAttribute(AttributeKey.MoveWalk, GetAttribute(AttributeKey.Agility) + 6,false);
+        SetAttribute(AttributeKey.MoveRun, GetAttribute(AttributeKey.MoveWalk) * 2, false);
+        // COMPOSURE (CHA + WIL)
+        SetAttribute(AttributeKey.Composure, GetAttribute(AttributeKey.Charisma) + GetAttribute(AttributeKey.Willpower),false);
+        // JUDGE INTENTIONS (CHA + INT)
+        SetAttribute(AttributeKey.JudgeIntentions, GetAttribute(AttributeKey.Charisma) + GetAttribute(AttributeKey.Intuition),false);
+        // LIFTING/CARRYING (BOD + STR)
+        SetAttribute(AttributeKey.LiftCarry, GetAttribute(AttributeKey.Body) + GetAttribute(AttributeKey.Strength),false);
+        // MEMORY (LOG + WIL)
+        SetAttribute(AttributeKey.Memory, GetAttribute(AttributeKey.Logic) + GetAttribute(AttributeKey.Willpower),false);
+        // DEFENSE (REF + INT)
+        SetAttribute(AttributeKey.Defense, GetAttribute(AttributeKey.Reaction) + GetAttribute(AttributeKey.Intuition),false);
+        // RECOILCOMP = 1 + S/2
+        SetAttribute(AttributeKey.RecoilComp, 1 + Mathf.CeilToInt(GetAttribute(AttributeKey.Strength)/2),false);
+        // ESSENSE = 6 - penalties
+        if(hasTalent(TalentKey.Industrialist))
+        {
+            SetAttribute(AttributeKey.Magic, GetAttribute(AttributeKey.Intuition),false);
+        }
+
+        SetAttribute(AttributeKey.Essense, 6, false);
+        int attributeTotal = -8;
+        attributeTotal += GetAttribute(AttributeKey.Body);
+        attributeTotal += GetAttribute(AttributeKey.Agility);
+        attributeTotal += GetAttribute(AttributeKey.Reaction);
+        attributeTotal += GetAttribute(AttributeKey.Strength);
+        attributeTotal += GetAttribute(AttributeKey.Willpower);
+        attributeTotal += GetAttribute(AttributeKey.Logic);
+        attributeTotal += GetAttribute(AttributeKey.Charisma);
+        attributeTotal += GetAttribute(AttributeKey.Intuition);
+        SetAttribute(AttributeKey.AttributePoints, attributeTotal, false);
+
+        int skillTotal = 0;
+        foreach(KeyValuePair<string, SkillTemplate> kvp in SkillReference.SkillsTemplates())
+        {
+            AttributeKey skillKey = kvp.Value.skillKey;
+            skillTotal += GetAttribute(skillKey);
+        }
+        SetAttribute(AttributeKey.SkillPoints, skillTotal, false);
+    }
+
+    public void setSpecialization(string skillKey, int SpecializationIndex)
+    {
+        if(!skillSpecialization.ContainsKey(skillKey))
+        {
+            skillSpecialization.Add(skillKey,0);
+        }
+        skillSpecialization[skillKey] = SpecializationIndex;
+    }
+
+    public bool hasSpecialization(string skillKey, int SpecializationIndex)
+    {
+        if(!skillSpecialization.ContainsKey(skillKey))
+        {
+            skillSpecialization.Add(skillKey,0);
+        }
+        //Debug.Log("my index: " + skillSpecialization[skillKey] + " desired index " + SpecializationIndex);
+        return skillSpecialization[skillKey] == SpecializationIndex+1;
+    }
+    
+    public bool hasSpecialization(Weapon weapon)
+    {
+        if(weapon != null && weapon.Template != null)
+        {
+            int SpecializationIndex = weapon.Template.WeaponSpecialization;
+            string skillKey = weapon.Template.WeaponSkill.name;
+            return hasSpecialization(skillKey, SpecializationIndex);
+        }
+        return false;
+    }
+
+
+    public int GetSpecializationIndex(string skillKey)
+    {
+        if(!skillSpecialization.ContainsKey(skillKey))
+        {
+            skillSpecialization.Add(skillKey,0);
+        }
+        return skillSpecialization[skillKey];
+    }
+
+    // Converts talents into readable code for PUN
+    public Dictionary<int, bool> CompileTalents()
+    {
+        Dictionary<int,bool> output = new Dictionary<int, bool>();
+        for(int i = 0; i < talents.Length; i++) 
+        {
+            output.Add(i, talents[i]);
         }
         return output;
     }
 
-    // Resets all Skills, used when charactersheet is editing skills
-    public void ClearSkills()
+    public void DecompileTalents(Dictionary<int, bool> input)
     {
-        SkillNames = new string[50];
-        SkillLevels = new int[50];
-    }
-
-    // Skill: an specific skill object
-    // Converts object into back into basic structures 
-    public void addSkill(Skill input)
-    {
-        int newindex = 1;
-        while(newindex < 50 && SkillNames[newindex] != null)
+        foreach(KeyValuePair<int,bool> kvp in input)
         {
-             newindex++;
-        }
-        //if there is space
-        if(SkillNames[newindex] == null)
-        {
-            SkillNames[newindex] = input.name;
-            SkillLevels[newindex] = input.levels;
+            talents[kvp.Key] = kvp.Value;
         }
     }
 
-    // Converts Equipment and EquipmentSize into a readable list of Item objects
-    public Dictionary<string,int> GetEquipment()
+    public void AddItem(Item item)
     {
-        Dictionary<string,int> output = new Dictionary<string, int>();
-        for(int i = 0; i < 8; i++)
+        // if an item needs to be stacked
+        if(item.Stackable())
         {
-            if(equipment[i] != null)
+            // if a player already has one of these items, stack exisiting item and discard the new one
+            if(equipmentObjects.Contains(item))
             {
-                if(!output.ContainsKey(equipment[i]))
+                foreach(Item i in equipmentObjects)
                 {
-                    output.Add(equipment[i],equipmentSize[i]);
-                }
-                else
-                {
-                    output[equipment[i]] += equipmentSize[i];
+                    if(i.Equals(item))
+                    {
+                        i.AddStack();
+                    }
                 }
             }
+            else
+            {
+                equipmentObjects.Add(item);   
+            }
         }
-        return output;
-    }
-
-    // Resets all Items, used when charactersheet is editing equipment
-    public void ClearEquipment()
-    {
-        equipment = new string[20];
-        equipmentSize = new int[20];
-    }
-
-    // Takes a series of Gameobjects and converts them back into basic datastructures
-    public void AddEquipment(Dictionary<string,int> input)
-    {
-        ClearEquipment();
-        int newIndex = 0;
-        foreach(KeyValuePair<string,int> kvp in input)
+        // unstackable items can be directly added to the inventory
+        else 
         {
-            equipment[newIndex] = kvp.Key;
-            equipmentSize[newIndex] = kvp.Value;
-            newIndex++;
+            equipmentObjects.Add(item);
         }
     }
-    public void AddEquipment(List<Item> input)
+
+    public Item GetItem(string key)
     {
-        ClearEquipment();
-        int newIndex = 0;
-        foreach(Item i in input)
+        ItemTemplate myTemplate = ItemReference.GetTemplate(key);
+        foreach(Item item in equipmentObjects)
         {
-            equipment[newIndex] = i.GetName();
-            equipmentSize[newIndex] = i.GetStacks();
-            newIndex++;
+            if(item.Template == myTemplate)
+            {
+                return item;
+            }
+        }
+        return null;
+    }
+
+    public void RemoveItem(Item item)
+    {
+        if(!equipmentObjects.Contains(item))
+        {
+            Debug.Log("Error: Item not found");
+        }
+        else
+        {
+            // often item will not be apart of my inventory, in which case we need to actually see our stacks of this item
+            Item modifiedItem = item;
+            Item[] equipment = equipmentObjects.ToArray();
+            for(int i = 0; i < equipmentObjects.Count; i++)
+            {
+                if(equipment[i].Equals(item))
+                {
+                    modifiedItem = equipment[i];
+                }
+            }
+            modifiedItem.SubtractStack();
+            if(modifiedItem.IsConsumed())
+            {
+                equipmentObjects.Remove(modifiedItem);
+            }
         }
     }
 
     // Saves my data on to the computer for later play sessions
     public void Quit()
     {
-        UploadSaveData();
+        //UploadSaveData();
         SaveSystem.SavePlayer(this);
     }
 
-    // If this is a player character with a single map token, save the stats of the map token instead
-    // Not done for NPCs because there can be multiple copies of them
+    // Depreciated Save method
+    /* Not done for NPCs because there can be multiple copies of them
     public void UploadSaveData()
     {
         if(team == 0)
@@ -337,6 +503,7 @@ public class CharacterSaveData
                     myPlayer = g.GetComponent<PlayerStats>();
                 }
             }
+            /*
             if(myPlayer != null)
             {
                 Debug.Log("Found My player");
@@ -355,6 +522,8 @@ public class CharacterSaveData
                 ClearEquipment();
                 AddEquipment(myPlayer.equipment);
             }
+            
         }
     }
+    */
 }

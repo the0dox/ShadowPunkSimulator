@@ -8,25 +8,18 @@ using Photon.Pun;
 public class CombatLog : MonoBehaviourPunCallbacks
 {
     [SerializeField] private int MaxEntries = 10;
-    [SerializeField] private Text textRef;
-    // Static prefernce tp the game object
-    static int SMaxEntries;
-    static Text displayText;
-    static Vector3 DefaultPos;
+    [SerializeField] private RectTransform content;
+    [SerializeField] private GameObject entryReference;
     private static PhotonView pv;
-    static private Vector3 originalPos;
     // lines are entered into queue so that when the text box overflows, the first entry is deleted.
-    private static Queue<string> ContentsQueue = new Queue<string>();
+    private static Queue<GameObject> ContentsQueue = new Queue<GameObject>();
 
     // text: string input to be read to the player
     // types out text and formats it for the player
 
     void Start()
     {
-        SMaxEntries = MaxEntries;
         pv = GetComponent<PhotonView>();
-        displayText = textRef;
-        DefaultPos = displayText.transform.localPosition;
     }
     public static void Log(string text)
     {
@@ -36,26 +29,21 @@ public class CombatLog : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_Log(string text)
     {
-        ContentsQueue.Enqueue(text);
+        GameObject newEntry = GameObject.Instantiate(entryReference, Vector3.zero, Quaternion.identity);
+        newEntry.GetComponentInChildren<Text>().text = text;
+        newEntry.transform.SetParent(content);
+        newEntry.transform.localScale = Vector3.one;
+        newEntry.SetActive(true);
+        ContentsQueue.Enqueue(newEntry);
         TrimEntries();
-        int Reps = ContentsQueue.Count;
-        Stack<string> tempStack = new Stack<string>();
-        displayText.text = "";
-        for(int i = 0; i < Reps; i++)
-        {
-            string currentLine = ContentsQueue.Dequeue();
-            displayText.text += "----------------------------------------------------\n" + currentLine +"\n";
-            ContentsQueue.Enqueue(currentLine);
-        }
-        displayText.transform.localPosition = DefaultPos;
     }
 
 
-    private static void TrimEntries()
+    private void TrimEntries()
     {
-        while(ContentsQueue.Count > SMaxEntries)
+        while(ContentsQueue.Count > MaxEntries)
         {
-            ContentsQueue.Dequeue();
+            Destroy(ContentsQueue.Dequeue());
         }
     }
 }

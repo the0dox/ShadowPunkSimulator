@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
+  m_Name: Reposition
+  m_EditorClassIdentifier: 
+  description: "[Free Action, 2 stress] Can only be used in a state of momentum.
+    \nReposition expends your momentum to allow you to move after you make an attack
+    action this turn (normally you are unable to move after an attack action)"
+  icon: {fileID: 21300000, guid: 4fb80390fc01b064bb8e723b70590abe, type: 3}
+  code: Reposition

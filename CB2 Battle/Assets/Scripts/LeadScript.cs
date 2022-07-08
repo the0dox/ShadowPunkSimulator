@@ -53,13 +53,12 @@ public class LeadScript : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_SetLead(string name, float progress, float time, int count)
     {
-        Debug.Log(name);
         Title.text = name;
         this.MaxHours = time;
         this.CompletedHours = progress;
         transform.SetParent(GameObject.FindGameObjectWithTag("LeadParent").transform);
-        transform.localPosition = new Vector3();
-        transform.localPosition -= new Vector3(0, 200 * (count + 1),0);
+        transform.localScale = Vector3.one;
+        transform.localPosition = new Vector3(0, 200 * (count + 1),0);
     }
 
     //depreciated

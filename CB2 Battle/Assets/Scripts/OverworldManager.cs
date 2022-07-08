@@ -30,7 +30,7 @@ public class OverworldManager : UIButtonManager
         {
             d.Add(playerName,playerName);
         }
-        d.Add("Fast Forward","FastForward");
+        //d.Add("Fast Forward","FastForward");
         ConstructActions(d);
     }
 
@@ -76,7 +76,8 @@ public class OverworldManager : UIButtonManager
         {
             leadScripts.Add(g.GetComponent<LeadScript>());
         }
-        SceneSaveData overworldScene = new SceneSaveData("Overworld",OverworldTokens);
+        Material groundMat = TileGround.GetMaterial();
+        SceneSaveData overworldScene = new SceneSaveData("Overworld",OverworldTokens,groundMat);
         overworldScene.AddLeads(leadScripts);
         SaveSystem.SaveScene(overworldScene);
         Debug.Log("scene saved with " + players.Length + " tokens and " + leads.Length + " leads ");

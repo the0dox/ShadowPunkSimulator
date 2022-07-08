@@ -22,6 +22,24 @@ public class AttackSequence
     public bool attackRolled = false;
     public RollResult reactionRoll;
     public bool reactionRolled = false;
+    public bool Completed = false;
+    public GameObject interceptingGameobject;
+    public int coverRange = 0;
+    private bool skipAttack = false;
+    public int flatDamage = 0;
+    public int flatAP = 0;
+
+    // creates an attack sequence of damage being dealt directly to player with no attacker
+    public AttackSequence(PlayerStats target, int damage, int AP)
+    {
+        this.target = target;   
+        attackRolled = true;
+        reactionRolled = true;
+        skipAttack = true;
+        flatDamage = damage;
+        flatAP = AP;
+        ResolveHit();
+    }
 
     // creates an attack sequence without specifying a hitlocation
     public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks, bool skipAttack)
@@ -33,89 +51,116 @@ public class AttackSequence
         this.attacks =attacks;
         if(skipAttack)
         {
-            attackRoll = new RollResult();
+            attackRolled = true;
+            reactionRolled = true;
+            this.skipAttack = true;
+            ResolveHit();
         }
-    }
-    // creates an attack sequence while specifying a hitlocation
-    public AttackSequence (PlayerStats target, PlayerStats attacker, Weapon ActiveWeapon, string ROF,int attacks,string HitLocation)
-    {
-        this.ActiveWeapon = ActiveWeapon;
-        this.attacker = attacker;
-        this.target = target;
-        this.FireRate = ROF;
-        this.attacks =attacks;
-        this.HitLocation = HitLocation;
     }
     
     public void AttackRollComplete()
     {
         attackRolled = true;
-        int shots = ActiveWeapon.ExpendAmmo(FireRate);
-        if(attacks == 0)
-        {
-            if(TacticsAttack.Jammed(attackRoll.GetRoll(), ActiveWeapon, FireRate, attacker))
-            {
-                attacks = 0;
-            }
-            else if (attackRoll.Passed() || target.IsHelpless())
-            {
-                if(ActiveWeapon.IsWeaponClass("Melee"))
-                {
-                    attacks = 1;
-                }
-                else
-                {
-                    bool scatterDistance = Vector3.Distance(attacker.gameObject.transform.position, target.gameObject.transform.position) <= 3;
-                    attacks = ActiveWeapon.GetAdditionalHits(FireRate, attackRoll.GetDOF(), shots, scatterDistance);
-                }
-            }
-            else if(TacticsAttack.adjacencyBonus(target, attacker,ActiveWeapon) == -20)
-            {
-                int friendlyFireTarget = attackRoll.GetTarget() + 20; 
-                Debug.Log("Could friendlyfire! under a " + friendlyFireTarget);
-                if(attackRoll.GetRoll() <= friendlyFireTarget)
-                {
-                    PlayerStats[] adjacentTargets = target.GetComponent<TacticsMovement>().AdjacentPlayers().ToArray();
-                    target.GetComponent<TacticsMovement>().PaintCurrentTile("");
-                    target = adjacentTargets[Random.Range(0,adjacentTargets.Length - 1)];
-                    CombatLog.Log("By missing their target by 20, " + attacker.GetName() + " the shot hits " + target.GetName() + " instead!");
-                    attacks = 1;
-                } 
-            }
-            else
-            {
-                attacks = 0;
-            }
-        }
     }
     public void ReactionRollComplete()
     {
+        UIPlayerInfo.ShowAllInfo(attacker);
         reactionRolled = true;
-
-        if (reactionRoll.Passed())
+        // See compare hits between attack and defense roll
+        int netHits = attackRoll.GetHits();
+        if (reactionRoll != null)
         {
-            if(reactionRoll.GetSkillType().Equals("Dodge"))
+            netHits -= reactionRoll.GetHits();
+        } 
+        // Attack misses if net hits is 0
+        if(netHits < 0)
+        {
+            CombatLog.Log(target.GetName() + " avoids the attack!");
+            PopUpText.CreateText("Missed", Color.yellow, target.gameObject);
+            SequenceComplete();
+        }
+        else if(netHits <= coverRange)
+        {
+            HitCover();
+        }
+        // If attack hits, start a soak roll
+        else
+        {
+            ResolveHit();    
+        }
+    }
+
+    public void ResolveHit()
+    {
+        TacticsAttack.DealDamage(this);
+        SequenceComplete();
+    }
+
+    private void HitCover()
+    {
+        if(interceptingGameobject != null)
+        {
+            Tile interceptingTile = interceptingGameobject.GetComponent<Tile>();
+            PlayerStats interceptingPlayer = interceptingGameobject.GetComponent<PlayerStats>();
+            if(interceptingTile != null)
             {
-                int dodgedAttacks = reactionRoll.GetDOF() + 1;
-                attacks -= dodgedAttacks;
-                CombatLog.Log(target.GetName() + " dodges " + dodgedAttacks + " attack(s)");
+                interceptingTile.HitCover(this);
+                SequenceComplete();
             }
-            else
-            {
-                attacks--;
-                CombatLog.Log(target.GetName() + " parries the incoming attack!");
-                if(target.PowerFieldAbility())
-                {
-                    PopUpText.CreateText(ActiveWeapon.GetName() + " Shattered!", Color.red, attacker.gameObject);
-                    CombatLog.Log(target.GetName() + "'s power field shatters the attackers weapon!");
-                    attacker.Unequip(ActiveWeapon);
-                    attacker.equipment.Remove(ActiveWeapon);
-                }
+            else if(interceptingPlayer != null)
+            {   
+                CombatLog.Log("by getting 0-4 hits, " + target.GetName() + " intercepts the hit!");
+                target = interceptingPlayer;
+                ResolveHit();
             }
         }
         else
         {
-            CombatLog.Log(target.GetName() + " fails to avoid the incoming attack!");
+            CombatLog.Log("by getting 0 hits, " + target.GetName() + " suffers a grazing hit!");
+            PopUpText.CreateText("Grazed!", Color.yellow, target.gameObject);
+            SequenceComplete();
         }
+    }
+    
+    public int GetNetHits()
+    {
+        if(skipAttack)
+        {
+            return 0;
+        }
+        return attackRoll.GetHits() - reactionRoll.GetHits();
+    }
+
+    private void SequenceComplete()
+    {
+        Completed = true; 
+        if(attacker != null)
+        {
+            attacker.OnAttackFinished();
+        }
+    }
+
+    public int CalculateQuickDefenseBonus()
+    {
+        int totalModifiers = 0;
+        Dictionary<string, int> conditionalModifiers = TacticsAttack.ApplyModifiers(this,false);
+        foreach(string key in conditionalModifiers.Keys)
+        {
+            totalModifiers += conditionalModifiers[key];
+        }
+        int pool = 0;
+        if(target.myData.isMinion)
+        {
+            pool = target.myData.GetAttribute(AttributeKey.DroneHandling) + target.myData.getOwner().myData.GetAttribute(AttributeKey.Logic) + totalModifiers;
+        }
+        else
+        {
+            pool = target.myData.GetAttribute(AttributeKey.Reaction) + target.myData.GetAttribute(AttributeKey.Intuition) + totalModifiers;
+        }
+        if(pool < 0)
+        {
+            pool = 0;
+        }
+        return pool;
     }
 }

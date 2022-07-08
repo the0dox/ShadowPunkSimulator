@@ -5,9 +5,7 @@ using UnityEngine;
 // Armor is a subtype of Item that reduces incoming damage on wearers
 public class Armor : Item
 {
-    // Keys correspond to hit locations like head, legs etc. 
-    private List<string> ArmorLocation;
-    // Each location has the same protective value
+    // protective Armor value
     private int AP;
     // Attributes are any special rules armor can have
     private List<string> Attribues;
@@ -22,39 +20,54 @@ public class Armor : Item
         this.availablity = template.availablity;
         this.description = template.description;
         this.Attribues = template.Attributes; 
-        this.ArmorLocation = new List<string>();
-        for(int i = 0; i < template.Parts.Length; i++)
-        {
-            ArmorLocation.Add(template.Parts[i]);
-        }
         this.AP = template.AP;
+        this.Template = template;
+        
+        upgrades = new Dictionary<ItemTemplate, bool>();
+        foreach(ItemTemplate ug in template.upgrades)
+        {
+            this.upgrades.Add(ug, false);
+        }
+        UpdateTooltip();
     }
-    // HitLocation: key that corresponds to body part hit
-    // w: Weapon that dealt the damage 
-    // returns the damage reduction from that hitlocation
-    public int GetAP(string HitLocation, Weapon w)
+
+    public int GetAP()
     {
-        // If the armor doesn't cover this area, no damage is reduced
-        if(!ArmorLocation.Contains(HitLocation))
+        return AP;
+    }
+
+    public override Sprite GetSprite()
+    {
+        if(Template.icon != null)
         {
-            return 0;
+            return Template.icon;
         }
-        int output = AP;
-        // Flak armor is more effective against explosions
-        if(w != null && w.HasWeaponAttribute("Blast") && Attribues.Contains("Flak"))
+        return Resources.Load<Sprite>("Assets/Resources/Materials/Icons/Items/Vest.png");
+    
+    }
+
+    public override string GetTemplateName()
+    {
+        return (Template.name);
+    }
+
+    public override void UpdateTooltip()
+    {
+        tooltip = "Rating " + rating + " Armor ";
+        tooltip += "\nArmor Points: " + AP;
+        tooltip += "\nupgrades:";
+        string upgradedesc = " ";
+        foreach(ItemTemplate ug in upgrades.Keys)
         {
-            AP = 5;
+            if(upgrades[ug])
+            {
+                upgradedesc += ug.name + ",";
+            } 
+            upgradedesc = upgradedesc.TrimEnd(upgradedesc[upgradedesc.Length - 1]);
         }
-        // advanced armor is twice as effective against primitive damage sources
-        if(w != null && !w.HasWeaponAttribute("Primitive") && Attribues.Contains("Primitive"))
-        {
-            output /= 2;
-        }
-        // primitive armor is half as effective against advanced damage sources
-        else if (w != null && w.HasWeaponAttribute("Primitive") && !Attribues.Contains("Primitive"))
-        {
-            output *= 2;
-        }
-        return output;
+        tooltip += upgradedesc;
+        tooltip += "\nweight: " + weight;
+        tooltip += "\nvalue: " + cost;
+        tooltip += "\n\n\"" + description + "\"";
     }
 }

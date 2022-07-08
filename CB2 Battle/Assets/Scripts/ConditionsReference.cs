@@ -8,20 +8,20 @@ public class ConditionsReference : MonoBehaviour
     // IMPORTANT: you must add all scriptable objects to this list in order for them to be intialized in the game scene
     [SerializeField] public List<ConditionTemplate> ConditionsInitializer = new List<ConditionTemplate>();
     // static reference of conditionsinitializer for other scripts
-    private static Dictionary<string, ConditionTemplate> Library = new Dictionary<string, ConditionTemplate>();
+    private static Dictionary<Condition, ConditionTemplate> Library = new Dictionary<Condition, ConditionTemplate>();
 
     // creates Library so that it can be referenced statically
     public void Init()
     {
         foreach(ConditionTemplate c in ConditionsInitializer)
         {
-            Library.Add(c.name, c);
+            Library.Add(c.conditionKey, c);
         }
     }
 
     // name: the name of the scriptable object that needs to be copied
     // creates and returns a regular condition object out of the template that shares a name with input
-    public static ConditionTemplate Condition(string name)
+    public static ConditionTemplate GetTemplate(Condition name)
     {
         if(!Library.ContainsKey(name))
         {
@@ -31,8 +31,41 @@ public class ConditionsReference : MonoBehaviour
     }
 
     // returns the library
-    public static Dictionary<string, ConditionTemplate> ConditionTemplates()
+    public static Dictionary<Condition, ConditionTemplate> ConditionTemplates()
     {
         return Library;
     }
+}
+
+public enum Condition
+{
+    Aiming,
+    Prone,
+    Grappled,
+    Grappler,
+    CalledShot,
+    Covered,
+    Running,
+    FullDefense,
+    Disarm,
+    KnockDown,
+    ShakeUp,
+    Winded,
+    Intimidated,
+    Presence,
+    RookUp,
+    RookLeft,
+    RookDown,
+    RookRight,
+    Direction,
+    FocusFlank,
+    TerrainArmor,
+    Momentum,
+    AR,
+    Overwatch,
+    Broken,
+    Flurry,
+    FlurrySecondary,
+    Dropkick,
+    TelemetryRounds
 }

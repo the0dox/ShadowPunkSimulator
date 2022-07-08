@@ -5,32 +5,57 @@ using UnityEngine.UI;
 
 public class ItemInputField : MonoBehaviour
 {
-    private CharacterSheet mySheet;
     [SerializeField] private Text displayText;
-    private string myItem;
-    private int myStacks;
+    [SerializeField] private TooltipTrigger tooltipContent;
+    [SerializeField] private GameObject popUpMenu;
+    [SerializeField] private Image displayImage;
+    [SerializeField] private Sprite EmptyImage;
+    [SerializeField] private ItemAdder ItemAdder;
+    private Item myData;
 
-    public void UpdateStacks(int stacks)
+    public void SetItem(Item myData)
     {
-        myStacks = stacks;
-        displayText.text = myItem + " x " + myStacks;
-    }
-
-    public void UpdateIn(string input, int stacks, CharacterSheet mySheet)
-    {
-        this.mySheet = mySheet;
-        myItem = input;
-        UpdateStacks(stacks);
-    }
-
-    public void ReduceItem()
-    {
-        myStacks--;
-        UpdateStacks(myStacks);
-        if(myStacks < 1)
+        if(myData != null)
         {
-            mySheet.Remove(myItem);
-            Destroy(gameObject);
+            this.myData = myData;
+            displayImage.sprite = myData.GetSprite();
+            tooltipContent.enabled = true;
+            if(!myData.Stackable())
+            {
+                displayText.text = "";
+            }
         }
+        else
+        {
+            Clear();
+        }
+    }
+
+    void Update()
+    {
+        if(myData != null)
+        {
+            displayText.text = "x" + myData.GetStacks();
+            tooltipContent.content = myData.getTooltip();
+            tooltipContent.header = myData.GetName();
+        }
+    }
+
+    public Item GetItem()
+    {
+        return myData;
+    }
+
+    public void OnButtonPressed()
+    {
+        ItemAdder.OnItemClicked(this);
+    }
+
+    public void Clear()
+    {
+        myData = null;
+        displayText.text = "";
+        displayImage.sprite = EmptyImage;  
+        tooltipContent.enabled = false;
     }
 }

@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13e9b4cee9722b340a3e714a0d739400, type: 3}
+  m_Name: Face
+  m_EditorClassIdentifier: 
+  key: 4
+  description: 'Sometimes all you need is a firm handshake and a winning smile. You
+    are a people person, and you are expected to lead this team of cyber-psychos
+    to victory.
+
+
+    The Face is a class focused on diplomatic manuevering and when
+    push comes to shove, commanding your team during the heat of battle.'
+  prerequisites: 
+  conflictsWith: 00000000080000000c000000
+  Icon: {fileID: 21300000, guid: 247d34e6681f1c048af5229dc010e54a, type: 3}

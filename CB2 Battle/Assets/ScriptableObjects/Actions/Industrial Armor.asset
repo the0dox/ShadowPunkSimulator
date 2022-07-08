@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3c7b36ad74839e840ba900543aa6639d, type: 3}
+  m_Name: Industrial Armor
+  m_EditorClassIdentifier: 
+  description: "[Full Action, 2 Stress]: Consume up to 6 tiles to grant an ally within
+    10m the 'Industrail Armor' Condition. \nEvery 2 tiles grants one point of armor
+    which decays every turn."
+  icon: {fileID: 21300000, guid: 22955e5e0af89ba49952a3661b3f1315, type: 3}
+  code: SpellArmor

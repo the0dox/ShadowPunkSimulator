@@ -1,0 +1,26 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2d2fc584977f7d54791bf7dd7d8886c9, type: 3}
+  m_Name: Palming
+  m_EditorClassIdentifier: 
+  defaultable: 1
+  skillKey: 76
+  derivedAttribute: 6
+  visible: 1
+  Descriptor: []
+  displayText: "Palming represents your character\u2019s nimbleness with their hands.
+    Palming can be used to hide items on one\u2019s person, steal items off of another
+    person without them knowing, or even picking traditional locks."
+  limit: 24
+  Specializations: []
+  DroneEquivalent: 0
+  DroneAttributeEquivalent: 0

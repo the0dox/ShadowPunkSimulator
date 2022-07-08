@@ -10,40 +10,43 @@ public class ActionButtonScript : MonoBehaviour
     // Invoke string, the name of the method thats called
     [SerializeField] private string action;
     // Display name of the button shown to the player, can be different than action
-    [SerializeField] private GameObject Text;
-    private PhotonView pv;
+    [SerializeField] private Text Text;
+    [SerializeField] private Image myIcon;
+    [SerializeField] TooltipTrigger myTooltip;
+    [SerializeField] private PhotonView pv;
 
     void Awake()
     {
-        pv = GetComponent<PhotonView>();
-        transform.SetParent(GameObject.FindGameObjectWithTag("Canvas").transform, false);
+        transform.SetParent(UIActionbar.current.transform);
+        transform.localScale = new Vector3(0.5f, 0.5f, 0.5f);
     }
 
     // Called by whatevered instantiated the button to set its saved string and display name
-    public void SetAction(string action)
+    public void DownloadButton(string displayName, string action)
     {
-        pv = GetComponent<PhotonView>();
-        pv.RPC("RPC_SetAction",RpcTarget.All,action);
+        pv.RPC("RPC_SetAction",RpcTarget.All, displayName, action);
     }
 
     [PunRPC]
-    void RPC_SetAction(string action)
+    void RPC_SetAction(string displayName, string action)
     {
-        Text.GetComponent<Text>().text = action;
+        Text.text = displayName;
         this.action = action;
+        ActionTemplate myTemplate = ActionReference.GetActionTemplate(action);
+        if(myTemplate != null)
+        {
+            Text.enabled = false;
+            myIcon.sprite = myTemplate.icon;
+            myTooltip.content = myTemplate.description;
+            myTooltip.header = myTemplate.name; 
+        }
+        else
+        {
+            myIcon.enabled = false;
+            myTooltip.enabled = false;
+        }
     }
 
-    // Same as SetAction, but only changes display name 
-    public void SetText(string text)
-    {
-        pv.RPC("RPC_SetText",RpcTarget.All,text);
-    }
-
-    [PunRPC]
-    void RPC_SetText(string text)
-    {
-        Text.GetComponent<Text>().text = text;
-    }
     // On button press send my action string to the game controller
     public void GetAction()
     {
