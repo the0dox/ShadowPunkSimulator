@@ -10,13 +10,13 @@ MonoBehaviour:
   m_Enabled: 1
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
-  m_Name: Colt Cobra TZ-99
+  m_Name: S32 UCAS-Compliant
   m_EditorClassIdentifier: 
   weight: 2
   cost: 0
   availablity: 
-  description: As versatile as it is affordable, the Cobra is popular among security
-    forces.
+  description: A weapon made before the time of universal ID enforced gun control.
+    Cheap junk by the modern standards, but independent contractors make do.
   unique: 1
   rating: 3
   icon: {fileID: 21300000, guid: ca1a9370614840d4e84acb0f488201c8, type: 3}
