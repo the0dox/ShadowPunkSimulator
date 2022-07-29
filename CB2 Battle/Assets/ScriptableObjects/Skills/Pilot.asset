@@ -19,7 +19,7 @@ MonoBehaviour:
   Descriptor: []
   displayText: Pilot is the skilled used to drive vehicles. Sim-techs also use this
     skill to command drones
-  limit: 0
+  limit: 26
   Specializations: []
   DroneEquivalent: 98
   DroneAttributeEquivalent: 10

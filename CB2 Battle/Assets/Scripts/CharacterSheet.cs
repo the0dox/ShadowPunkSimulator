@@ -30,9 +30,11 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     public bool ClientActive = false;
     public bool ActiveOnce = false;
 
-
+    // Reference to the playertoken on the board, not the original charactersavedata
     private PlayerStats CurrentToken;
+    // Since npcs have health independent of their sheets. Their current health is stored outside of there charactersavedata
     private int NPCHealth = -1;
+
     // Called when created downloads player data onto the sheet and freezes the screen
     public void Show(){
         DmMenu.ActiveCharacterSheet = this;
@@ -124,95 +126,11 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     public void UpdateStatsIn(){
         NameField.text = ActivePlayer.playername;
         ActivePlayer.CalculateCharacteristics();
-        
-        /*StunMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.SDamage));
-        EdgeMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.Edge));
-
-        if(NPCHealth >= 0)
-        {
-            HealthMonitor.SetResource(NPCHealth);
-        }
-        else
-        {
-            HealthMonitor.SetResource(ActivePlayer.GetAttribute(AttributeKey.PDamage));
-        }
-        */
-
         UpdateInputFields();
         SkillAdder.DownloadOwner(ActivePlayer);
         ItemAdder.DownloadOwner(ActivePlayer);
         TalentAdder.DownloadOwner(ActivePlayer);
         page2.SetActive(false);
-    }
-
-
-    // Bars
-    public void AddHealth()
-    {
-        if(NPCHealth >= 0)
-        {
-            if(NPCHealth < 18)
-            {
-                NPCHealth++;
-            }
-        }
-        else
-        {
-            if(ActivePlayer.attribues[(int)AttributeKey.PDamage] < 18)
-            {
-                UpdatedAttribute(AttributeKey.PDamage, ActivePlayer.GetAttribute(AttributeKey.PDamage) + 1);
-            }
-        }
-    }
-
-    public void DecreaseHealth()
-    {
-        if(NPCHealth >= 0)
-        {
-            if(NPCHealth > 0)
-            {
-                NPCHealth--;
-            }
-        }
-        else
-        {
-            if(ActivePlayer.attribues[(int)AttributeKey.PDamage] > 0)
-            {
-                UpdatedAttribute(AttributeKey.PDamage, ActivePlayer.GetAttribute(AttributeKey.PDamage) - 1);
-            }
-        }
-    }
-
-    public void AddStun()
-    {
-        if(ActivePlayer.attribues[(int)AttributeKey.SDamage] < 12)
-        {
-            UpdatedAttribute(AttributeKey.SDamage, ActivePlayer.GetAttribute(AttributeKey.SDamage) + 1);
-        }
-    }
-
-    public void DecreaseStun()
-    {
-        if(ActivePlayer.attribues[(int)AttributeKey.SDamage] > 0)
-        {
-            UpdatedAttribute(AttributeKey.SDamage, ActivePlayer.GetAttribute(AttributeKey.SDamage) - 1);
-        }
-    }
-
-    public void AddEdge()
-    {
-        if(ActivePlayer.attribues[(int)AttributeKey.CurrentEdge] < 7)
-        {
-            UpdatedAttribute(AttributeKey.CurrentEdge, ActivePlayer.GetAttribute(AttributeKey.CurrentEdge) + 1);
-        }
-    }
-
-    public void DecreaseEdge()
-    {
-        if(ActivePlayer.attribues[(int)AttributeKey.CurrentEdge] > 0)
-        {
-            UpdatedAttribute(AttributeKey.CurrentEdge, ActivePlayer.GetAttribute(AttributeKey.CurrentEdge) - 1);
-        }
     }
 
     // Change Name
@@ -326,14 +244,18 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
 
     public void ChangeSpecialization(string skillKey, int SpecializationIndex)
     {
+        Debug.Log("changing " + skillKey + " skill to " + SpecializationIndex + " index");
         pv.RPC("RPC_ChangeSpecialization", RpcTarget.All, skillKey, SpecializationIndex);
     }
 
     [PunRPC]
     void RPC_ChangeSpecialization(string skillKey, int SpecializationIndex)
     {
-        ActivePlayer.setSpecialization(skillKey, SpecializationIndex);
-        SkillAdder.UpdateSkillFields();
+        if(ActivePlayer != null)
+        {
+            ActivePlayer.setSpecialization(skillKey, SpecializationIndex);
+            SkillAdder.UpdateSkillFields();
+        }
     }
 
     private void UpdateInputFields()

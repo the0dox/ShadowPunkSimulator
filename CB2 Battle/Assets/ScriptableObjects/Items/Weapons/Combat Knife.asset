@@ -15,7 +15,7 @@ MonoBehaviour:
   weight: 1
   cost: 0
   availablity: 
-  description: Good for all your survival needs, and more.
+  description: Good for all your survival needs, and more...
   unique: 1
   rating: 3
   icon: {fileID: 21300000, guid: 44217e1759eab0c4f929e9d56d9b3846, type: 3}

@@ -17,7 +17,7 @@ public class CombatLog : MonoBehaviourPunCallbacks
     // text: string input to be read to the player
     // types out text and formats it for the player
 
-    void Start()
+    void Awake()
     {
         pv = GetComponent<PhotonView>();
     }
@@ -30,11 +30,12 @@ public class CombatLog : MonoBehaviourPunCallbacks
     void RPC_Log(string text)
     {
         GameObject newEntry = GameObject.Instantiate(entryReference, Vector3.zero, Quaternion.identity);
-        newEntry.GetComponentInChildren<Text>().text = text;
-        newEntry.transform.SetParent(content);
-        newEntry.transform.localScale = Vector3.one;
         newEntry.SetActive(true);
+        newEntry.GetComponentInChildren<Text>().text = text;
+        newEntry.transform.SetParent(content,false);
+        newEntry.transform.localScale = Vector3.one;
         ContentsQueue.Enqueue(newEntry);
+        
         TrimEntries();
     }
 

@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 79bcf598b0b00194a9d2f82f24429629, type: 3}
   m_Name: Taurus Omni-6
   m_EditorClassIdentifier: 
-  weight: 2
+  weight: 1
   cost: 300
   availablity: 
   description: This reliable, rugged revolver used to have a broken description.

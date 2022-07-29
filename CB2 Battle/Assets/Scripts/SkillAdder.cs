@@ -42,21 +42,21 @@ public class SkillAdder : MonoBehaviour
     { 
         owner = newonwer;
 
+        /*
         foreach(SkillScript sc in Skills)
         {
             Destroy(sc);
         }
         Skills.Clear();
+        */
         Dictionary<string, SkillTemplate> allSkills = SkillReference.SkillsTemplates();
         foreach(string key in allSkills.Keys)  
         {
             AttributeKey currentSkillkey = allSkills[key].skillKey;
-            if(newonwer.GetAttribute(currentSkillkey) > 0 && validSkill(allSkills[key]))
-            {
-                AddSkill(allSkills[key],false);
-            }
+            // if(validSkill(allSkills[key])) skills are no longer removable from the sheet so the check is now depreciated 
+            AddSkill(allSkills[key],false);
         } 
-        UpdateAdderContent();
+        //UpdateAdderContent();
     }
     
     // Adds a skill from skillreferences that matches a given name
@@ -108,7 +108,10 @@ public class SkillAdder : MonoBehaviour
     {
         foreach(SkillScript sc in Skills)
         {
-            sc.UpdateValue();
+            if(sc != null)
+            {
+                sc.UpdateValue();
+            }
         }
     }
 

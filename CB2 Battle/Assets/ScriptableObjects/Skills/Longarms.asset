@@ -20,6 +20,10 @@ MonoBehaviour:
   displayText: Longarms is the combat skill used to fire larger non-automatic weapons
     such as sniper rifles and shotgun
   limit: 0
-  Specializations: []
+  Specializations:
+  - Rifles
+  - Snipers
+  - Shotguns
+  - Semi-autos
   DroneEquivalent: 98
   DroneAttributeEquivalent: 10

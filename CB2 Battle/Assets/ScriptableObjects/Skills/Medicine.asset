@@ -17,7 +17,9 @@ MonoBehaviour:
   derivedAttribute: 10
   visible: 1
   Descriptor: []
-  displayText: 
+  displayText: Medicine is a support skill used to heal biological targets. Medicine
+    can be used to identify injuries and posions. A character with a high Medicine
+    can craft their own med kits and other support items.
   limit: 23
   Specializations: []
   DroneEquivalent: 0

@@ -178,7 +178,6 @@ public class GlobalManager : MonoBehaviourPunCallbacks
     public override void OnMasterClientSwitched(Photon.Realtime.Player newMasterClient)
     {
         PhotonNetwork.Disconnect();
-        Debug.Log("disconnected");
         SceneManager.LoadScene("LostConnection");
     }
 }

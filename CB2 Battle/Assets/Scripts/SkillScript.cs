@@ -47,6 +47,7 @@ public class SkillScript : MonoBehaviour
         int derivedValue = myData.GetAttribute(mySkill.derivedAttribute);
         int levels = myData.GetAttribute(mySkill.skillKey);
         int total = derivedValue + levels; 
+        Debug.Log("updating " + mySkill.skillKey.ToString() + " to " + levels);
         IF.text = "" + levels;
         if(ButtonText != null)
         {
