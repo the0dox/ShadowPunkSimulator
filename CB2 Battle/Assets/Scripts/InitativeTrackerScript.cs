@@ -19,7 +19,7 @@ public class InitativeTrackerScript : MonoBehaviour
     private Stack<GameObject> Entries = new Stack<GameObject>();
 
     // L is the string of initative order provided by gamecontroller
-    // displays the iniative order with the current player on top
+    // displays the Initiative order with the current player on top
     public void UpdateList(string[] initative)
     {
         if(initative.Length == 1)

@@ -20,7 +20,6 @@ public class SceneSaveData
         if(groundMat != null)
         {
             groundMaterialIndex = MaterialReference.GetMaterialIndex(groundMat);
-            Debug.Log("saving scene with material " + groundMaterialIndex);
         }
         foreach(Vector3 pos in input.Keys)
         {

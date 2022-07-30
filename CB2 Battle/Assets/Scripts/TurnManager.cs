@@ -15,8 +15,9 @@ public class TurnManager : TurnActionsSR
     public static TurnManager instance;
     public static DebugTooltip DebugTooltip;
     
-    SortedList<float, PlayerStats> IntiativeActiveActors = new SortedList<float, PlayerStats>(); 
-    SortedList<float, PlayerStats> IntiativeFinishedActors = new SortedList<float, PlayerStats>(); 
+    SortedList<float, PlayerStats> InitiativeSorter;
+    private Queue<PlayerStats> InitiativeQueue;
+
     // Start is called before the first frame update
     void Awake()
     {
@@ -200,9 +201,9 @@ public class TurnManager : TurnActionsSR
 
     public void StartTurn()
     {
-        if (IntiativeActiveActors.Count > 0) 
+        if (InitiativeQueue.Count > 0) 
         {
-            ActivePlayerStats = IntiativeActiveActors[IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1]];
+            ActivePlayerStats = InitiativeQueue.Peek();
             UIPlayerInfo.ShowAllInfo(ActivePlayerStats);
             ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
             halfActions = 2;
@@ -219,37 +220,25 @@ public class TurnManager : TurnActionsSR
                 w.OnTurnStart();
             }
         }
+    }
+   public void StartTurn(PlayerStats newPlayer, bool end)
+    {
+        if(InitiativeQueue.Contains(newPlayer))
+        {
+            // if someone else is active, end their trun
+            if(ActivePlayerStats != null && end)
+            {
+                ActivePlayerStats.OnTurnEnd(halfActions);
+            }
+            while(InitiativeQueue.Peek() != newPlayer)
+            {
+                InitiativeQueue.Enqueue(InitiativeQueue.Dequeue());
+            }
+            StartTurn();
+        }
         else
         {
-            CompletePass();
-        }
-    }
-   public void StartTurn(PlayerStats newPlayer)
-    {
-        // if someone else is active, end their trun
-        if(ActivePlayerStats != null && IntiativeActiveActors.ContainsValue(ActivePlayerStats))
-        {
-            ActivePlayerStats.OnTurnEnd(halfActions);
-            float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
-            IntiativeFinishedActors.Add(initative,ActivePlayerStats);
-            IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(ActivePlayerStats));
-        }
-        ActivePlayerStats = newPlayer;
-        UIPlayerInfo.ShowAllInfo(ActivePlayerStats);
-        ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
-        halfActions = 2;
-        freeActions = 1;
-        ActivePlayerStats.ResetActions();
-        ActivePlayer.OnTurnStart();
-        ApplyConditions();
-        PrintInitiative();
-        Cancel();
-        //PrintInitiative();
-        RemoveRange(ActivePlayerStats);
-        pv.RPC("RPC_SetCamera", RpcTarget.All, ActivePlayer.transform.position);
-        foreach(Weapon w in ActivePlayerStats.GetWeaponsForEquipment())
-        {
-            w.OnTurnStart();
+            Debug.LogWarning(newPlayer.GetName() + " cannot start their turn as they are not in this initative queue!");
         }
     }
 
@@ -259,111 +248,66 @@ public class TurnManager : TurnActionsSR
         CameraButtons.SetFocus(location);
     }
 
-    private void CompletePass()
+    public void SubtractInitiative(PlayerStats player, int initative)
     {
-        SortedList<float, PlayerStats> TempSorter = new SortedList<float, PlayerStats>(); 
-
-        foreach (KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors) 
+        Debug.LogWarning("subtracting initative has been removed");
+        /*
+        if(InitiativeActiveActors.ContainsValue(player))
         {
-            // NEW INITATIVE STYLE SUBTRACT ON PASS NOT ON TURN END
-            float initative = kvp.Key - 10;
-            if(Mathf.FloorToInt(initative) >= 1)
-            {
-                IntiativeActiveActors.Add(initative, kvp.Value);
-            }
-            else{
-                initative = 0;
-                while(TempSorter.ContainsKey(initative))
-                {
-                    initative += 0.01f;
-                }
-                TempSorter.Add(initative, kvp.Value);
-            }
-        }
-
-        IntiativeFinishedActors = TempSorter;
-
-        if(IntiativeActiveActors.Count > 0)
-        {
-            StartTurn();
-        }
-        else
-        {
-            StartNewRound();
-        }
-    }
-
-    public void SubtractIniative(PlayerStats player, int initative)
-    {
-        if(IntiativeActiveActors.ContainsValue(player))
-        {
-            int indexOf = IntiativeActiveActors.IndexOfValue(player);
-            float newInitative = IntiativeActiveActors.Keys[indexOf] - initative;
-            IntiativeActiveActors.RemoveAt(indexOf);
+            int indexOf = InitiativeActiveActors.IndexOfValue(player);
+            float newInitative = InitiativeActiveActors.Keys[indexOf] - initative;
+            InitiativeActiveActors.RemoveAt(indexOf);
             if(newInitative < 1)
             {
                 newInitative = 0;
-                while(IntiativeFinishedActors.ContainsKey(newInitative))
+                while(InitiativeFinishedActors.ContainsKey(newInitative))
                 {
                     newInitative += 0.01f;
                 }
-                IntiativeFinishedActors.Add(newInitative, player);
+                InitiativeFinishedActors.Add(newInitative, player);
             } 
             else
             {   
-                IntiativeActiveActors.Add(newInitative, player);
+                InitiativeActiveActors.Add(newInitative, player);
             }   
         }
-        else if(IntiativeFinishedActors.ContainsValue(player))
+        else if(InitiativeFinishedActors.ContainsValue(player))
         {
-            int indexOf = IntiativeFinishedActors.IndexOfValue(player);
-            float newInitative = IntiativeFinishedActors.Keys[indexOf] - initative;
-            IntiativeFinishedActors.RemoveAt(indexOf);
+            int indexOf = InitiativeFinishedActors.IndexOfValue(player);
+            float newInitative = InitiativeFinishedActors.Keys[indexOf] - initative;
+            InitiativeFinishedActors.RemoveAt(indexOf);
             if(newInitative < 1)
             {
                 newInitative = 0;
             }
-            while(IntiativeFinishedActors.ContainsKey(newInitative))
+            while(InitiativeFinishedActors.ContainsKey(newInitative))
             {
                 newInitative += 0.01f;
             }
-            IntiativeFinishedActors.Add(newInitative,player);
+            InitiativeFinishedActors.Add(newInitative,player);
         }
         else
         {
             Debug.LogWarning("Error: player not present in initative order!");
         }
         PrintInitiative();   
+        */
     }
 
 
     public void IncreaseInitiative(PlayerStats player, int initative)
     {
-        if(IntiativeActiveActors.ContainsValue(player))
+        Debug.LogWarning("increaseinitiative is depreciated");
+        if(InitiativeSorter.ContainsValue(player))
         {
-            int indexOf = IntiativeActiveActors.IndexOfValue(player);
-            float newInitative = IntiativeActiveActors.Keys[indexOf] + initative;
-            IntiativeActiveActors.RemoveAt(indexOf);
-            while(IntiativeActiveActors.ContainsKey(newInitative))
+            int indexOf = InitiativeSorter.IndexOfValue(player);
+            float newInitative = InitiativeSorter.Keys[indexOf] + initative;
+            InitiativeSorter.RemoveAt(indexOf);
+            while(InitiativeSorter.ContainsKey(newInitative))
             {
                 newInitative += 0.01f;
             }
-            IntiativeActiveActors.Add(newInitative, player);
-        }
-        else if(IntiativeFinishedActors.ContainsValue(player))
-        {
-            int indexOf = IntiativeFinishedActors.IndexOfValue(player);
-            // only add initative to those who haven't been bumped off initative yet
-            if(IntiativeFinishedActors.Keys[indexOf] >= 1)
-            {
-                float newInitative = IntiativeFinishedActors.Keys[indexOf] + initative;
-                IntiativeFinishedActors.RemoveAt(indexOf);
-                while(IntiativeFinishedActors.ContainsKey(newInitative))
-                {
-                    newInitative += 0.01f;
-                }
-                IntiativeFinishedActors.Add(newInitative,player);
-            }
+            InitiativeSorter.Add(newInitative, player);
         }
         else
         {
@@ -373,44 +317,42 @@ public class TurnManager : TurnActionsSR
     }
 
     //sorts initative order at the start of the new round. Rounds are larger than passes 
-    public void StartNewRound()
+    public void GameStart()
     {
         gameStart = true;
-        //InitativeOrder.Clear();
-        IntiativeActiveActors.Clear(); 
-        IntiativeFinishedActors.Clear();
+
         It.UpdateRound();
+        InitiativeSorter = new SortedList<float, PlayerStats>();
+        InitiativeQueue = new Queue<PlayerStats>();
 
         GameObject[] players = GameObject.FindGameObjectsWithTag("Player");
-        
+        Debug.Log("player count" + players.Length);
         //adds all values in to sorted list in descending order
         foreach (GameObject p in players)
         {
             PlayerStats ps = p.GetComponent<PlayerStats>();
-            ps.StartRound();
             if(!ps.myData.isMinion)
             {
-                float initiative = RollInitaitve(ps);
-                if(Mathf.FloorToInt(initiative) >= 1)
+                float initiative = ps.RollInitaitve() + (float)ps.GetStat(AttributeKey.Agility)/10f;
+                while(InitiativeSorter.ContainsKey(initiative))
                 {
-                    while(IntiativeActiveActors.ContainsKey(initiative))
-                    {
-                        initiative += 0.01f;
-                    }
-                    IntiativeActiveActors.Add(initiative,ps);
+                    initiative += 0.01f;
                 }
-                else
-                {
-                    while(IntiativeFinishedActors.ContainsKey(initiative))
-                    {
-                        initiative += 0.01f;
-                    }
-                    IntiativeFinishedActors.Add(initiative,ps);
-                }
+                InitiativeSorter.Add(initiative,ps); 
             }
         }
-
-        if(IntiativeActiveActors.Count > 0)
+        Stack<PlayerStats> tempStack = new Stack<PlayerStats>();
+        foreach(PlayerStats ps in InitiativeSorter.Values)
+        {
+            tempStack.Push(ps);
+        }
+        Debug.Log("tempstacks length" + tempStack.Count);
+        while(tempStack.Count > 0)
+        {
+            InitiativeQueue.Enqueue(tempStack.Pop());
+        }
+        Debug.Log("initiative length" + InitiativeQueue.Count);
+        if(InitiativeQueue.Count > 0)
         {
             StartTurn();
         }
@@ -447,61 +389,47 @@ public class TurnManager : TurnActionsSR
         }
     }
 
-    // called by the player manually ends the turn and transfers the activeplayer to the inactive iniative list
+    // called by the player manually ends the turn and transfers the activeplayer to the inactive Initiative list
     public void EndTurn(){
-        ActivePlayerStats.OnTurnEnd(halfActions);
-        // minions do not participate in the initative order
-        if(IntiativeActiveActors.ContainsValue(ActivePlayerStats))
+        if(ActivePlayerStats != null)
         {
-            float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
-            IntiativeFinishedActors.Add(initative,ActivePlayerStats);
-            IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(ActivePlayerStats));
-        }
-        /* OLD STYLE MAYBE BRING BACK?
-        float newInitative = IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1] - 10;
-        if(Mathf.FloorToInt(newInitative) < 1)
-        {
-            newInitative = 0;
-            while(IntiativeFinishedActors.ContainsKey(newInitative))
+            ActivePlayerStats.OnTurnEnd(halfActions);
+            CheckRoundEnd();
+            // minions do not participate in the initative order
+            if(InitiativeQueue.Contains(ActivePlayerStats))
             {
-                newInitative += 0.01f;
+                InitiativeQueue.Enqueue(InitiativeQueue.Dequeue());
             }
         }
-        */
         StartTurn();
     }
 
-    /*
-    public void EndTurn(TacticsMovement newPlayer){
-        ActivePlayerStats.UpdateConditions(false);
-        //InitativeOrder.Enqueue(InitativeOrder.Dequeue());
-        ActivePlayerStats.ApplyAdvanceBonus(0);
-        StartTurn(newPlayer);
+    public void CheckRoundEnd()
+    {
+        PlayerStats lastPlayer = InitiativeSorter.Values[0];
+        if(lastPlayer == ActivePlayerStats)
+        {
+            It.UpdateRound();
+        }
     }
-    */
 
     public void PrintInitiative()
     {
         if(gameStart)
         {
-            Stack<string> outputStack = new Stack<string>();
+            Debug.Log("printing InitiativeQueue with size: " + InitiativeQueue.Count);
+            Queue<PlayerStats> tempQueue = new Queue<PlayerStats>();
             List<string> entries = new List<string>();
-            foreach(KeyValuePair<float, PlayerStats> kvp in IntiativeActiveActors)
-            {  
-                outputStack.Push(kvp.Value.GetName() + ": " + Mathf.FloorToInt(kvp.Key));
-            }
-            while(outputStack.Count > 0)
+            while(InitiativeQueue.Count > 0)
             {
-                entries.Add(outputStack.Pop());
+                PlayerStats currentPlayer = InitiativeQueue.Dequeue();
+                float Initiative = InitiativeSorter.Keys[InitiativeSorter.IndexOfValue(currentPlayer)];
+                entries.Add(currentPlayer + ": " + Initiative);
+                tempQueue.Enqueue(currentPlayer);
             }
-            entries.Add("!inactive");
-            foreach(KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors)
-            {  
-                outputStack.Push(kvp.Value.GetName() + ": " + Mathf.FloorToInt(kvp.Key));
-            }
-            while(outputStack.Count > 0)
+            while(tempQueue.Count > 0)
             {
-                entries.Add(outputStack.Pop());
+                InitiativeQueue.Enqueue(tempQueue.Dequeue());
             }
             It.UpdateList(entries.ToArray());
         }
@@ -650,19 +578,19 @@ public class TurnManager : TurnActionsSR
 
     public void AddPlayer(GameObject newPlayer)
     {
-        PlayerStats newps = newPlayer.GetComponent<PlayerStats>();
-        if(!newps.myData.isMinion)
+        if(gameStart)
         {
-            float initiative = newps.RollInitaitve() + (float)newps.GetStat(AttributeKey.Agility)/10f;
-            while(IntiativeFinishedActors.ContainsKey(initiative))
+            PlayerStats newps = newPlayer.GetComponent<PlayerStats>();
+            if(!newps.myData.isMinion)
             {
-                initiative += 0.01f;
+                float initiative = newps.RollInitaitve() + (float)newps.GetStat(AttributeKey.Agility)/10f;
+                while(InitiativeSorter.ContainsKey(initiative))
+                {
+                    initiative += 0.01f;
+                }
+                InitiativeSorter.Add(initiative, newps);
+                ResetInitiativeAt(ActivePlayerStats);
             }
-            IntiativeFinishedActors.Add(initiative, newps);
-        }
-        else
-        {
-            StartTurn(newps);
         }
     }
 
@@ -670,7 +598,7 @@ public class TurnManager : TurnActionsSR
     {
         Cancel();
         PlayerStats removedPlayer = Player.GetComponent<PlayerStats>();
-        if(IntiativeActiveActors.Count == 1)
+        if(InitiativeSorter.Count == 1)
         {
             ActivePlayerStats = null;
         }
@@ -678,23 +606,45 @@ public class TurnManager : TurnActionsSR
         {
             EndTurn();
         }
-        if(IntiativeActiveActors.ContainsValue(removedPlayer))
+        if(InitiativeSorter.ContainsValue(removedPlayer))
         {
-            IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(removedPlayer));
+            InitiativeSorter.RemoveAt(InitiativeSorter.IndexOfValue(removedPlayer));
         }
-        if(IntiativeFinishedActors.ContainsValue(removedPlayer))
-        {
-            IntiativeFinishedActors.RemoveAt(IntiativeFinishedActors.IndexOfValue(removedPlayer));
-        }
+        ResetInitiativeAt(ActivePlayerStats);
         PhotonNetwork.Destroy(Player);
         PrintInitiative();
+    }
+
+    private void ResetInitiativeAt(PlayerStats top)
+    {
+        InitiativeQueue.Clear();
+        Stack<PlayerStats> tempStack = new Stack<PlayerStats>();
+        foreach(PlayerStats ps in InitiativeSorter.Values)
+        {
+            tempStack.Push(ps);
+        }
+        while(tempStack.Count > 0)
+        {
+            InitiativeQueue.Enqueue(tempStack.Pop());
+        }
+        if(top != null)
+        {
+            while(InitiativeQueue.Peek() != top)
+            {
+                InitiativeQueue.Enqueue(InitiativeQueue.Dequeue());
+            }
+        }
+        else
+        {
+            StartTurn();
+        }
     }
 
     public void TotalDefense()
     {
         CurrentAttack.target.SetCondition(Condition.FullDefense,1,true);
         TacticsAttack.Defend(CurrentAttack,0);
-        SubtractIniative(CurrentAttack.target,10);
+        SubtractInitiative(CurrentAttack.target,10);
         ClearActions();
     }
 
@@ -702,7 +652,7 @@ public class TurnManager : TurnActionsSR
     {
         int gymnasticsBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Gymnastics);
         TacticsAttack.Defend(CurrentAttack,gymnasticsBonus);
-        SubtractIniative(CurrentAttack.target,5);
+        SubtractInitiative(CurrentAttack.target,5);
         ClearActions();
     }
     
@@ -729,7 +679,7 @@ public class TurnManager : TurnActionsSR
             }
         } 
         TacticsAttack.Defend(CurrentAttack,weaponBonus);
-        SubtractIniative(CurrentAttack.target,5);
+        SubtractInitiative(CurrentAttack.target,5);
         ClearActions();
     }
 
@@ -738,7 +688,7 @@ public class TurnManager : TurnActionsSR
     {
         int unarmedBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.UnarmedCombat);
         TacticsAttack.Defend(CurrentAttack,unarmedBonus);
-        SubtractIniative(CurrentAttack.target,5);
+        SubtractInitiative(CurrentAttack.target,5);
         ClearActions();
     }
 
@@ -746,7 +696,7 @@ public class TurnManager : TurnActionsSR
     { 
         int parryBonus = CurrentAttack.target.myData.GetAttribute(AttributeKey.Blades);
         TacticsAttack.Defend(CurrentAttack,parryBonus);
-        SubtractIniative(CurrentAttack.target,5);
+        SubtractInitiative(CurrentAttack.target,5);
         ClearActions();
     }
     public void NoReaction()
@@ -791,7 +741,7 @@ public class TurnManager : TurnActionsSR
         }
         else
         {
-            StartTurn(ActiveDrone.droneMinion);
+            StartTurn(ActiveDrone.droneMinion, false);
         }
     }
 

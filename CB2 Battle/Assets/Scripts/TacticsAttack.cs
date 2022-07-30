@@ -229,7 +229,7 @@ public static class TacticsAttack
             }
             else if(currentAttack.attacker.hasCondition(Condition.ShakeUp))
             {
-                TurnManager.instance.SubtractIniative(currentAttack.target, 5);
+                TurnManager.instance.SubtractInitiative(currentAttack.target, 5);
                 PopUpText.CreateText("Shaken!", Color.yellow, currentAttack.target.gameObject);
                 CombatLog.Log(currentAttack.target.GetName() + " loses 5 initative");
                 apply = true;

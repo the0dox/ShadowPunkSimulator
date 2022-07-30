@@ -40,6 +40,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
     public int remainingMove;
     private int defensePenality = 0;
     private int TotalBulletsFired;
+    private int actions;
     
     [SerializeField] private HealthBar HealthBar;
     [SerializeField] private FatigueBar FatigueBar;
@@ -324,14 +325,14 @@ public class PlayerStats : MonoBehaviourPunCallbacks
 
     public float RollInitaitve()
     {
-        int baseIniative = 0;
+        int baseInitiative = 0;
         if(hasCondition(Condition.AR))
         {
-            baseIniative = myData.GetAttribute(AttributeKey.InitativeMatrix);
+            baseInitiative = myData.GetAttribute(AttributeKey.InitativeMatrix);
         }
         else
         {
-            baseIniative = myData.GetAttribute(AttributeKey.InitativeStandard);
+            baseInitiative = myData.GetAttribute(AttributeKey.InitativeStandard);
         }
         int roll = 0;
         int initativeDice = 1;
@@ -354,7 +355,7 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         {
             roll += Random.Range(1,7);
         }
-        return baseIniative + roll;
+        return baseInitiative + roll;
     }
 
     public bool HoldingWeaponClass(WeaponClass desiredClass)
@@ -709,19 +710,11 @@ public class PlayerStats : MonoBehaviourPunCallbacks
         return output;
     }
 
-    public bool IsHelpless()
-    {
-        return false;
-    }
-
     public bool IsOccupied()
     {
         return Occupied;
     }
-    public void EndJob()
-    {
-        Occupied = false;
-    }
+    
     public override string ToString()
     {
         string output = GetName();

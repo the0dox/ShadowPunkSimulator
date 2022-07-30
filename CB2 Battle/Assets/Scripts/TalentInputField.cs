@@ -42,14 +42,18 @@ public class TalentInputField : MonoBehaviour
             {
                 backgroundImage.color = Color.white;
             }
-            if(!myData.CanSelect(owner))
+            if(CrossOut != null)
             {
-                CrossOut.SetActive(true);
+                if(!myData.CanSelect(owner))
+                {
+                    CrossOut.SetActive(true);
+                }
+                else
+                {
+                    CrossOut.SetActive(false);
+                }
             }
-            else
-            {
-                CrossOut.SetActive(false);
-            }
+            
         }
     }
 }

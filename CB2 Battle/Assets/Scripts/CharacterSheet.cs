@@ -184,27 +184,33 @@ public class CharacterSheet : MonoBehaviourPunCallbacks
     [PunRPC]
     void RPC_UpdatedTalentMaster(int key)
     {
-        Talent Talent = TalentReference.GetTalent((TalentKey)key);
-        if(ActivePlayer.hasTalent(Talent.key))
+        if(ActivePlayer != null)
         {
-            //Debug.Log("removing talent");
-            ActivePlayer.SetTalent(Talent.key, false);
+            Talent Talent = TalentReference.GetTalent((TalentKey)key);
+            if(ActivePlayer.hasTalent(Talent.key))
+            {
+                //Debug.Log("removing talent");
+                ActivePlayer.SetTalent(Talent.key, false);
+            }
+            else if(Talent.CanSelect(ActivePlayer))
+            {
+                //Debug.Log("adding talent");
+                ActivePlayer.SetTalent(Talent.key, true);
+            }
+            TalentAdder.OnValueChanged();
+            pv.RPC("RPC_UpdatedTalentClient", RpcTarget.Others, ActivePlayer.CompileTalents());    
         }
-        else if(Talent.CanSelect(ActivePlayer))
-        {
-            //Debug.Log("adding talent");
-            ActivePlayer.SetTalent(Talent.key, true);
-        }
-        TalentAdder.OnValueChanged();
-        pv.RPC("RPC_UpdatedTalentClient", RpcTarget.Others, ActivePlayer.CompileTalents());
     }
 
     // Master sends its new list of updated talents to each client
     [PunRPC]
     void RPC_UpdatedTalentClient(Dictionary<int,bool> newTalents)
     {
-        ActivePlayer.DecompileTalents(newTalents);
-        TalentAdder.OnValueChanged();
+        if(ActivePlayer != null)
+        {
+            ActivePlayer.DecompileTalents(newTalents);
+            TalentAdder.OnValueChanged();
+        }
     }
 
     // Change Items

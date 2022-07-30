@@ -80,7 +80,7 @@ public class OverworldManager : UIButtonManager
         SceneSaveData overworldScene = new SceneSaveData("Overworld",OverworldTokens,groundMat);
         overworldScene.AddLeads(leadScripts);
         SaveSystem.SaveScene(overworldScene);
-        Debug.Log("scene saved with " + players.Length + " tokens and " + leads.Length + " leads ");
+        //Debug.Log("scene saved with " + players.Length + " tokens and " + leads.Length + " leads ");
     }
 
     private bool ContinueIenumerator(List<LeadScript> leads)

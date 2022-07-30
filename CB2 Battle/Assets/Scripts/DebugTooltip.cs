@@ -83,7 +83,7 @@ public class DebugTooltip : MonoBehaviour
 
     public void StartTurnButton()
     {
-        GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().StartTurn(myStats);
+        GameObject.FindGameObjectWithTag("GameController").GetComponent<TurnManager>().StartTurn(myStats,false);
         DestroyMe();
     }
 

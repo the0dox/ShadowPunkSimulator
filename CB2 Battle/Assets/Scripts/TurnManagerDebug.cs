@@ -10,8 +10,8 @@ public class TurnManagerDebug : TurnManager
     //static means easily accessable reference for all moveable characters
     //private static Queue<TacticsMovement> InitativeOrder = new Queue<TacticsMovement>();
     private bool gameStart = false;
-    SortedList<float, PlayerStats> IntiativeActiveActors = new SortedList<float, PlayerStats>(); 
-    SortedList<float, PlayerStats> IntiativeFinishedActors = new SortedList<float, PlayerStats>(); 
+    SortedList<float, PlayerStats> InitiativeActiveActors = new SortedList<float, PlayerStats>(); 
+    SortedList<float, PlayerStats> InitiativeFinishedActors = new SortedList<float, PlayerStats>(); 
 
     int hits = 0;
     int misses = 0; 
@@ -229,9 +229,9 @@ public class TurnManagerDebug : TurnManager
     
     public new void StartTurn()
     {
-        if (IntiativeActiveActors.Count > 0) 
+        if (InitiativeActiveActors.Count > 0) 
         {
-            ActivePlayerStats = IntiativeActiveActors[IntiativeActiveActors.Keys[IntiativeActiveActors.Count-1]];
+            ActivePlayerStats = InitiativeActiveActors[InitiativeActiveActors.Keys[InitiativeActiveActors.Count-1]];
             UIPlayerInfo.ShowAllInfo(ActivePlayerStats);
             ActivePlayer = ActivePlayerStats.GetComponent<TacticsMovement>();
             halfActions = 100;
@@ -257,12 +257,12 @@ public class TurnManagerDebug : TurnManager
    public new void StartTurn(PlayerStats newPlayer)
     {
         // if someone else is active, end their trun
-        if(ActivePlayerStats != null && IntiativeActiveActors.ContainsValue(ActivePlayerStats))
+        if(ActivePlayerStats != null && InitiativeActiveActors.ContainsValue(ActivePlayerStats))
         {
             ActivePlayerStats.OnTurnEnd(halfActions);
-            float initative = IntiativeActiveActors.Keys[IntiativeActiveActors.IndexOfValue(ActivePlayerStats)];
-            IntiativeFinishedActors.Add(initative,ActivePlayerStats);
-            IntiativeActiveActors.RemoveAt(IntiativeActiveActors.IndexOfValue(ActivePlayerStats));
+            float initative = InitiativeActiveActors.Keys[InitiativeActiveActors.IndexOfValue(ActivePlayerStats)];
+            InitiativeFinishedActors.Add(initative,ActivePlayerStats);
+            InitiativeActiveActors.RemoveAt(InitiativeActiveActors.IndexOfValue(ActivePlayerStats));
         }
         ActivePlayerStats = newPlayer;
         UIPlayerInfo.ShowAllInfo(ActivePlayerStats);
@@ -287,13 +287,13 @@ public class TurnManagerDebug : TurnManager
     {
         SortedList<float, PlayerStats> TempSorter = new SortedList<float, PlayerStats>(); 
 
-        foreach (KeyValuePair<float, PlayerStats> kvp in IntiativeFinishedActors) 
+        foreach (KeyValuePair<float, PlayerStats> kvp in InitiativeFinishedActors) 
         {
             // NEW INITATIVE STYLE SUBTRACT ON PASS NOT ON TURN END
             float initative = kvp.Key - 10;
             if(Mathf.FloorToInt(initative) >= 1)
             {
-                IntiativeActiveActors.Add(initative, kvp.Value);
+                InitiativeActiveActors.Add(initative, kvp.Value);
             }
             else{
                 initative = 0;
@@ -305,15 +305,15 @@ public class TurnManagerDebug : TurnManager
             }
         }
 
-        IntiativeFinishedActors = TempSorter;
+        InitiativeFinishedActors = TempSorter;
 
-        if(IntiativeActiveActors.Count > 0)
+        if(InitiativeActiveActors.Count > 0)
         {
             StartTurn();
         }
         else
         {
-            StartNewRound();
+            //StartNewRound();
         }
     }
 

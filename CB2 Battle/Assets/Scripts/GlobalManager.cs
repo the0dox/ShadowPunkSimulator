@@ -84,7 +84,7 @@ public class GlobalManager : MonoBehaviourPunCallbacks
         GameObject GM = GameObject.FindGameObjectWithTag("GameController");
         if(GM.TryGetComponent<TurnManager>(out TurnManager tm))
         {
-            tm.StartNewRound();
+            tm.GameStart();
             pv.RPC("RPC_FinishedLoading",RpcTarget.All);
         }
         else if (GM.TryGetComponent<LevelEditor>(out LevelEditor le))
